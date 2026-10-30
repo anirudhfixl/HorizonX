@@ -14,42 +14,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <Web3Provider>
       <WalletProvider>
         <ModalProvider>
-        <div className="relative min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/25 selection:text-primary-foreground">
-          {/* Subtle Ambient Glow Gradients in Background */}
-          <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-            <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[1000px] rounded-full bg-gradient-to-b from-primary/10 via-amber-600/5 to-transparent blur-3xl opacity-60" />
-            <div className="absolute top-1/3 -left-40 h-[400px] w-[600px] rounded-full bg-primary/5 blur-3xl" />
-            <div className="absolute top-2/3 -right-40 h-[400px] w-[600px] rounded-full bg-amber-600/5 blur-3xl" />
-          </div>
+          <div className="relative min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/25 selection:text-primary-foreground">
 
-          <Suspense fallback={<div className="h-[68px]" />}>
-            <TopNav />
-          </Suspense>
-
-          <main className="flex-1 pt-24 sm:pt-28 pb-16">
-            <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading...</div>}>
-              {children}
+            <Suspense fallback={<div className="h-[68px]" />}>
+              <TopNav />
             </Suspense>
-          </main>
 
-          <Footer />
+            <main className="flex-1 pt-24 sm:pt-28 pb-16">
+              <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading...</div>}>
+                {children}
+              </Suspense>
+            </main>
 
-          {/* Global Modal Layer */}
-          <GlobalModalRenderer />
+            <Footer />
 
-          {/* Sonner Toast Container */}
-          <Toaster
-            position="bottom-right"
-            theme="dark"
-            richColors
-            closeButton
-            toastOptions={{
-              className: "border border-border/80 bg-card text-foreground font-sans",
-            }}
-          />
-        </div>
-      </ModalProvider>
-    </WalletProvider>
-  </Web3Provider>
-);
+            {/* Global Modal Layer */}
+            <GlobalModalRenderer />
+
+            {/* Sonner Toast Container */}
+            <Toaster
+              position="bottom-right"
+              theme="dark"
+              richColors
+              closeButton
+              toastOptions={{
+                className: "border border-border/80 bg-card text-foreground font-sans",
+              }}
+            />
+          </div>
+        </ModalProvider>
+      </WalletProvider>
+    </Web3Provider>
+  );
 }

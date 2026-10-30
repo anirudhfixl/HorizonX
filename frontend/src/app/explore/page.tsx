@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { ExploreOrbitalHero } from "@/components/explore/orbital-explore-hero";
 import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { MetricCard } from "@/components/shared/metric-card";
@@ -246,7 +247,9 @@ export default function ExploreHubPage() {
   const isFilteringActive = query.length > 0 || activeCategory !== "all" || quickFilter !== "all";
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <>
+      <ExploreOrbitalHero />
+      <div id="explore-discovery-content" className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       {/* 1. Header & Demonstration Notice */}
       <div className="space-y-4">
         <PageHeader
@@ -1211,6 +1214,7 @@ export default function ExploreHubPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
