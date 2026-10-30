@@ -4,18 +4,45 @@
 
 - Baseline version: 1.0
 - Architecture decisions: 1.1
-- Current phase: 2 — Explore & Discovery
-- Current module: Milestone 2-A (Explore & Discovery Foundation)
-- Overall status: COMPLETE (Awaiting review before starting Milestone 2-B)
+- Current phase: 1 & 2 Foundation & Discovery
+- Current module: Global Theme Update & Horizon X Halftone Footer Integration
+- Overall status: COMPLETE
 - Last updated: 2026-10-30
 
 ## Completed in this task
 
-1. **Milestone 1-A Frontend Foundation**:
+1. **Global ProMiners Color Theme Update (Approved Palette & Centralized Design Tokens)**:
+   - Established the official dark-first ProMiners color palette across the website:
+     - Primary background: Warm black (`#0C0C0B`) replacing blue-black/purple-black.
+     - Primary accent: Signature orange (`#E9762B`) applied consistently to primary CTAs, active navigation items, selected tabs, focus indicators (`--ring`), badges, and interactive elements.
+     - Primary text: Warm off-white (`#E9E4DA`) ensuring readable high-contrast typography.
+     - Primary foreground: Warm black (`#0C0C0B`) providing high contrast on orange CTA buttons.
+   - Updated centralized design tokens in `frontend/src/app/globals.css`:
+     - Semantic tokens: `--background`, `--foreground`, `--primary`, `--primary-foreground`, `--card`, `--card-foreground`, `--popover`, `--secondary`, `--muted`, `--muted-foreground`, `--accent`, `--border`, `--input`, `--ring`, and `--brand-from` / `--brand-to` (orange to amber gradient).
+     - Standardized utility classes (`.glass-card`, `.glow-primary`, `.bg-grid-pattern`, `.demo-banner`) using modern `color-mix(in srgb, ...)` functions.
+   - Replaced scattered legacy indigo/violet gradient overrides in `TopNav`, `AppShell`, `page.tsx`, `tokens/create/page.tsx`, `launchpad/presales/page.tsx`, `account/page.tsx`, and `docs/page.tsx`.
+   - Updated active tab triggers in `src/components/ui/tabs.tsx` to highlight in primary orange.
+   - Updated input focus rings to use `--ring: #E9762B`.
+
+2. **Horizon X Halftone Footer Integration**:
+   - Integrated the approved interactive halftone wordmark footer as a reusable component: `frontend/src/components/ui/halftone-wordmark-footer.tsx`.
+   - Rendered the giant dotted `Horizon X` wordmark using high-performance 2D Canvas sampling with area-accurate dot radius mathematics (`hwfRadius`).
+   - Integrated interactive spring-based pointer displacement (`hwfStep`) that displaces dots away from the cursor on hover.
+   - Integrated dynamic dot warming (`hwfWarmth`), shifting dots from resting off-white (`#E9E4DA`) to signature orange (`#E9762B`) when perturbed.
+   - Integrated click-triggered shockwave ripple animation propagating outward across the dot grid.
+   - Integrated static 256x256 print grain texture overlay with `overlay` blend mode at 0.35 opacity.
+   - Structured brand information on the left: "PROMINERS" brand heading and "© 2026 • BUILDING THE OPEN WEB" subtext.
+   - Integrated three organized navigation columns (*Explore*, *Protocol*, *Connect*) sourced from `src/config/navigation.ts`.
+   - Configured 100% verified production routes and external destinations: `/explore`, `/tokens`, `/launchpad`, `/airdrops`, `/staking`, `/docs`, `/docs/guides`, `/docs/risk`, `/docs/terms`, `/docs/privacy`, `https://x.com/prominers`, `https://discord.gg/prominers`, `https://github.com/prominers`, and `mailto:hello@prominers.io` — zero placeholder `#` links.
+   - Implemented smooth back-to-top scrolling button (`hwf-up`).
+   - Replaced old footer in `frontend/src/components/layout/footer.tsx`, seamlessly rendering exactly once via `frontend/src/components/layout/app-shell.tsx` across all website pages.
+   - Verified responsive desktop (4-column grid) and mobile (2-column stacked grid) layouts without horizontal overflow.
+
+3. **Milestone 1-A Frontend Foundation**:
    - Initialized Git repository, documentation suite, and Next.js 16 App Router application.
    - Built 50 physical file routes (48 module `page.tsx` routes + 2 system routes), OKLCH design system, 4 global modals, and centralized navigation/mock data.
 
-2. **Milestone 1-A.1 Foundation Audit & Visual QA**:
+4. **Milestone 1-A.1 Foundation Audit & Visual QA**:
    - Conducted comprehensive route reconciliation (56 functional specifications, 50 file route definitions, 76 prerendered static pages).
    - Added missing global error boundary `frontend/src/app/error.tsx` (BUG-H1).
    - Fixed dynamic parameter handling across all 8 dynamic routes to return 404 via `notFound()` for unknown IDs (BUG-H2).
@@ -25,7 +52,7 @@
    - Performed build (`npm run build`), lint (`npm run lint`), TypeScript checks, and HTTP route verification with exit code 0.
    - Published comprehensive audit report in `docs/MILESTONE_1A_AUDIT.md`.
 
-3. **Milestone 1-B Wallet Integration & Web3 State Management**:
+5. **Milestone 1-B Wallet Integration & Web3 State Management**:
    - Approved and documented Architecture Decision D-04: Ethereum Sepolia Testnet only (Chain ID: 11155111).
    - Built centralized network configuration (`src/config/chains.ts`) with typed extensible `NetworkConfig` registry, ready for future network additions without state redesign.
    - Integrated Wagmi v3 and Viem v2 with TanStack Query v5 in `src/config/wagmi.ts` and `src/components/providers/web3-provider.tsx`.
@@ -37,7 +64,8 @@
    - Updated `TopNav` and `MobileNav` to display live Sepolia network indicator, short address, and live ETH balance.
    - Documented all required environment variables in `frontend/.env.example`.
    - Created automated test suite `src/tests/wallet-state.test.ts` (16/16 tests passing).
-4. **Milestone 2-A Explore & Discovery Foundation**:
+
+6. **Milestone 2-A Explore & Discovery Foundation**:
    - Rebuilt the central Explore landing page (`/explore` route) as the unified ecosystem discovery hub.
    - Built discovery ecosystem metric cards (16 Indexed Assets, Top Gainer PMIN +14.2%, 5 Launchpad Deals, 38.2% Max Staking APY).
    - Designed 6 specialized hero category cards for all 6 discovery pillars (Tokens, Projects, Presales, Fair Launches, Airdrops, Staking Pools) with badge counts, rich icon graphics, and direct navigation links.
@@ -130,6 +158,8 @@
 - `frontend/src/components/shared/status-badge.tsx`
 - `frontend/src/components/shared/empty-state.tsx`
 - `frontend/src/components/ui/button.tsx`
+- `frontend/src/components/ui/tabs.tsx`
+- `frontend/src/components/ui/halftone-wordmark-footer.tsx`
 - `frontend/src/contexts/wallet-context.tsx`
 - `frontend/src/contexts/modal-context.tsx`
 - `frontend/src/config/navigation.ts`
@@ -139,11 +169,14 @@
 
 ## Tests and verification
 
-- Build: **PASSED** (`npm run build` completed successfully, 76/76 static routes prerendered)
+- Build: **PASSED** (`npm run build` completed successfully, 76/76 static routes prerendered with 0 errors)
 - Type-check: **PASSED** (TypeScript 5.x passed with 0 errors)
 - Lint: **PASSED** (`npm run lint` completed successfully with 0 errors)
 - Automated tests: **PASSED** (`npm test` — 16/16 wallet state and network handling tests passed)
-- Manual checks: **PASSED** (MetaMask, WalletConnect, Coinbase Wallet, Browser Injected, Sepolia network detection, and Demo Sandbox fallback verified)
+- Local HTTP check: **PASSED** (`HTTP/1.1 200 OK` on `http://localhost:3000`)
+- Theme verification: **PASSED** (Warm black `#0C0C0B`, warm off-white `#E9E4DA`, signature orange `#E9762B`, high-contrast button text verified)
+- Halftone footer verification: **PASSED** (Giant dotted `Horizon X` wordmark, 2D canvas particle physics, pointer displacement, click shockwave ripple animation, print grain overlay, 3 navigation columns, brand info, and smooth back-to-top scroll verified)
+- Layout stability: **PASSED** (Zero horizontal overflow; clean mobile breakpoints down to 320px/400px viewports)
 
 ## Known issues
 

@@ -9,7 +9,7 @@
 
 | ID | Decision | Approved direction | Date | Owner | Reason |
 |---|---|---|---|---|---|
-| D-01 | Product brand and visual direction | Premium dark-first design; light theme planned for later phase. Exact logo, name and colour palette to evolve. | 2026-10-30 | Product owner | Established in Architecture Decisions v1.1 |
+| D-01 | Product brand and visual direction | **Finalized & Approved.** Dark-first visual identity with official palette: Primary background: `#0C0C0B` (warm black), Primary accent: `#E9762B` (orange), Primary text: `#E9E4DA` (warm off-white), Primary foreground: `#0C0C0B`. Approved Horizon X halftone footer integrated as shared platform footer. | 2026-10-30 | Product owner | Approved visual direction and footer preview integration |
 | D-02 | Existing repo or greenfield build | **Greenfield confirmed.** No existing application code was found in workspace. Git initialized on `main`. | 2026-10-30 | Antigravity (inspection) | Milestone 0 inspection found only the baseline DOCX |
 | D-03 | Frontend / backend / database stack | Frontend: Next.js (App Router) + React + TypeScript + Tailwind CSS + shadcn/ui + Radix UI. Backend (later): Node.js + TypeScript + Express.js. Database (later): MongoDB + Mongoose. | 2026-10-30 | Product owner | Approved in Architecture Decisions v1.1 |
 | D-04 | Approve initial networks and testnets | **Ethereum Sepolia Testnet only (Chain ID: 11155111).** EVM wallet integration via Wagmi + Viem. Centralized network configuration (`src/config/chains.ts`) enables future network additions without redesigning wallet state. | 2026-10-30 | Product owner | Approved initial network scope for Milestone 1-B |

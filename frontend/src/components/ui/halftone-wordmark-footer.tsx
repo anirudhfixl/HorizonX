@@ -257,17 +257,6 @@ export default function HalftoneWordmarkFooter({
     fontWeight,
     wordmark,
   });
-  opts.current = {
-    colors,
-    dotGap,
-    radius,
-    crop,
-    grain,
-    interactive,
-    fontFamily,
-    fontWeight,
-    wordmark,
-  };
   const key = [
     wordmark,
     dotGap,
@@ -281,6 +270,17 @@ export default function HalftoneWordmarkFooter({
   ].join("|");
 
   React.useEffect(() => {
+    opts.current = {
+      colors,
+      dotGap,
+      radius,
+      crop,
+      grain,
+      interactive,
+      fontFamily,
+      fontWeight,
+      wordmark,
+    };
     const root = rootRef.current;
     const canvas = canvasRef.current;
     if (!root || !canvas) return;
@@ -533,6 +533,7 @@ export default function HalftoneWordmarkFooter({
       root.removeEventListener("pointerleave", onLeave);
       root.removeEventListener("pointerdown", onDown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   const toTop = () => {
