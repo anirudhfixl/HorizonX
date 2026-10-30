@@ -127,12 +127,20 @@ export interface Presale {
 export interface FairLaunch {
   id: string;
   title: string;
+  description?: string;
+  category?: string;
   tokenId: string;
   projectId?: string;
   ownerAddress: string;
   status: PresaleStatus;
   startTime?: string;
   endTime?: string;
+  totalSelling?: string;
+  softCap?: string;
+  totalRaised?: string;
+  participantCount?: number;
+  minContribution?: string;
+  maxContribution?: string;
   network: string;
   contractAddress?: string;
   createdAt: string;

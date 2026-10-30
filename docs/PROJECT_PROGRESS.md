@@ -5,8 +5,8 @@
 - Baseline version: 1.0
 - Architecture decisions: 1.1
 - Current phase: 2 — Explore & Discovery
-- Current module: Milestone 2-D (Presales Discovery)
-- Overall status: COMPLETE (Awaiting review before starting Milestone 2-E)
+- Current module: Milestone 2-E (Fair Launch Discovery)
+- Overall status: COMPLETE (Awaiting product owner review before starting Milestone 2-F)
 - Last updated: 2026-10-30
 
 ## Completed in this task
@@ -217,15 +217,87 @@
 - `frontend/src/tests/token-explorer.test.ts`
 - `frontend/src/components/projects/project-directory.tsx`
 - `frontend/src/tests/project-directory.test.ts`
+10. **Milestone 2-E Fair Launch Discovery**:
+    - Built a shared, reusable `FairLaunchDirectory` component (`frontend/src/components/launchpad/fair-launch-directory.tsx`) powering both `/launchpad/launches` (canonical fair launch directory) and `/explore/launches` (discovery entry) with 0 duplicate logic.
+    - Designed dual presentation: responsive 3-column Grid View and high-density Table View with sortable columns, progress bars, and mobile responsiveness.
+    - Preserved existing fair launch detail (`/launchpad/launches/[id]`) and creation (`/launchpad/launches/create`) routes without modifying workflows.
+    - Integrated dynamic softcap progress calculation (`totalRaised / softCap * 100`) and contribution metrics.
+    - Built multi-criteria filter toolbar:
+      - Search: instant client-side matching across launch title, token symbol, token name, project name, and description.
+      - Status filter: `live`, `scheduled`, `ended`, `finalized`, `draft`.
+      - Network filter: strictly restricted per Architecture Decision D-04 to `All Networks` and `Ethereum Sepolia (11155111 — Active)`; non-Sepolia launches preserved in centralized mock catalog for cross-chain discovery without wallet claims.
+      - Category filter: all categories derived from launches and linked tokens (`Governance`, `Meme & Community`, `Infrastructure`, `DeFi`, `Security & Privacy`, `AI & Compute`, `DePIN`).
+    - Built full sorting across 4 dimensions (launch title, start/creation date, softcap progress, total raised).
+    - Implemented configurable pagination (`4`, `6`, `12` items per page) with page number pills, previous/next controls, result count indicators, and automatic reset to page 1 on filter or search changes.
+    - Implemented component-level `EmptyState` fallback with a 1-click "Reset All Filters" action.
+    - Embedded explicit demonstration data disclaimers complying with D-04 and BUG-M2.
+    - Expanded `FairLaunch` interface in `frontend/src/types/index.ts` with optional metadata (`description`, `category`, `totalSelling`, `softCap`, `totalRaised`, `participantCount`, `minContribution`, `maxContribution`).
+    - Enriched typed mock dataset `MOCK_FAIR_LAUNCHES` in `frontend/src/lib/mock-data.ts` to 8 realistic fair launches (5 Ethereum Sepolia D-04 items, 3 cross-chain discovery items on Base, Arbitrum One, Polygon).
+    - Cleaned unused imports in `frontend/src/app/launchpad/launches/[id]/page.tsx` for optimal lint hygiene.
+    - Created automated unit test suite `frontend/src/tests/fair-launch-directory.test.ts` verifying schema, progress math, search, filtering, Sepolia D-04 scope compliance, sorting, pagination, and detail link integrity.
+
+## Files created or modified
+
+- `docs/PROJECT_PROGRESS.md`
+- `docs/PROJECT_OVERVIEW.md`
+- `docs/MODULE_INVENTORY.md`
+- `docs/MODAL_INVENTORY.md`
+- `docs/DESIGN_SYSTEM.md`
+- `docs/DATA_AND_INTEGRATIONS.md`
+- `docs/CONTRACT_SPECIFICATION.md`
+- `docs/DECISION_LOG.md`
+- `docs/TESTING_CHECKLIST.md`
+- `docs/KNOWN_ISSUES.md`
+- `frontend/package.json`
+- `frontend/src/app/globals.css`
+- `frontend/src/app/page.tsx`
+- `frontend/src/app/explore/page.tsx`
+- `frontend/src/app/explore/tokens/page.tsx`
+- `frontend/src/app/explore/projects/page.tsx`
+- `frontend/src/app/explore/presales/page.tsx`
+- `frontend/src/app/explore/launches/page.tsx`
+- `frontend/src/app/tokens/page.tsx`
+- `frontend/src/app/tokens/explore/page.tsx`
+- `frontend/src/app/tokens/create/page.tsx`
+- `frontend/src/app/tokens/[id]/page.tsx`
+- `frontend/src/app/projects/page.tsx`
+- `frontend/src/app/projects/[id]/page.tsx`
+- `frontend/src/app/launchpad/page.tsx`
+- `frontend/src/app/launchpad/launches/page.tsx`
+- `frontend/src/app/launchpad/launches/[id]/page.tsx`
+- `frontend/src/app/launchpad/launches/create/page.tsx`
+- `frontend/src/app/launchpad/presales/page.tsx`
+- `frontend/src/app/launchpad/presales/create/page.tsx`
+- `frontend/src/app/account/page.tsx`
+- `frontend/src/app/docs/page.tsx`
+- `frontend/src/components/layout/app-shell.tsx`
+- `frontend/src/components/layout/top-nav.tsx`
+- `frontend/src/components/layout/footer.tsx`
+- `frontend/src/components/ui/tabs.tsx`
+- `frontend/src/components/ui/halftone-wordmark-footer.tsx`
+- `frontend/src/components/wallet/wallet-modal.tsx`
+- `frontend/src/components/wallet/network-switch-modal.tsx`
+- `frontend/src/contexts/wallet-context.tsx`
+- `frontend/src/contexts/modal-context.tsx`
+- `frontend/src/config/navigation.ts`
+- `frontend/src/lib/mock-data.ts`
+- `frontend/src/lib/utils.ts`
+- `frontend/src/types/index.ts`
+- `frontend/src/components/tokens/token-explorer.tsx`
+- `frontend/src/tests/token-explorer.test.ts`
+- `frontend/src/components/projects/project-directory.tsx`
+- `frontend/src/tests/project-directory.test.ts`
 - `frontend/src/components/launchpad/presale-directory.tsx`
 - `frontend/src/tests/presale-directory.test.ts`
+- `frontend/src/components/launchpad/fair-launch-directory.tsx`
+- `frontend/src/tests/fair-launch-directory.test.ts`
 
 ## Tests and verification
 
-- Build: **PASSED** (`npm run build` completed successfully, 99/99 static routes prerendered with 0 errors)
+- Build: **PASSED** (`npm run build` completed successfully, 105/105 static routes prerendered with 0 errors)
 - Type-check: **PASSED** (TypeScript 5.x passed with 0 errors)
-- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 71 warnings across legacy files; 0 errors/warnings in Presales Discovery files)
-- Automated tests: **PASSED** (`npm test` — all four test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, and `presale-directory.test.ts` passed 100%)
+- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 64 warnings across legacy files; 0 errors/warnings in Fair Launch Discovery files)
+- Automated tests: **PASSED** (`npm test` — all five test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, and `fair-launch-directory.test.ts` passed 100%)
 - Local HTTP check: **PASSED** (`HTTP/1.1 200 OK` on `http://localhost:3000`)
 - Theme verification: **PASSED** (Warm black `#0C0C0B`, warm off-white `#E9E4DA`, signature orange `#E9762B`, high-contrast button text verified)
 - Halftone footer verification: **PASSED** (Giant dotted `Horizon X` wordmark, 2D canvas particle physics, pointer displacement, click shockwave ripple animation, print grain overlay, 3 navigation columns, brand info, and smooth back-to-top scroll verified)
@@ -234,7 +306,7 @@
 ## Known issues
 
 - **KI-001 (Severity: INFO):** Real EVM Web3 wallet integration and native balance retrieval is live on Ethereum Sepolia Testnet. Smart contract actions and external market feeds remain mock-adapted for this phase. (Accepted for Phase 1.)
-- **KI-002 (Severity: LOW):** 71 unused variable/import warnings reported by ESLint across legacy page and wizard files (Presales Discovery, Project Directory, and Token Explorer files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
+- **KI-002 (Severity: LOW):** 64 unused variable/import warnings reported by ESLint across legacy page and wizard files (Fair Launch Discovery, Presales Discovery, Project Directory, and Token Explorer files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
 - **KI-003 (Severity: INFO):** Next.js 16 Turbopack logs a prefetch warning when accessing dynamic `await params` outside of `<Suspense>` during instant navigation. Static page generation succeeds with 0 errors; planned resolution is wrapping dynamic route parameter access inside `<Suspense>` during future refactoring.
 - **KI-004 (Severity: INFO):** 8 owner-management sub-routes from `MODULE_INVENTORY.md` (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, etc.) are currently accessible via tabbed views within parent detail pages rather than isolated sub-route URLs. Planned resolution is dedicated sub-route partitioning during Phase 3–8 module milestones.
 
@@ -247,7 +319,7 @@
 
 ## Next exact task
 
-Milestone 2-E: Fair Launch Discovery (`/explore/launches` discovery entry and `/launchpad/launches` canonical fair launch listing). Awaiting product owner review of Milestone 2-D before proceeding.
+Milestone 2-F: Airdrop Discovery (`/explore/airdrops` discovery entry and `/airdrops/campaigns` canonical listing). Awaiting product owner review of Milestone 2-E before proceeding.
 
 ## Baseline compliance
 
