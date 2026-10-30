@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { MOCK_PROJECTS, MOCK_TOKENS } from "@/lib/mock-data";
-import { Token } from "@/types";
+import { Project, Token } from "@/types";
+import { cn } from "@/lib/utils";
 import {
   Briefcase,
   Search,
@@ -209,16 +210,46 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     }
   };
 
-  // Helper for initial avatar generator
-  const getInitials = (name: string) => {
-    const parts = name.split(" ").filter(Boolean);
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  };
+  const isSepoliaProject = (proj: Project) =>
+    Boolean(
+      proj.ecosystem?.toLowerCase().includes("sepolia") || proj.ecosystem?.toLowerCase() === "ethereum"
+    );
+
+  const linkedTokensOf = (proj: Project) =>
+    proj.tokenIds.map((id) => tokenMap.get(id)).filter((t): t is Token => Boolean(t));
+
+  const stats = [
+    {
+      label: "Total Protocols",
+      value: MOCK_PROJECTS.length,
+      note: "Ecosystem projects",
+      icon: <Briefcase className="h-4 w-4 text-primary" />,
+    },
+    {
+      label: "Sepolia Ecosystem",
+      value: MOCK_PROJECTS.filter((p) => p.ecosystem?.toLowerCase().includes("sepolia")).length,
+      note: "Active D-04 scope",
+      icon: <CheckCircle2 className="h-4 w-4 text-emerald-400" />,
+    },
+    {
+      label: "Security Audited",
+      value: MOCK_PROJECTS.filter(
+        (p) => p.verificationStatus === "audit_available" || p.verificationStatus === "contract_source_verified"
+      ).length,
+      note: "Audited or verified",
+      icon: <ShieldCheck className="h-4 w-4 text-cyan-400" />,
+    },
+    {
+      label: "Linked Tokens",
+      value: MOCK_PROJECTS.reduce((acc, p) => acc + p.tokenIds.length, 0),
+      note: "Catalog tokens",
+      icon: <Coins className="h-4 w-4 text-amber-400" />,
+    },
+  ];
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* 1. Page Header */}
+    <div className="mx-auto w-full max-w-[1800px] space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+      {/* 1. Page header */}
       <PageHeader
         title={mode === "canonical" ? "Project Directory" : "Explore Projects"}
         description={
@@ -241,245 +272,195 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
         }
       />
 
-      {/* 2. D-04 Scope & Demo Notice Banner */}
-      <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5 backdrop-blur-md">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-muted-foreground">
-          <div className="flex items-start gap-2.5">
-            <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <span>
-              <strong className="text-foreground">Demonstration Data Notice:</strong> Project listings, verification tiers,
-              and ecosystem affiliations are simulated for demonstration. Per Architecture Decision{" "}
-              <strong className="text-foreground">D-04</strong>, Ethereum Sepolia Testnet (Chain ID: 11155111) is the only approved and supported EVM wallet network. Ecosystem metadata reflects protocol origins and does not imply wallet connectivity or transaction support for non-Sepolia networks.
-            </span>
-          </div>
-          <Badge variant="outline" className="border-primary/30 text-primary font-mono text-[11px] self-start sm:self-auto shrink-0">
-            D-04: Sepolia (11155111) Only
-          </Badge>
+      {/* 2. D-04 scope & demo notice */}
+      <div
+        role="note"
+        className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs leading-relaxed text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="flex items-start gap-2.5">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <span>
+            <strong className="text-foreground">Demonstration Data Notice:</strong> Project listings, verification
+            tiers, and ecosystem affiliations are simulated for demonstration. Per Architecture Decision{" "}
+            <strong className="text-foreground">D-04</strong>, Ethereum Sepolia Testnet (Chain ID: 11155111) is the only
+            approved and supported EVM wallet network. Ecosystem metadata reflects protocol origins and does not imply
+            wallet connectivity or transaction support for non-Sepolia networks.
+          </span>
         </div>
+        <Badge
+          variant="outline"
+          className="shrink-0 self-start border-primary/30 font-mono text-[11px] text-primary sm:self-auto"
+        >
+          D-04: Sepolia (11155111) Only
+        </Badge>
       </div>
 
-      {/* 3. Summary Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="rounded-2xl border border-border/60 bg-card/60 p-4 backdrop-blur-md">
-          <div className="flex items-center justify-between text-muted-foreground mb-1">
-            <span className="text-xs font-medium">Total Protocols</span>
-            <Briefcase className="h-4 w-4 text-primary" />
-          </div>
-          <div className="text-2xl font-bold text-foreground">{MOCK_PROJECTS.length}</div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Ecosystem projects</p>
-        </div>
-
-        <div className="rounded-2xl border border-border/60 bg-card/60 p-4 backdrop-blur-md">
-          <div className="flex items-center justify-between text-muted-foreground mb-1">
-            <span className="text-xs font-medium">Sepolia Ecosystem</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold text-foreground">
-            {MOCK_PROJECTS.filter((p) => p.ecosystem?.toLowerCase().includes("sepolia")).length}
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Active D-04 scope</p>
-        </div>
-
-        <div className="rounded-2xl border border-border/60 bg-card/60 p-4 backdrop-blur-md">
-          <div className="flex items-center justify-between text-muted-foreground mb-1">
-            <span className="text-xs font-medium">Security Audited</span>
-            <ShieldCheck className="h-4 w-4 text-cyan-400" />
-          </div>
-          <div className="text-2xl font-bold text-foreground">
-            {MOCK_PROJECTS.filter((p) => p.verificationStatus === "audit_available" || p.verificationStatus === "contract_source_verified").length}
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Audited or verified</p>
-        </div>
-
-        <div className="rounded-2xl border border-border/60 bg-card/60 p-4 backdrop-blur-md">
-          <div className="flex items-center justify-between text-muted-foreground mb-1">
-            <span className="text-xs font-medium">Linked Tokens</span>
-            <Coins className="h-4 w-4 text-amber-400" />
-          </div>
-          <div className="text-2xl font-bold text-foreground">
-            {MOCK_PROJECTS.reduce((acc, p) => acc + p.tokenIds.length, 0)}
-          </div>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Catalog tokens</p>
-        </div>
-      </div>
-
-      {/* 4. Controls Toolbar */}
-      <div className="rounded-2xl border border-border/60 bg-card/60 p-4 backdrop-blur-md space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
-          {/* Search Input (4 cols) */}
-          <div className="lg:col-span-4 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search by project name, description, or token ($PMIN)..."
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-9 pr-8 bg-secondary/30 border-border/70 text-xs text-foreground placeholder:text-muted-foreground/70"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => handleSearchChange("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                aria-label="Clear search"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+      {/* 3. Summary: one divided strip */}
+      <dl className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border/60 bg-card/50 backdrop-blur-md lg:grid-cols-4">
+        {stats.map((s, i) => (
+          <div
+            key={s.label}
+            className={cn(
+              "space-y-1 p-4 sm:p-5",
+              i % 2 === 1 && "border-l border-border/50",
+              i >= 2 && "border-t border-border/50 lg:border-t-0",
+              i > 0 && "lg:border-l lg:border-border/50"
             )}
+          >
+            <dt className="flex items-center justify-between gap-2 text-xs font-medium text-muted-foreground">
+              <span>{s.label}</span>
+              {s.icon}
+            </dt>
+            <dd className="font-mono text-2xl font-bold tracking-tight text-foreground">{s.value}</dd>
+            <p className="text-[11px] text-muted-foreground">{s.note}</p>
           </div>
+        ))}
+      </dl>
 
-          {/* Category Filter (2 cols) */}
-          <div className="lg:col-span-2">
-            <select
-              value={categoryFilter}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="w-full rounded-lg border border-border/70 bg-secondary/30 px-2.5 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
-              aria-label="Filter by category"
+      {/* 4. Filters: one flat panel, labelled controls */}
+      <section aria-label="Search and filters" className="space-y-4 rounded-2xl border border-border/60 bg-card/40 p-4 sm:p-5">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search by project name, description, or token ($PMIN)..."
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            aria-label="Search projects"
+            className="h-11 border-border/70 bg-secondary/30 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground/70"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => handleSearchChange("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              aria-label="Clear search"
             >
-              <option value="all">All Categories ({MOCK_PROJECTS.length})</option>
-              {uniqueCategories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Ecosystem Filter (2 cols) - D-04 Sepolia scope restriction */}
-          <div className="lg:col-span-2">
-            <select
-              value={ecosystemFilter}
-              onChange={(e) => handleEcosystemChange(e.target.value)}
-              className="w-full rounded-lg border border-border/70 bg-secondary/30 px-2.5 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
-              aria-label="Filter by ecosystem"
-            >
-              <option value="all">All Ecosystems ({MOCK_PROJECTS.length})</option>
-              <option value="sepolia">Ethereum Sepolia (11155111 — Active)</option>
-            </select>
-          </div>
-
-          {/* Status Filter (2 cols) */}
-          <div className="lg:col-span-2">
-            <select
-              value={statusFilter}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              className="w-full rounded-lg border border-border/70 bg-secondary/30 px-2.5 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
-              aria-label="Filter by status"
-            >
-              <option value="all">All Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="pending">Pending Only</option>
-            </select>
-          </div>
-
-          {/* View Mode & Reset (2 cols) */}
-          <div className="lg:col-span-2 flex items-center justify-end gap-2">
-            <div className="flex items-center rounded-lg border border-border/70 bg-secondary/30 p-0.5">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-md text-xs transition-colors ${
-                  viewMode === "grid"
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Grid View"
-                aria-label="Grid View"
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`p-1.5 rounded-md text-xs transition-colors ${
-                  viewMode === "table"
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Table View"
-                aria-label="Table View"
-              >
-                <List className="h-3.5 w-3.5" />
-              </button>
-            </div>
-
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleResetFilters}
-                className="h-8 px-2 text-xs text-muted-foreground hover:text-primary"
-                title="Reset all filters"
-              >
-                Reset
-              </Button>
-            )}
-          </div>
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
-        {/* Secondary controls row: Sorting & Verification filter */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/40 text-xs text-muted-foreground">
-          <div className="flex flex-wrap items-center gap-2">
-            <span>Filter Verification:</span>
-            <select
-              value={verificationFilter}
-              onChange={(e) => handleVerificationChange(e.target.value)}
-              className="rounded-lg border border-border/70 bg-secondary/30 px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
-              aria-label="Filter by verification"
-            >
-              <option value="all">All Verification Tiers</option>
-              <option value="audited">Security Audited</option>
-              <option value="source_verified">Source Code Verified</option>
-              <option value="reviewed">Protocol Reviewed</option>
-              <option value="not_reviewed">Not Reviewed</option>
-            </select>
-          </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <FilterSelect label="Category" ariaLabel="Filter by category" value={categoryFilter} onChange={handleCategoryChange}>
+            <option value="all">All Categories ({MOCK_PROJECTS.length})</option>
+            {uniqueCategories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </FilterSelect>
 
-          <div className="flex items-center gap-2">
-            <span>Sort by:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as ProjectSortOption)}
-              className="rounded-lg border border-border/70 bg-secondary/30 px-2 py-1 text-xs text-foreground focus:border-primary focus:outline-none"
-              aria-label="Sort projects"
-            >
-              <option value="name-asc">Name (A → Z)</option>
-              <option value="name-desc">Name (Z → A)</option>
-              <option value="date-desc">Newest First</option>
-              <option value="date-asc">Oldest First</option>
-              <option value="tokens-desc">Most Linked Tokens</option>
-            </select>
-          </div>
+          {/* D-04 scope restriction preserved */}
+          <FilterSelect label="Ecosystem" ariaLabel="Filter by ecosystem" value={ecosystemFilter} onChange={handleEcosystemChange}>
+            <option value="all">All Ecosystems ({MOCK_PROJECTS.length})</option>
+            <option value="sepolia">Ethereum Sepolia (11155111 — Active)</option>
+          </FilterSelect>
+
+          <FilterSelect label="Status" ariaLabel="Filter by status" value={statusFilter} onChange={handleStatusChange}>
+            <option value="all">All Statuses</option>
+            <option value="active">Active Only</option>
+            <option value="pending">Pending Only</option>
+          </FilterSelect>
+
+          <FilterSelect
+            label="Verification"
+            ariaLabel="Filter by verification"
+            value={verificationFilter}
+            onChange={handleVerificationChange}
+          >
+            <option value="all">All Verification Tiers</option>
+            <option value="audited">Security Audited</option>
+            <option value="source_verified">Source Code Verified</option>
+            <option value="reviewed">Protocol Reviewed</option>
+            <option value="not_reviewed">Not Reviewed</option>
+          </FilterSelect>
+
+          <FilterSelect
+            label="Sort by"
+            ariaLabel="Sort projects"
+            value={sortBy}
+            onChange={(v) => setSortBy(v as ProjectSortOption)}
+          >
+            <option value="name-asc">Name (A → Z)</option>
+            <option value="name-desc">Name (Z → A)</option>
+            <option value="date-desc">Newest First</option>
+            <option value="date-asc">Oldest First</option>
+            <option value="tokens-desc">Most Linked Tokens</option>
+          </FilterSelect>
         </div>
-      </div>
+      </section>
 
-      {/* 5. Results Counter */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-        <div>
+      {/* 5. Results bar: count, page size, view toggle, reset */}
+      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+        <div aria-live="polite">
           Showing <span className="font-semibold text-foreground">{totalItems === 0 ? 0 : startIndex + 1}</span> to{" "}
-          <span className="font-semibold text-foreground">
-            {Math.min(startIndex + pageSize, totalItems)}
-          </span>{" "}
-          of <span className="font-semibold text-foreground">{totalItems}</span> projects
+          <span className="font-semibold text-foreground">{Math.min(startIndex + pageSize, totalItems)}</span> of{" "}
+          <span className="font-semibold text-foreground">{totalItems}</span> projects
           {hasActiveFilters && " (filtered)"}
         </div>
 
-        <div className="flex items-center gap-2">
-          <span>Per page:</span>
-          {[6, 12, 24].map((size) => (
-            <button
-              key={size}
-              onClick={() => handlePageSizeChange(size)}
-              className={`px-2 py-0.5 rounded text-xs transition-colors ${
-                pageSize === size
-                  ? "bg-primary text-primary-foreground font-semibold"
-                  : "bg-secondary/40 text-muted-foreground hover:text-foreground"
-              }`}
+        <div className="flex flex-wrap items-center gap-3">
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleResetFilters}
+              className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-primary"
+              title="Reset all filters"
             >
-              {size}
+              <X className="h-3 w-3" /> Reset
+            </Button>
+          )}
+
+          <div className="flex items-center gap-1.5">
+            <span>Per page:</span>
+            {[6, 12, 24].map((size) => (
+              <button
+                key={size}
+                onClick={() => handlePageSizeChange(size)}
+                aria-pressed={pageSize === size}
+                className={cn(
+                  "rounded px-2 py-1 text-xs transition-colors",
+                  pageSize === size
+                    ? "bg-primary font-semibold text-primary-foreground"
+                    : "bg-secondary/40 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center rounded-lg border border-border/70 bg-secondary/30 p-0.5" role="group" aria-label="View mode">
+            <button
+              onClick={() => setViewMode("grid")}
+              aria-pressed={viewMode === "grid"}
+              className={cn(
+                "rounded-md p-1.5 text-xs transition-colors",
+                viewMode === "grid" ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+              title="Grid View"
+              aria-label="Grid View"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode("table")}
+              aria-pressed={viewMode === "table"}
+              className={cn(
+                "rounded-md p-1.5 text-xs transition-colors",
+                viewMode === "table" ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+              title="Table View"
+              aria-label="Table View"
+            >
+              <List className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 6. Main Presentation (Grid or Table) */}
+      {/* 6. Results */}
       {paginatedProjects.length === 0 ? (
         <EmptyState
           icon={<Briefcase className="h-10 w-10 text-muted-foreground/60" />}
@@ -498,159 +479,114 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
           }
         />
       ) : viewMode === "grid" ? (
-        /* GRID PRESENTATION */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {paginatedProjects.map((proj) => {
-            // Linked tokens lookup
-            const linkedTokens = proj.tokenIds
-              .map((id) => tokenMap.get(id))
-              .filter((t): t is Token => Boolean(t));
-
-            const isSepolia =
-              proj.ecosystem?.toLowerCase().includes("sepolia") ||
-              proj.ecosystem?.toLowerCase() === "ethereum";
-
+            const linkedTokens = linkedTokensOf(proj);
             return (
-              <div
+              <article
                 key={proj.id}
-                className="flex flex-col justify-between rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md hover:border-primary/50 transition-all shadow-sm hover:shadow-md"
+                className="group flex flex-col gap-4 rounded-2xl border border-border/60 bg-card/50 p-5 transition-all hover:border-primary/50 hover:shadow-md"
               >
-                <div className="space-y-4">
-                  {/* Card Header: Avatar, Name, Status */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-primary/20 to-amber-500/10 border border-primary/30 flex items-center justify-center font-bold text-foreground text-sm shrink-0">
-                        {getInitials(proj.name)}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="font-bold text-foreground text-base leading-tight">
-                            {proj.name}
-                          </h3>
-                          {proj.websiteUrl && (
-                            <a
-                              href={proj.websiteUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-muted-foreground hover:text-primary transition-colors"
-                              title="Official Website"
-                              aria-label={`Official website for ${proj.name}`}
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          )}
-                        </div>
-                        <p className="text-[11px] font-mono text-muted-foreground mt-0.5">
-                          Owner: {proj.ownerAddress}
-                        </p>
-                      </div>
-                    </div>
-                    <StatusBadge status={proj.status} />
-                  </div>
-
-                  {/* Description */}
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                    {proj.description || "No description provided."}
-                  </p>
-
-                  {/* Metadata Tags: Category, Ecosystem, Verification */}
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    {proj.category && (
-                      <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
-                        {proj.category}
-                      </Badge>
-                    )}
-
-                    {proj.ecosystem && (
-                      <Badge
-                        variant={isSepolia ? "default" : "secondary"}
-                        className={`text-[10px] ${
-                          isSepolia
-                            ? "bg-primary/20 text-primary hover:bg-primary/30 border border-primary/40"
-                            : "bg-secondary text-muted-foreground"
-                        }`}
-                        title={
-                          isSepolia
-                            ? "D-04 Approved Network (11155111)"
-                            : "Catalog Origin — Non-active network per D-04"
-                        }
-                      >
-                        {proj.ecosystem}
-                      </Badge>
-                    )}
-
-                    {proj.verificationStatus === "audit_available" && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-medium bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                        <ShieldCheck className="h-3 w-3" /> Audited
-                      </span>
-                    )}
-
-                    {proj.verificationStatus === "contract_source_verified" && (
-                      <span className="inline-flex items-center gap-1 text-[10px] text-cyan-400 font-medium bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 rounded-full">
-                        <ShieldCheck className="h-3 w-3" /> Verified Source
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Linked Tokens Section */}
-                  <div className="pt-3 border-t border-border/40 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Coins className="h-3.5 w-3.5 text-primary" /> Associated Tokens:
-                      </span>
-                      <span className="font-mono text-[10px]">
-                        {linkedTokens.length} {linkedTokens.length === 1 ? "token" : "tokens"}
-                      </span>
-                    </div>
-
-                    {linkedTokens.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {linkedTokens.map((t) => (
-                          <Link
-                            key={t.id}
-                            href={`/tokens/${t.id}`}
-                            className="inline-flex items-center gap-1 rounded bg-secondary/70 hover:bg-primary/20 hover:border-primary/40 border border-border/60 px-2 py-0.5 font-mono text-[10px] text-foreground transition-colors"
-                            title={`Inspect ${t.name} ($${t.symbol})`}
+                {/* Identity + status */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar name={proj.name} className="h-11 w-11 rounded-xl text-sm" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="truncate text-base font-bold leading-tight text-foreground">{proj.name}</h3>
+                        {proj.websiteUrl && (
+                          <a
+                            href={proj.websiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 text-muted-foreground transition-colors hover:text-primary"
+                            title="Official Website"
+                            aria-label={`Official website for ${proj.name}`}
                           >
-                            <span>${t.symbol}</span>
-                            <span className="text-[9px] text-muted-foreground">({t.name})</span>
-                          </Link>
-                        ))}
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
                       </div>
-                    ) : (
-                      <div className="text-[11px] text-muted-foreground/70 italic">
-                        No tokens currently associated
-                      </div>
-                    )}
+                      <p className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">
+                        Owner: {proj.ownerAddress}
+                      </p>
+                    </div>
                   </div>
+                  <StatusBadge status={proj.status} />
                 </div>
 
-                {/* Card Footer */}
-                <div className="mt-5 pt-3 border-t border-border/40 flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                  {proj.description || "No description provided."}
+                </p>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {proj.category && (
+                    <Badge variant="outline" className="border-primary/30 text-[10px] text-primary">
+                      {proj.category}
+                    </Badge>
+                  )}
+                  {proj.ecosystem && <EcosystemBadge proj={proj} isSepolia={isSepoliaProject(proj)} />}
+                  <VerificationPill status={proj.verificationStatus} />
+                </div>
+
+                {/* Linked tokens */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Coins className="h-3.5 w-3.5 text-primary" /> Associated Tokens:
+                    </span>
+                    <span className="font-mono text-[10px]">
+                      {linkedTokens.length} {linkedTokens.length === 1 ? "token" : "tokens"}
+                    </span>
+                  </div>
+                  {linkedTokens.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {linkedTokens.map((t) => (
+                        <Link
+                          key={t.id}
+                          href={`/tokens/${t.id}`}
+                          className="inline-flex items-center gap-1 rounded border border-border/60 bg-secondary/70 px-2 py-0.5 font-mono text-[10px] text-foreground transition-colors hover:border-primary/40 hover:bg-primary/20"
+                          title={`Inspect ${t.name} ($${t.symbol})`}
+                        >
+                          <span>${t.symbol}</span>
+                          <span className="text-[9px] text-muted-foreground">({t.name})</span>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-[11px] italic text-muted-foreground/70">No tokens currently associated</div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/40 pt-3">
+                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                     <Calendar className="h-3 w-3" /> {proj.createdAt}
                   </span>
-                  <Button asChild size="sm" variant="outline" className="h-7 text-xs border-border/60 hover:border-primary">
+                  <Button asChild size="sm" variant="outline" className="h-8 border-border/60 text-xs hover:border-primary">
                     <Link href={`/projects/${proj.id}`}>Project Overview →</Link>
                   </Button>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
       ) : (
-        /* TABLE PRESENTATION */
-        <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/50">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-foreground">
-              <thead className="bg-secondary/40 text-muted-foreground border-b border-border/60 uppercase tracking-wider font-semibold text-[10px]">
+            <table className="w-full min-w-[860px] text-left text-xs text-foreground">
+              <caption className="sr-only">Project directory</caption>
+              <thead className="border-b border-border/60 bg-secondary/40 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th
                     scope="col"
-                    className="py-3.5 px-4 cursor-pointer hover:text-foreground"
-                    onClick={() => handleSortClick("name")}
+                    aria-sort={sortBy === "name-asc" ? "ascending" : sortBy === "name-desc" ? "descending" : "none"}
+                    className="px-4 py-3.5"
                   >
-                    <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleSortClick("name")}
+                      className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground"
+                    >
                       <span>Project</span>
                       {sortBy === "name-asc" ? (
                         <ChevronUp className="h-3.5 w-3.5 text-primary" />
@@ -659,37 +595,43 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                       ) : (
                         <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
                       )}
-                    </div>
+                    </button>
                   </th>
-                  <th scope="col" className="py-3.5 px-4">
+                  <th scope="col" className="px-4 py-3.5">
                     Category
                   </th>
-                  <th scope="col" className="py-3.5 px-4">
+                  <th scope="col" className="px-4 py-3.5">
                     Ecosystem
                   </th>
-                  <th scope="col" className="py-3.5 px-4">
+                  <th scope="col" className="px-4 py-3.5">
                     Status & Verification
                   </th>
                   <th
                     scope="col"
-                    className="py-3.5 px-4 cursor-pointer hover:text-foreground"
-                    onClick={() => handleSortClick("tokens")}
+                    aria-sort={sortBy === "tokens-desc" ? "descending" : "none"}
+                    className="px-4 py-3.5"
                   >
-                    <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleSortClick("tokens")}
+                      className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground"
+                    >
                       <span>Linked Tokens</span>
                       {sortBy === "tokens-desc" ? (
                         <ChevronDown className="h-3.5 w-3.5 text-primary" />
                       ) : (
                         <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
                       )}
-                    </div>
+                    </button>
                   </th>
                   <th
                     scope="col"
-                    className="py-3.5 px-4 cursor-pointer hover:text-foreground"
-                    onClick={() => handleSortClick("date")}
+                    aria-sort={sortBy === "date-desc" ? "descending" : sortBy === "date-asc" ? "ascending" : "none"}
+                    className="px-4 py-3.5"
                   >
-                    <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleSortClick("date")}
+                      className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground"
+                    >
                       <span>Created</span>
                       {sortBy === "date-desc" ? (
                         <ChevronDown className="h-3.5 w-3.5 text-primary" />
@@ -698,35 +640,23 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                       ) : (
                         <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
                       )}
-                    </div>
+                    </button>
                   </th>
-                  <th scope="col" className="py-3.5 px-4 text-right">
+                  <th scope="col" className="px-4 py-3.5 text-right">
                     Action
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
                 {paginatedProjects.map((proj) => {
-                  const linkedTokens = proj.tokenIds
-                    .map((id) => tokenMap.get(id))
-                    .filter((t): t is Token => Boolean(t));
-
-                  const isSepolia =
-                    proj.ecosystem?.toLowerCase().includes("sepolia") ||
-                    proj.ecosystem?.toLowerCase() === "ethereum";
-
+                  const linkedTokens = linkedTokensOf(proj);
                   return (
-                    <tr
-                      key={proj.id}
-                      className="hover:bg-secondary/20 transition-colors group"
-                    >
-                      <td className="py-3.5 px-4">
+                    <tr key={proj.id} className="group transition-colors hover:bg-secondary/20">
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-primary/20 to-amber-500/10 border border-primary/30 flex items-center justify-center font-bold text-foreground text-xs shrink-0">
-                            {getInitials(proj.name)}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5 font-bold text-foreground group-hover:text-primary transition-colors">
+                          <Avatar name={proj.name} className="h-9 w-9 rounded-lg text-xs" />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 font-bold text-foreground transition-colors group-hover:text-primary">
                               <Link href={`/projects/${proj.id}`}>{proj.name}</Link>
                               {proj.websiteUrl && (
                                 <a
@@ -735,21 +665,20 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                                   rel="noopener noreferrer"
                                   className="text-muted-foreground hover:text-primary"
                                   title="Official Website"
+                                  aria-label={`Official website for ${proj.name}`}
                                 >
                                   <ExternalLink className="h-3 w-3" />
                                 </a>
                               )}
                             </div>
-                            <span className="text-[10px] font-mono text-muted-foreground">
-                              {proj.ownerAddress}
-                            </span>
+                            <span className="font-mono text-[10px] text-muted-foreground">{proj.ownerAddress}</span>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4">
+                      <td className="px-4 py-3.5">
                         {proj.category ? (
-                          <Badge variant="outline" className="text-[10px] border-primary/30 text-primary">
+                          <Badge variant="outline" className="border-primary/30 text-[10px] text-primary">
                             {proj.category}
                           </Badge>
                         ) : (
@@ -757,29 +686,11 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                         )}
                       </td>
 
-                      <td className="py-3.5 px-4">
-                        {proj.ecosystem ? (
-                          <Badge
-                            variant={isSepolia ? "default" : "secondary"}
-                            className={`text-[10px] ${
-                              isSepolia
-                                ? "bg-primary/20 text-primary border border-primary/40"
-                                : "bg-secondary text-muted-foreground"
-                            }`}
-                            title={
-                              isSepolia
-                                ? "D-04 Approved Network (11155111)"
-                                : "Catalog Origin — Non-active network per D-04"
-                            }
-                          >
-                            {proj.ecosystem}
-                          </Badge>
-                        ) : (
-                          "—"
-                        )}
+                      <td className="px-4 py-3.5">
+                        {proj.ecosystem ? <EcosystemBadge proj={proj} isSepolia={isSepoliaProject(proj)} /> : "—"}
                       </td>
 
-                      <td className="py-3.5 px-4">
+                      <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2">
                           <StatusBadge status={proj.status} />
                           {proj.verificationStatus === "audit_available" && (
@@ -795,30 +706,30 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                         </div>
                       </td>
 
-                      <td className="py-3.5 px-4">
+                      <td className="px-4 py-3.5">
                         {linkedTokens.length > 0 ? (
                           <div className="flex flex-wrap gap-1">
                             {linkedTokens.map((t) => (
                               <Link
                                 key={t.id}
                                 href={`/tokens/${t.id}`}
-                                className="inline-block rounded bg-secondary/70 hover:bg-primary/20 hover:border-primary/40 border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-foreground transition-colors"
+                                className="inline-block rounded border border-border/60 bg-secondary/70 px-1.5 py-0.5 font-mono text-[10px] text-foreground transition-colors hover:border-primary/40 hover:bg-primary/20"
                               >
                                 ${t.symbol}
                               </Link>
                             ))}
                           </div>
                         ) : (
-                          <span className="text-[10px] text-muted-foreground/70 italic">None</span>
+                          <span className="text-[10px] italic text-muted-foreground/70">None</span>
                         )}
                       </td>
 
-                      <td className="py-3.5 px-4 text-muted-foreground font-mono text-[11px]">
+                      <td className="whitespace-nowrap px-4 py-3.5 font-mono text-[11px] text-muted-foreground">
                         {proj.createdAt}
                       </td>
 
-                      <td className="py-3.5 px-4 text-right">
-                        <Button asChild size="sm" variant="outline" className="h-7 text-xs border-border/60 hover:border-primary">
+                      <td className="px-4 py-3.5 text-right">
+                        <Button asChild size="sm" variant="outline" className="h-8 border-border/60 text-xs hover:border-primary">
                           <Link href={`/projects/${proj.id}`}>Inspect</Link>
                         </Button>
                       </td>
@@ -831,15 +742,15 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
         </div>
       )}
 
-      {/* 7. Pagination Controls */}
+      {/* 7. Pagination */}
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+        <nav aria-label="Pagination" className="flex flex-col items-center justify-between gap-4 pt-2 sm:flex-row">
           <div className="text-xs text-muted-foreground">
             Page <span className="font-semibold text-foreground">{effectivePage}</span> of{" "}
             <span className="font-semibold text-foreground">{totalPages}</span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
             <Button
               variant="outline"
               size="sm"
@@ -848,7 +759,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
               className="h-8 px-2 text-xs border-border/60"
               aria-label="Previous page"
             >
-              <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Prev
+              <ChevronLeft className="mr-1 h-3.5 w-3.5" /> Prev
             </Button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
@@ -857,11 +768,14 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                 variant={effectivePage === num ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCurrentPage(num)}
-                className={`h-8 w-8 text-xs p-0 ${
+                aria-label={`Page ${num}`}
+                aria-current={effectivePage === num ? "page" : undefined}
+                className={cn(
+                  "h-8 w-8 p-0 text-xs",
                   effectivePage === num
-                    ? "bg-primary text-primary-foreground font-semibold"
+                    ? "bg-primary font-semibold text-primary-foreground"
                     : "border-border/60 text-muted-foreground"
-                }`}
+                )}
               >
                 {num}
               </Button>
@@ -875,11 +789,94 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
               className="h-8 px-2 text-xs border-border/60"
               aria-label="Next page"
             >
-              Next <ChevronRight className="h-3.5 w-3.5 ml-1" />
+              Next <ChevronRight className="ml-1 h-3.5 w-3.5" />
             </Button>
           </div>
-        </div>
+        </nav>
       )}
     </div>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Local presentational helpers (no state, no data)                    */
+/* ------------------------------------------------------------------ */
+
+function FilterSelect({
+  label,
+  ariaLabel,
+  value,
+  onChange,
+  children,
+}: {
+  label: string;
+  ariaLabel: string;
+  value: string;
+  onChange: (value: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1.5">
+      <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={ariaLabel}
+        className="h-10 w-full min-w-0 rounded-lg border border-border/70 bg-secondary/30 px-3 text-xs text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+      >
+        {children}
+      </select>
+    </label>
+  );
+}
+
+function Avatar({ name, className }: { name: string; className?: string }) {
+  const parts = name.split(" ").filter(Boolean);
+  const initials = parts.length >= 2 ? `${parts[0][0]}${parts[1][0]}`.toUpperCase() : name.slice(0, 2).toUpperCase();
+  return (
+    <div
+      aria-hidden="true"
+      className={cn(
+        "flex shrink-0 items-center justify-center border border-primary/30 bg-gradient-to-br from-primary/20 to-amber-500/10 font-bold text-foreground",
+        className
+      )}
+    >
+      {initials}
+    </div>
+  );
+}
+
+function EcosystemBadge({ proj, isSepolia }: { proj: Project; isSepolia: boolean }) {
+  return (
+    <Badge
+      variant={isSepolia ? "default" : "secondary"}
+      className={cn(
+        "text-[10px]",
+        isSepolia
+          ? "border border-primary/40 bg-primary/20 text-primary hover:bg-primary/30"
+          : "bg-secondary text-muted-foreground"
+      )}
+      title={isSepolia ? "D-04 Approved Network (11155111)" : "Catalog Origin — Non-active network per D-04"}
+    >
+      {proj.ecosystem}
+    </Badge>
+  );
+}
+
+function VerificationPill({ status }: { status?: Project["verificationStatus"] }) {
+  if (status === "audit_available") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+        <ShieldCheck className="h-3 w-3" /> Audited
+      </span>
+    );
+  }
+  if (status === "contract_source_verified") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-medium text-cyan-400">
+        <ShieldCheck className="h-3 w-3" /> Verified Source
+      </span>
+    );
+  }
+  return null;
 }
