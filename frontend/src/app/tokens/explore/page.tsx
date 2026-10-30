@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
+import React from "react";
+import { TokenExplorer } from "@/components/tokens/token-explorer";
 
-export default function TokensExploreRedirect() {
-  redirect("/explore/tokens");
+export default function CanonicalTokenExplorerPage() {
+  return <TokenExplorer mode="canonical" />;
 }

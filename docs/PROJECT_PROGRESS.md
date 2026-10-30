@@ -4,9 +4,9 @@
 
 - Baseline version: 1.0
 - Architecture decisions: 1.1
-- Current phase: 1 & 2 Foundation & Discovery
-- Current module: Global Theme Update & Horizon X Halftone Footer Integration
-- Overall status: COMPLETE
+- Current phase: 2 — Explore & Discovery
+- Current module: Milestone 2-B (Token Explorer)
+- Overall status: COMPLETE (Awaiting review before starting Milestone 2-C)
 - Last updated: 2026-10-30
 
 ## Completed in this task
@@ -77,6 +77,19 @@
    - Integrated creator action callout banner with `useWallet` and `useModal` hooks for "Deploy Token" and "Connect Wallet".
    - Integrated explicit Phase 1 demonstration alert banner complying with BUG-M2.
    - Preserved existing wallet and web3 integration; strictly adhered to scope boundaries without modifying sub-listing pages.
+
+7. **Milestone 2-B Token Explorer**:
+   - Built a shared, reusable `TokenExplorer` component (`src/components/tokens/token-explorer.tsx`) powering both `/tokens/explore` (canonical listing) and `/explore/tokens` (discovery entry) with 0 duplicate logic.
+   - Implemented a desktop table layout with token identity (avatar initials, name, symbol), category pill, network badge (with special Ethereum Sepolia D-04 highlight), simulated price, 24h percentage change (with trend icons and colors), 24h volume, market cap, lifecycle/audit status badges, and direct detail links.
+   - Implemented responsive mobile/tablet card presentation with clean touch targets and clear data hierarchy.
+   - Implemented client-side instant search for token names and symbols with clear button (`X`) and empty state trigger.
+   - Implemented multi-criteria filters: Network (`All Networks`, `Ethereum Sepolia (D-04 Scope)`, `Arbitrum One`, `Base`, `Polygon`), Category (`Governance`, `AI & Compute`, `DeFi`, `DePIN`, `Infrastructure`, `Security & Privacy`, `Meme & Community`), and Status (`active`, `pending`).
+   - Implemented full sorting across all 5 dimensions (`name`, `price`, `marketCap`, `priceChange24h`, `volume24h`) with interactive table header click-to-sort and sort direction indicators (`asc` / `desc`).
+   - Implemented configurable pagination (`5`, `10`, `20` per page), previous/next controls, page number pills, total result counts, and automatic page 1 reset on filter/search changes.
+   - Implemented component-level `EmptyState` fallback with a 1-click "Clear All Filters" action.
+   - Upgraded `MOCK_TOKENS` schema in `src/types/index.ts` and `src/lib/mock-data.ts` with typed categories and 5 corresponding ecosystem tokens (`quantum`, `nexus`, `zkpv`, `ccat`, `mdao`).
+   - Embedded explicit demonstration data disclaimers: "Demonstration Data Notice: Token pricing, 24h percentage changes, market caps, and audit badges are simulated for demonstration. Per Architecture Decision D-04, Ethereum Sepolia Testnet (11155111) is the currently active EVM scope."
+   - Created automated unit test suite `src/tests/token-explorer.test.ts` verifying data integrity, search, filtering, sorting, and pagination logic.
 
 ## Files created or modified
 
@@ -166,13 +179,15 @@
 - `frontend/src/lib/mock-data.ts`
 - `frontend/src/lib/utils.ts`
 - `frontend/src/types/index.ts`
+- `frontend/src/components/tokens/token-explorer.tsx`
+- `frontend/src/tests/token-explorer.test.ts`
 
 ## Tests and verification
 
-- Build: **PASSED** (`npm run build` completed successfully, 76/76 static routes prerendered with 0 errors)
+- Build: **PASSED** (`npm run build` completed successfully, 86/86 static routes prerendered with 0 errors)
 - Type-check: **PASSED** (TypeScript 5.x passed with 0 errors)
-- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors)
-- Automated tests: **PASSED** (`npm test` — 16/16 wallet state and network handling tests passed)
+- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 83 warnings)
+- Automated tests: **PASSED** (`npm test` — both `wallet-state.test.ts` (16/16) and `token-explorer.test.ts` passed 100%)
 - Local HTTP check: **PASSED** (`HTTP/1.1 200 OK` on `http://localhost:3000`)
 - Theme verification: **PASSED** (Warm black `#0C0C0B`, warm off-white `#E9E4DA`, signature orange `#E9762B`, high-contrast button text verified)
 - Halftone footer verification: **PASSED** (Giant dotted `Horizon X` wordmark, 2D canvas particle physics, pointer displacement, click shockwave ripple animation, print grain overlay, 3 navigation columns, brand info, and smooth back-to-top scroll verified)
@@ -181,7 +196,7 @@
 ## Known issues
 
 - **KI-001 (Severity: INFO):** Real EVM Web3 wallet integration and native balance retrieval is live on Ethereum Sepolia Testnet. Smart contract actions and external market feeds remain mock-adapted for this phase. (Accepted for Phase 1.)
-- **KI-002 (Severity: LOW):** 85 unused variable/import warnings reported by ESLint across page and wizard files (reduced from 86; `frontend/src/app/explore/page.tsx` has 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
+- **KI-002 (Severity: LOW):** 83 unused variable/import warnings reported by ESLint across page and wizard files (Token Explorer files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
 - **KI-003 (Severity: INFO):** Next.js 16 Turbopack logs a prefetch warning when accessing dynamic `await params` outside of `<Suspense>` during instant navigation. Static page generation succeeds with 0 errors; planned resolution is wrapping dynamic route parameter access inside `<Suspense>` during future refactoring.
 - **KI-004 (Severity: INFO):** 8 owner-management sub-routes from `MODULE_INVENTORY.md` (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, etc.) are currently accessible via tabbed views within parent detail pages rather than isolated sub-route URLs. Planned resolution is dedicated sub-route partitioning during Phase 3–8 module milestones.
 
@@ -194,7 +209,7 @@
 
 ## Next exact task
 
-Milestone 2-B: Token Explorer (`/explore/tokens` cross-module explorer and `/tokens/explore` canonical listing with sorting, pagination, search, and deep-link integration). Awaiting product owner review of Milestone 2-A before proceeding.
+Milestone 2-C: Project Directory (`/explore/projects` cross-module discovery and `/projects` directory with protocol filtering, linked token badges, and project detail linking). Awaiting product owner review of Milestone 2-B before proceeding.
 
 ## Baseline compliance
 

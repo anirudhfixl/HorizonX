@@ -34,7 +34,7 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 | Route | View | Auth | Phase | Status |
 |---|---|---|---|---|
 | `/explore` | Discovery Hub landing | Public | 2 | COMPLETE |
-| `/explore/tokens` | Token explorer (cross-module) | Public | 2 | SHELL |
+| `/explore/tokens` | Token explorer (cross-module) | Public | 2 | COMPLETE |
 | `/explore/projects` | Project directory | Public | 2 | SHELL |
 | `/explore/presales` | Presales discovery | Public | 2 | SHELL |
 | `/explore/launches` | Fair launches discovery | Public | 2 | SHELL |
@@ -50,7 +50,7 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 | Route | View | Auth | Phase | Status |
 |---|---|---|---|---|
 | `/tokens` | Token dashboard | Public | 3 | SHELL |
-| `/tokens/explore` | Token explorer (canonical listing) | Public | 3 | SHELL |
+| `/tokens/explore` | Token explorer (canonical listing) | Public | 3 | COMPLETE |
 | `/tokens/my` | My Tokens | Wallet-gated | 3 | SHELL |
 | `/tokens/create` | Create Token wizard | Wallet-gated | 3 | SHELL |
 | `/tokens/[id]` | Token detail | Public | 3 | SHELL |
