@@ -55,6 +55,7 @@ export interface Token {
   verificationStatus?: VerificationStatus;
   createdAt: string;
   updatedAt: string;
+  features?: string[];
 }
 
 export interface TokenMarketData {

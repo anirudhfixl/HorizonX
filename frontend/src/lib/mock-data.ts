@@ -23,6 +23,8 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
     status: "active",
     verificationStatus: "audit_available",
     projectId: "prominers-dao",
+    creatorAddress: "0x71C9561E873f324A3B4323E56d3935a8286C4e39",
+    features: ["Burnable (Illustrative)", "Permit (Illustrative)"],
     createdAt: "2026-10-01",
     updatedAt: "2026-10-30",
     market: {
@@ -49,6 +51,8 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
     status: "active",
     verificationStatus: "project_reviewed",
     projectId: "aurora-labs",
+    creatorAddress: "0x34291849a0293847291038472910482910293847",
+    features: ["Mintable (Illustrative)"],
     createdAt: "2026-10-15",
     updatedAt: "2026-10-30",
     market: {
@@ -75,6 +79,8 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
     status: "active",
     verificationStatus: "contract_source_verified",
     projectId: "hyper-liquidity-labs",
+    creatorAddress: "0x5829304918293847291048291029482019482910",
+    features: ["Burnable (Illustrative)"],
     createdAt: "2026-10-20",
     updatedAt: "2026-10-30",
     market: {
@@ -101,6 +107,8 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
     status: "active",
     verificationStatus: "audit_available",
     projectId: "solargrid-network",
+    creatorAddress: "0x9182049182938472910482910294820194829102",
+    features: ["Standard ERC-20"],
     createdAt: "2026-09-10",
     updatedAt: "2026-10-30",
     market: {
@@ -127,6 +135,8 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
     status: "active",
     verificationStatus: "audit_available",
     projectId: "quantum-net",
+    creatorAddress: "0x7492a91038472910293847291048291029384712",
+    features: ["Burnable (Illustrative)", "Permit (Illustrative)"],
     createdAt: "2026-10-22",
     updatedAt: "2026-10-30",
     market: {
@@ -153,6 +163,8 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
     status: "pending",
     verificationStatus: "project_reviewed",
     projectId: "nexus-defi",
+    creatorAddress: "0x1294829104829102948201948291029482019482",
+    features: ["Pausable (Illustrative)"],
     createdAt: "2026-10-25",
     updatedAt: "2026-10-30",
     market: {
@@ -179,6 +191,8 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
     status: "active",
     verificationStatus: "audit_available",
     projectId: "zk-privacy-labs",
+    creatorAddress: "0x4810293847291048291029384729104829102938",
+    features: ["Permit (Illustrative)"],
     createdAt: "2026-10-05",
     updatedAt: "2026-10-30",
     market: {
@@ -205,6 +219,8 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
     status: "active",
     verificationStatus: "contract_source_verified",
     projectId: "cybercat-dao",
+    creatorAddress: "0x8291048291029482019482910294820194829104",
+    features: ["Burnable (Illustrative)"],
     createdAt: "2026-10-27",
     updatedAt: "2026-10-30",
     market: {
@@ -231,6 +247,8 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
     status: "pending",
     verificationStatus: "not_reviewed",
     projectId: "matrix-governance",
+    creatorAddress: "0x3918492019482910482910294820194829102938",
+    features: ["Standard ERC-20"],
     createdAt: "2026-10-29",
     updatedAt: "2026-10-30",
     market: {

@@ -341,6 +341,18 @@ export function TokenCreationWizard() {
               };
 
               setReceipt(newReceipt);
+              if (typeof window !== "undefined") {
+                try {
+                  const stored = JSON.parse(sessionStorage.getItem("prominers_session_tokens") || "[]");
+                  const updated = [
+                    newReceipt,
+                    ...stored.filter((s: { contractAddress: string }) => s.contractAddress !== newReceipt.contractAddress),
+                  ];
+                  sessionStorage.setItem("prominers_session_tokens", JSON.stringify(updated));
+                } catch {
+                  // ignore
+                }
+              }
               setSimulationStage("completed");
               toast.success("Simulation Complete", {
                 description: `Simulated deployment receipt generated for ${newReceipt.name} ($${newReceipt.symbol}).`,
