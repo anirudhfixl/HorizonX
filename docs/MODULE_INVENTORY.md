@@ -52,7 +52,7 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 | `/tokens` | Token dashboard | Public | 3 | COMPLETE |
 | `/tokens/explore` | Token explorer (canonical listing) | Public | 3 | COMPLETE |
 | `/tokens/my` | My Tokens | Wallet-gated | 3 | SHELL |
-| `/tokens/create` | Create Token wizard | Wallet-gated | 3 | SHELL |
+| `/tokens/create` | Create Token wizard & deployment simulation | Wallet-gated | 3 | COMPLETE |
 | `/tokens/[id]` | Token detail hub | Public | 3 | COMPLETE |
 | `/tokens/[id]/contract` | Contract & source tab (integrated in hub) | Public | 3 | COMPLETE |
 | `/tokens/[id]/activity` | Token activity & holders tab (integrated in hub) | Public | 3 | COMPLETE |

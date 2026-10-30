@@ -5,8 +5,8 @@
 - Baseline version: 1.0
 - Architecture decisions: 1.1
 - Current phase: 3 — Tokens Management & Token Lifecycle
-- Current module: Milestone 3-C (Enhanced Token Detail, Contract & Activity Hub)
-- Overall status: COMPLETE — AWAITING PRODUCT OWNER APPROVAL TO PROCEED TO PHASE 3-D
+- Current module: Milestone 3-D (Token Creation Wizard & Deployment Simulation)
+- Overall status: COMPLETE — AWAITING PRODUCT OWNER APPROVAL TO PROCEED TO PHASE 3-E
 - Last updated: 2026-10-30
 
 ## Completed in this task
@@ -396,6 +396,40 @@
     - Total test suites in `npm test` expanded to 9, passing 100%.
     - Zero errors and warnings in all Phase 3-C files; legacy ESLint warnings reduced from 49 to 43.
 
+17. **Milestone 3-D: Token Creation Wizard & Deployment Simulation (`/tokens/create`)**:
+    - Transformed `/tokens/create` into a complete, modular, UI-driven 4-step wizard and 6-stage deployment simulator strictly scoped to Ethereum Sepolia (`11155111`) per Architecture Decision D-04:
+      - **WebGL2 Space Shader Hero (`TokenShaderHero`)**:
+        - Modularized animated WebGL2 fragment shader (`frontend/src/components/tokens/token-shader-hero.tsx`) with cosmic orange/amber space-orbit aesthetic.
+        - Resolved navbar collision and vertical spacing: `-mt-24 sm:-mt-28` container with `pt-24 sm:pt-32` padding guarantees the floating capsule navbar sits gracefully above hero content without text obstruction.
+        - Added interactive smooth scrolling CTA buttons targeting `#create-token-wizard` and `#token-wizard-steps`.
+      - **4-Step Creation Wizard (`TokenCreationWizard`)**:
+        - Step 1: Token Identity & Category (Token name, uppercase ticker symbol 2–8 chars, canonical category selection from 7 options, project association from `MOCK_PROJECTS`, optional description).
+        - Step 2: Supply & Network Configuration (Total supply with integer formatting, decimal configuration 6/9/18, network locked to Ethereum Sepolia `11155111` under D-04, gas estimation assumptions explicitly labeled illustrative cost assumptions).
+        - Step 3: Extensions & Live Preview (Proposed / illustrative configuration options for Burnable, Mintable, Pausable, and Permit; explicit architectural disclaimer callouts noting pending decisions D-05 and D-06; live code preview slide-out drawer with copy code button).
+        - Step 4: Review & Simulation Launch (Comprehensive review summary card, network verification badge, wallet connection status check, and simulation launch action).
+      - **Precision Base-Units & Decimals Mathematics**:
+        - Implemented `calculateBaseUnits()` using `BigInt` constructor math (`rawSupply * (BigInt(10) ** dec)`), handling 6, 9, and 18 decimals accurately without JavaScript IEEE-754 precision loss.
+        - Enforced strict bounds: rejects zero, negative, or formatted values exceeding safe upper bound (10 quadrillion tokens).
+      - **Illustrative OpenZeppelin v5.0.1 Source Generation (`generateIllustrativeContractSource`)**:
+        - Generates syntactically correct Solidity 0.8.24 source code based on OpenZeppelin Contracts v5.0.1.
+        - Accurately implements OpenZeppelin v5 extension requirements: overrides `_update(address from, address to, uint256 value)` for `ERC20Pausable` invoking `super._update(from, to, value)`.
+        - Generates `decimals()` override when decimals !== 18.
+        - Explicitly labels source code as an illustrative preview template with pending D-05/D-06 disclaimers; does NOT claim verified bytecode, immutable mandates, or successful compilation.
+      - **Strict 6-Stage Deployment Simulator**:
+        - Pure UI-driven simulation state machine: `idle` → `validating` → `generating` → `preparing` → `submitting` → `confirming` → `completed`.
+        - Accurately named stages: simulated validation, source generation, authorization preparation, transaction submission simulation, confirmation simulation, and receipt generation.
+        - Zero actual blockchain interaction: no real wallet signatures, no RPC deployments, no transaction broadcasting.
+        - Deterministic EVM hex address generator (`0x...`, 42 characters) and transaction hash generator (`0x...`, 66 characters).
+        - Simulated deployment receipt displays contract address, tx hash, simulated block number, ISO timestamp, and illustrative feature tags.
+      - **Connected vs. Disconnected Wallet Handling**:
+        - Detects real connected wallet via `useWallet()` and displays formatted address.
+        - When disconnected, prompts "Connect Wallet" modal trigger and falls back to an explicitly labeled simulated demo identity (`0x71C9...4E39 (Simulated Demo Identity)`).
+      - **Automated Tests & Quality Verification**:
+        - Created `frontend/src/tests/token-create.test.ts` (9 test suites covering base-units math, validation, OZ v5 source generation, architectural disclaimers, network restrictions, deterministic identifiers, simulation states, receipt schema, and wallet handling).
+        - Expanded `npm test` script to 10 automated test suites (all 10 passing 100%).
+        - Clean ESLint status: 0 errors across entire workspace.
+        - Clean Next.js production build: 116 static routes prerendered with 0 TypeScript errors.
+
 ## Files created or modified
 
 - `docs/PROJECT_PROGRESS.md`
@@ -420,7 +454,12 @@
 - `frontend/src/app/tokens/page.tsx`
 - `frontend/src/app/tokens/explore/page.tsx`
 - `frontend/src/app/tokens/create/page.tsx`
+- `frontend/src/components/tokens/token-shader-hero.tsx`
+- `frontend/src/components/tokens/token-creation-wizard.tsx`
+- `frontend/src/tests/token-create.test.ts`
 - `frontend/src/app/tokens/[id]/page.tsx`
+- `frontend/src/components/tokens/token-detail-hub.tsx`
+- `frontend/src/tests/token-detail.test.ts`
 - `frontend/src/app/projects/page.tsx`
 - `frontend/src/app/projects/[id]/page.tsx`
 - `frontend/src/app/launchpad/page.tsx`
@@ -467,39 +506,39 @@
 - `docs/PHASE_3A_AUDIT.md`
 - `frontend/src/app/tokens/page.tsx`
 - `frontend/src/tests/tokens-dashboard.test.ts`
-- `frontend/src/app/tokens/[id]/page.tsx`
-- `frontend/src/components/tokens/token-detail-hub.tsx`
-- `frontend/src/tests/token-detail.test.ts`
 
 ## Tests and verification
 
 - Build: **PASSED** (`npm run build` completed successfully, 116/116 static routes prerendered with 0 errors)
-- Type-check: **PASSED** (TypeScript 5.x passed with 0 errors in 15.7s)
-- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 43 warnings across legacy files; 0 errors/warnings in Phase 3-C Token Detail Hub files)
-- Automated tests: **PASSED** (`npm test` — all nine test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, `fair-launch-directory.test.ts`, `airdrop-directory.test.ts`, `staking-pool-directory.test.ts` (45/45), `tokens-dashboard.test.ts` (6/6), and `token-detail.test.ts` (8/8) passed 100%)
+- Type-check: **PASSED** (TypeScript 5.x passed with 0 errors in 8.6s)
+- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 41 warnings across legacy files; 0 errors/warnings in Phase 3-D Token Creation files)
+- Automated tests: **PASSED** (`npm test` — all ten test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, `fair-launch-directory.test.ts`, `airdrop-directory.test.ts`, `staking-pool-directory.test.ts` (45/45), `tokens-dashboard.test.ts` (6/6), `token-detail.test.ts` (8/8), and `token-create.test.ts` (9/9) passed 100%)
 - Local HTTP check: **PASSED** (`HTTP/1.1 200 OK` on `http://localhost:3000`)
 - Navbar v6 verification: **PASSED** (Floating capsule pill at 85.4% width, 7.3% offset, 68px height, 16px top offset, 999px radius, 0 border, subtle outer shadow; permanent geometry on scroll with smooth glass backdrop blur; 6 ProMiners navigation dropdowns; strictly scoped 36px circular theme toggle; live Ethereum Sepolia 41px Connect Wallet button and modal integration; mobile responsive layout verified)
 - Theme verification: **PASSED** (Warm black `#0C0C0B`, warm off-white `#E9E4DA`, signature orange `#E9762B`, high-contrast button text verified)
 - Halftone footer verification: **PASSED** (Giant dotted `Horizon X` wordmark, 2D canvas particle physics, pointer displacement, click shockwave ripple animation, print grain overlay, 3 navigation columns, brand info, and smooth back-to-top scroll verified)
-- Layout stability: **PASSED** (Zero horizontal overflow; clean mobile breakpoints down to 320px/400px viewports; main content padded with `pt-24 sm:pt-28` below fixed capsule)
+- Layout stability: **PASSED** (Zero horizontal overflow; clean mobile breakpoints down to 320px/400px viewports; main content padded with `pt-24 sm:pt-28` below fixed capsule; shader hero vertical collision with navbar fully resolved)
 
 ## Known issues
 
 - **KI-001 (Severity: INFO):** Real EVM Web3 wallet integration and native balance retrieval is live on Ethereum Sepolia Testnet. Smart contract actions and external market feeds remain mock-adapted for this phase. (Accepted for Phase 1.)
-- **KI-002 (Severity: LOW):** 43 unused variable/import warnings reported by ESLint across legacy page and wizard files (Phase 3-C Token Detail Hub and test files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
+- **KI-002 (Severity: LOW):** 41 unused variable/import warnings reported by ESLint across legacy page and wizard files (Phase 3-D Token Creation Wizard and test files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
 - **KI-003 (Severity: INFO):** Next.js 16 Turbopack logs a prefetch warning when accessing dynamic `await params` outside of `<Suspense>` during instant navigation. Static page generation succeeds with 0 errors; planned resolution is wrapping dynamic route parameter access inside `<Suspense>` during future refactoring.
 - **KI-004 (Severity: INFO):** 8 owner-management sub-routes from `MODULE_INVENTORY.md` (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, etc.) are currently accessible via tabbed views within parent detail pages rather than isolated sub-route URLs. Planned resolution is dedicated sub-route partitioning during Phase 3–8 module milestones.
 
 ## Decisions required
 
+- D-05: Token standard & module extensions (Burnable, Mintable, Pausable, Permit remain proposed/preview only)
+- D-06: Upgradeability pattern & authority architecture (remains pending review; no production finality claimed)
 - D-07: Exchange module scope (analytics only vs embedded AMM router)
 - D-08: Market data provider selection
 - D-09: KYC provider and policy (blocks live identity verification on `/account/verification`)
 - D-11: Partner role/permission matrix
+- D-12: Creation fee structure & revenue sharing (remains pending review)
 
 ## Next exact task
 
-Milestone 3-C complete. Awaiting product owner review and approval before proceeding to Milestone 3-D: Token Creation Wizard & Deployment Simulation (`/tokens/create`).
+Milestone 3-D complete. Awaiting product owner review and approval before proceeding to Milestone 3-E: Token Management Hub (`/tokens/my`).
 
 ## Baseline compliance
 
