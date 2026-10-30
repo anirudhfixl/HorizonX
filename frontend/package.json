@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "npx tsx src/tests/wallet-state.test.ts && npx tsx src/tests/token-explorer.test.ts && npx tsx src/tests/project-directory.test.ts && npx tsx src/tests/presale-directory.test.ts && npx tsx src/tests/fair-launch-directory.test.ts && npx tsx src/tests/airdrop-directory.test.ts && npx tsx src/tests/staking-pool-directory.test.ts && npx tsx src/tests/tokens-dashboard.test.ts"
+    "test": "npx tsx src/tests/wallet-state.test.ts && npx tsx src/tests/token-explorer.test.ts && npx tsx src/tests/project-directory.test.ts && npx tsx src/tests/presale-directory.test.ts && npx tsx src/tests/fair-launch-directory.test.ts && npx tsx src/tests/airdrop-directory.test.ts && npx tsx src/tests/staking-pool-directory.test.ts && npx tsx src/tests/tokens-dashboard.test.ts && npx tsx src/tests/token-detail.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

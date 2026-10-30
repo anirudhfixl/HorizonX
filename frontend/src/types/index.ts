@@ -64,6 +64,7 @@ export interface TokenMarketData {
   volume24h?: number;
   liquidity?: number;
   marketCap?: number;
+  circulatingSupply?: number;
   source?: string;
   lastUpdated?: string;
   isLive: boolean;
