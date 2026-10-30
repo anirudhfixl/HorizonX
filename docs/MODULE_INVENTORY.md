@@ -54,8 +54,8 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 | `/tokens/my` | Token management hub (My Tokens) | Wallet-gated | 3 | COMPLETE |
 | `/tokens/create` | Create Token wizard & deployment simulation | Wallet-gated | 3 | COMPLETE |
 | `/tokens/[id]` | Token detail hub | Public | 3 | COMPLETE |
-| `/tokens/[id]/contract` | Contract & source tab (integrated in hub) | Public | 3 | COMPLETE |
-| `/tokens/[id]/activity` | Token activity & holders tab (integrated in hub) | Public | 3 | COMPLETE |
+| `/tokens/[id]/contract` | Contract & source dedicated sub-route | Public | 3 | COMPLETE |
+| `/tokens/[id]/activity` | Token activity & holders dedicated sub-route | Public | 3 | COMPLETE |
 
 **Standard page pattern:** Dashboard → Listing → Detail → Create/Edit → Management → History  
 **Mock data file:** `src/services/mocks/tokens.mock.ts`  

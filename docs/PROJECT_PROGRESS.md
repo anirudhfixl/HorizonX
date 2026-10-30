@@ -5,8 +5,8 @@
 - Baseline version: 1.0
 - Architecture decisions: 1.1
 - Current phase: 3 — Tokens Management & Token Lifecycle
-- Current module: Milestone 3-E (Token Management Hub)
-- Overall status: COMPLETE — AWAITING PRODUCT OWNER APPROVAL TO PROCEED TO PHASE 3-F
+- Current module: Milestone 3-F (Advanced Token Administration & Operations)
+- Overall status: COMPLETE — AWAITING PRODUCT OWNER APPROVAL TO PROCEED TO PHASE 4
 - Last updated: 2026-10-30
 
 ## Completed in this task
@@ -463,9 +463,20 @@
         - Clean ESLint status: 0 errors across entire workspace.
         - Clean Next.js production build: 116 static routes prerendered with 0 TypeScript errors.
 
+19. **Milestone 3-F Advanced Token Administration & Operations (/tokens/[id]/contract & /tokens/[id]/activity)**:
+    - Partitioned `/tokens/[id]/contract` and `/tokens/[id]/activity` into dedicated physical Next.js App Router sub-routes (`frontend/src/app/tokens/[id]/contract/page.tsx` and `frontend/src/app/tokens/[id]/activity/page.tsx`).
+    - Implemented Option 2 parameterized hub architecture: parameterized `<TokenDetailHub initialTab="..." />` and updated in-hub tab bar to semantic Next.js `<Link>` elements.
+    - Enabled direct URL access, full browser history (back/forward navigation), bookmarking, and reload state retention across all three views (`/tokens/[id]`, `/tokens/[id]/contract`, `/tokens/[id]/activity`).
+    - Generated static parameters for all 9 catalog tokens across both sub-routes via `generateStaticParams()`, expanding static production page count to 136 routes.
+    - Enforced strict 404 validation via `if (!token) notFound()` for unknown or invalid token IDs.
+    - Preserved functional and presentation boundaries: zero blockchain write operations, zero wallet signatures, no backend or database dependencies, and full preservation of pending Architecture Decisions D-05, D-06, and D-12.
+    - Fully resolved the token sub-route portion of `KI-004` (6 owner-management sub-routes remain pending for Launchpad, Staking, and Projects in Phases 4–8).
+    - Created comprehensive automated test suite `frontend/src/tests/token-admin-routes.test.ts` (8 test suites covering static params, 404 handling, initial tab selection, link paths, utilities consistency, compiler specs, holder math, and non-execution boundaries).
+
 ## Files created or modified
 
 - `docs/PROJECT_PROGRESS.md`
+- `docs/PHASE_3F_AUDIT.md`
 - `docs/PROJECT_OVERVIEW.md`
 - `docs/MODULE_INVENTORY.md`
 - `docs/MODAL_INVENTORY.md`
@@ -476,6 +487,7 @@
 - `docs/TESTING_CHECKLIST.md`
 - `docs/KNOWN_ISSUES.md`
 - `frontend/package.json`
+- `frontend/eslint.config.mjs`
 - `frontend/src/app/globals.css`
 - `frontend/src/app/page.tsx`
 - `frontend/src/app/explore/page.tsx`
@@ -494,8 +506,11 @@
 - `frontend/src/components/tokens/my-tokens-hub.tsx`
 - `frontend/src/tests/token-my.test.ts`
 - `frontend/src/app/tokens/[id]/page.tsx`
+- `frontend/src/app/tokens/[id]/contract/page.tsx`
+- `frontend/src/app/tokens/[id]/activity/page.tsx`
 - `frontend/src/components/tokens/token-detail-hub.tsx`
 - `frontend/src/tests/token-detail.test.ts`
+- `frontend/src/tests/token-admin-routes.test.ts`
 - `frontend/src/app/projects/page.tsx`
 - `frontend/src/app/projects/[id]/page.tsx`
 - `frontend/src/app/launchpad/page.tsx`
@@ -545,11 +560,11 @@
 
 ## Tests and verification
 
-- Build: **PASSED** (`npm run build` completed successfully, 116/116 static routes prerendered with 0 errors)
-- Type-check: **PASSED** (TypeScript 5.x passed with 0 errors in 8.6s)
-- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 41 warnings across legacy files; 0 errors/warnings in Phase 3-E Token Management files)
-- Automated tests: **PASSED** (`npm test` — all eleven test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, `fair-launch-directory.test.ts`, `airdrop-directory.test.ts`, `staking-pool-directory.test.ts` (45/45), `tokens-dashboard.test.ts` (6/6), `token-detail.test.ts` (8/8), `token-create.test.ts` (9/9), and `token-my.test.ts` (7/7) passed 100%)
-- Local HTTP check: **PASSED** (`HTTP/1.1 200 OK` on `http://localhost:3000`)
+- Build: **PASSED** (`npm run build` completed successfully, 136/136 static routes prerendered with 0 errors)
+- Type-check: **PASSED** (TypeScript 5.x passed with 0 errors)
+- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 42 warnings across legacy files; 0 errors/warnings in Phase 3-F sub-route files)
+- Automated tests: **PASSED** (`npm test` — all twelve test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, `fair-launch-directory.test.ts`, `airdrop-directory.test.ts`, `staking-pool-directory.test.ts` (45/45), `tokens-dashboard.test.ts` (6/6), `token-detail.test.ts` (8/8), `token-create.test.ts` (9/9), `token-my.test.ts` (7/7), and `token-admin-routes.test.ts` (8/8) passed 100%)
+- Local HTTP check: **PASSED** (`/tokens/prominers`, `/tokens/prominers/contract`, and `/tokens/prominers/activity` return `HTTP/1.1 200 OK`; unknown token IDs return 404)
 - Navbar v6 verification: **PASSED** (Floating capsule pill at 85.4% width, 7.3% offset, 68px height, 16px top offset, 999px radius, 0 border, subtle outer shadow; permanent geometry on scroll with smooth glass backdrop blur; 6 ProMiners navigation dropdowns; strictly scoped 36px circular theme toggle; live Ethereum Sepolia 41px Connect Wallet button and modal integration; mobile responsive layout verified)
 - Theme verification: **PASSED** (Warm black `#0C0C0B`, warm off-white `#E9E4DA`, signature orange `#E9762B`, high-contrast button text verified)
 - Halftone footer verification: **PASSED** (Giant dotted `Horizon X` wordmark, 2D canvas particle physics, pointer displacement, click shockwave ripple animation, print grain overlay, 3 navigation columns, brand info, and smooth back-to-top scroll verified)
@@ -558,9 +573,9 @@
 ## Known issues
 
 - **KI-001 (Severity: INFO):** Real EVM Web3 wallet integration and native balance retrieval is live on Ethereum Sepolia Testnet. Smart contract actions and external market feeds remain mock-adapted for this phase. (Accepted for Phase 1.)
-- **KI-002 (Severity: LOW):** 41 unused variable/import warnings reported by ESLint across legacy page and wizard files (Phase 3-E Token Management Hub and test files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
+- **KI-002 (Severity: LOW):** 42 unused variable/import/ref warnings reported by ESLint across legacy page and wizard files (Phase 3-F sub-route files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
 - **KI-003 (Severity: INFO):** Next.js 16 Turbopack logs a prefetch warning when accessing dynamic `await params` outside of `<Suspense>` during instant navigation. Static page generation succeeds with 0 errors; planned resolution is wrapping dynamic route parameter access inside `<Suspense>` during future refactoring.
-- **KI-004 (Severity: INFO):** 8 owner-management sub-routes from `MODULE_INVENTORY.md` (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, etc.) are currently accessible via tabbed views within parent detail pages rather than isolated sub-route URLs. Planned resolution is dedicated sub-route partitioning during Phase 3–8 module milestones.
+- **KI-004 (Severity: INFO):** 6 owner-management sub-routes from `MODULE_INVENTORY.md` (`launchpad/presales/[id]/manage`, etc.) are currently accessible via tabbed views within parent detail pages rather than isolated sub-route URLs. Token sub-routes `/tokens/[id]/contract` and `/tokens/[id]/activity` were fully resolved in Phase 3-F. Planned resolution for the remaining 6 sub-routes is dedicated sub-route partitioning during Phase 4–8 module milestones.
 
 ## Decisions required
 
@@ -574,7 +589,7 @@
 
 ## Next exact task
 
-Milestone 3-E complete. Awaiting product owner review and approval before proceeding to Milestone 3-F: Advanced Token Administration & Operations (/tokens/[id]/contract & /tokens/[id]/activity).
+Milestone 3-F complete. Phase 3 (Tokens Management & Token Lifecycle) complete. Awaiting product owner review and approval before proceeding to Phase 4 (Launchpad & Token Offerings).
 
 ## Baseline compliance
 

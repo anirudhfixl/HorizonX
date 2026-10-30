@@ -49,6 +49,7 @@ interface TokenDetailHubProps {
   fairLaunches: FairLaunch[];
   airdrops: AirdropCampaign[];
   stakingPools: StakingPool[];
+  initialTab?: "overview" | "contract" | "activity";
 }
 
 // Format numbers as currency with K/M abbreviations
@@ -74,11 +75,12 @@ export function TokenDetailHub({
   fairLaunches,
   airdrops,
   stakingPools,
+  initialTab = "overview",
 }: TokenDetailHubProps) {
   const { isConnected, address: userAddress } = useWallet();
   const { openModal } = useModal();
 
-  const [activeTab, setActiveTab] = useState<"overview" | "contract" | "activity">("overview");
+  const activeTab = initialTab ?? "overview";
   const [contractSubtab, setContractSubtab] = useState<"source" | "abi" | "read">("source");
   const [activitySubtab, setActivitySubtab] = useState<"transfers" | "holders" | "events">("transfers");
 
@@ -533,8 +535,8 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
       {/* 4. Tab Navigation Bar */}
       <div className="border-b border-border/40">
         <div className="flex items-center gap-2 overflow-x-auto">
-          <button
-            onClick={() => setActiveTab("overview")}
+          <Link
+            href={`/tokens/${token.id}`}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-all ${
               activeTab === "overview"
                 ? "border-primary text-primary bg-primary/10"
@@ -543,9 +545,9 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
           >
             <BookOpen className="h-3.5 w-3.5" />
             Overview & Utilities
-          </button>
-          <button
-            onClick={() => setActiveTab("contract")}
+          </Link>
+          <Link
+            href={`/tokens/${token.id}/contract`}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-all ${
               activeTab === "contract"
                 ? "border-primary text-primary bg-primary/10"
@@ -554,9 +556,9 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
           >
             <FileCode2 className="h-3.5 w-3.5" />
             Contract & Source
-          </button>
-          <button
-            onClick={() => setActiveTab("activity")}
+          </Link>
+          <Link
+            href={`/tokens/${token.id}/activity`}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-all ${
               activeTab === "activity"
                 ? "border-primary text-primary bg-primary/10"
@@ -565,7 +567,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
           >
             <Activity className="h-3.5 w-3.5" />
             Activity & Holders
-          </button>
+          </Link>
         </div>
       </div>
 
