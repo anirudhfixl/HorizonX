@@ -1,0 +1,265 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   ProMiners Design System — Global CSS
+   Dark-first (D-01 approved). Light theme planned for later phase.
+   Token reference: docs/DESIGN_SYSTEM.md
+   ────────────────────────────────────────────────────────────────────────────── */
+
+@theme inline {
+  /* Color tokens mapped to Tailwind utilities */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Semantic status colors */
+  --color-status-active: var(--status-active);
+  --color-status-pending: var(--status-pending);
+  --color-status-draft: var(--status-draft);
+  --color-status-ended: var(--status-ended);
+  --color-status-failed: var(--status-failed);
+  --color-status-unverified: var(--status-unverified);
+  --color-status-unknown: var(--status-unknown);
+
+  /* Brand gradient colors */
+  --color-brand-from: var(--brand-from);
+  --color-brand-to: var(--brand-to);
+
+  /* Chart palette */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Typography */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-inter);
+
+  /* Border radius scale */
+  --radius-xs: 2px;
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-full: 9999px;
+
+  /* Motion */
+  --transition-fast: 100ms;
+  --transition-base: 150ms;
+  --transition-slow: 250ms;
+  --transition-modal: 200ms;
+}
+
+/* ─── Dark theme (DEFAULT — D-01 approved) ────────────────────────────────── */
+
+:root {
+  /* ProMiners dark palette — premium dark-first */
+  --background: oklch(0.10 0.005 265);       /* Near-black with subtle blue */
+  --foreground: oklch(0.95 0.005 240);       /* Warm white */
+
+  --card: oklch(0.14 0.007 265);             /* Card surface */
+  --card-foreground: oklch(0.95 0.005 240);
+
+  --popover: oklch(0.13 0.008 265);          /* Dropdown/popover */
+  --popover-foreground: oklch(0.95 0.005 240);
+
+  /* Primary — electric blue/violet brand accent */
+  --primary: oklch(0.65 0.22 268);           /* Vibrant blue-violet */
+  --primary-foreground: oklch(0.98 0 0);
+
+  /* Secondary — muted surface */
+  --secondary: oklch(0.18 0.008 265);
+  --secondary-foreground: oklch(0.90 0.005 240);
+
+  /* Muted — subtle backgrounds */
+  --muted: oklch(0.16 0.007 265);
+  --muted-foreground: oklch(0.60 0.010 250);
+
+  /* Accent — hover highlights */
+  --accent: oklch(0.20 0.012 268);
+  --accent-foreground: oklch(0.95 0.005 240);
+
+  /* Destructive */
+  --destructive: oklch(0.60 0.22 25);        /* Red */
+  --destructive-foreground: oklch(0.98 0 0);
+
+  /* Borders / inputs */
+  --border: oklch(0.25 0.010 265);
+  --input: oklch(0.20 0.008 265);
+  --ring: oklch(0.65 0.22 268);              /* Matches primary for focus rings */
+
+  /* Base radius */
+  --radius: 0.625rem;
+
+  /* Brand gradient endpoints */
+  --brand-from: oklch(0.65 0.22 268);
+  --brand-to: oklch(0.60 0.25 300);
+
+  /* Semantic status colors */
+  --status-active: oklch(0.65 0.18 150);     /* Emerald green */
+  --status-pending: oklch(0.75 0.18 75);     /* Amber */
+  --status-draft: oklch(0.60 0.010 250);     /* Muted */
+  --status-ended: oklch(0.55 0.08 220);      /* Cool grey */
+  --status-failed: oklch(0.60 0.22 25);      /* Red */
+  --status-unverified: oklch(0.65 0.18 55);  /* Orange */
+  --status-unknown: oklch(0.50 0.008 265);   /* Neutral */
+
+  /* Chart colors */
+  --chart-1: oklch(0.65 0.22 268);
+  --chart-2: oklch(0.65 0.18 150);
+  --chart-3: oklch(0.75 0.18 75);
+  --chart-4: oklch(0.60 0.22 300);
+  --chart-5: oklch(0.60 0.22 25);
+}
+
+/* ─── Light theme (future — kept consistent with shadcn contract) ─────────── */
+
+.light {
+  --background: oklch(0.98 0.003 240);
+  --foreground: oklch(0.12 0.008 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.12 0.008 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.12 0.008 265);
+  --primary: oklch(0.55 0.22 268);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.94 0.005 240);
+  --secondary-foreground: oklch(0.20 0.008 265);
+  --muted: oklch(0.95 0.004 240);
+  --muted-foreground: oklch(0.50 0.010 260);
+  --accent: oklch(0.92 0.008 268);
+  --accent-foreground: oklch(0.20 0.008 265);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.88 0.008 240);
+  --input: oklch(0.88 0.008 240);
+  --ring: oklch(0.55 0.22 268);
+  --brand-from: oklch(0.55 0.22 268);
+  --brand-to: oklch(0.50 0.25 300);
+  --status-active: oklch(0.50 0.18 150);
+  --status-pending: oklch(0.60 0.18 75);
+  --status-draft: oklch(0.50 0.008 250);
+  --status-ended: oklch(0.45 0.06 220);
+  --status-failed: oklch(0.50 0.22 25);
+  --status-unverified: oklch(0.55 0.18 55);
+  --status-unknown: oklch(0.40 0.006 265);
+}
+
+/* ─── Base styles ─────────────────────────────────────────────────────────── */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    box-sizing: border-box;
+  }
+
+  html {
+    @apply font-sans;
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased min-h-screen flex flex-col;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Typography defaults */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Focus ring - only on keyboard nav */
+  :focus-visible {
+    @apply outline-2 outline-ring outline-offset-2;
+  }
+
+  /* Address / hash display */
+  .font-address {
+    @apply font-mono text-sm tracking-wide;
+  }
+}
+
+/* ─── Utility classes ─────────────────────────────────────────────────────── */
+
+@layer utilities {
+  /* Brand gradient text */
+  .text-brand-gradient {
+    background: linear-gradient(135deg, var(--brand-from), var(--brand-to));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Brand gradient background */
+  .bg-brand-gradient {
+    background: linear-gradient(135deg, var(--brand-from), var(--brand-to));
+  }
+
+  /* Glass card effect */
+  .glass-card {
+    background: oklch(from var(--card) l c h / 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid oklch(from var(--border) l c h / 0.5);
+  }
+
+  /* Glow effect for CTAs */
+  .glow-primary {
+    box-shadow: 0 0 20px oklch(from var(--primary) l c h / 0.3),
+                0 0 40px oklch(from var(--primary) l c h / 0.15);
+  }
+
+  /* Subtle grid background pattern for hero sections */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(oklch(from var(--border) l c h / 0.4) 1px, transparent 1px),
+      linear-gradient(to right, oklch(from var(--border) l c h / 0.4) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-2 { -webkit-line-clamp: 2; }
+  .line-clamp-3 { -webkit-line-clamp: 3; }
+
+  /* Demo data indicator */
+  .demo-banner {
+    @apply text-xs font-medium px-2 py-0.5 rounded-full;
+    background: oklch(0.75 0.18 75 / 0.15);
+    color: oklch(0.75 0.18 75);
+    border: 1px solid oklch(0.75 0.18 75 / 0.3);
+  }
+}
