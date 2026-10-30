@@ -187,12 +187,15 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 
 ---
 
-## Total Route Count
+## Route Reconciliation & Inventory Summary
 
-| Category | Count |
-|---|---|
-| Module routes | 49 |
-| System routes | 2 |
-| **Total** | **51** |
+| Category | Count | Description |
+|---|---|---|
+| **Documented Functional Routes** | 56 | Total functional route concepts across Modules 1–11 in this specification |
+| **Deferred Sub-routes (Phases 3–8)** | -8 | Owner management / sub-tabs (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, `launchpad/launches/[id]/manage`, `airdrops/campaigns/[id]/manage`, `staking/pools/[id]/manage`, `exchange/pairs/[id]`, `projects/[id]/settings`) |
+| **Phase 1 Active Module File Routes** | 48 | Standalone `page.tsx` routes implemented in `frontend/src/app` |
+| **Phase 1 System Route Handlers** | 2 | `not-found.tsx` (404) and `error.tsx` (client exception boundary) |
+| **Total Physical File Route Definitions** | **50** | Exact count of file-based route handlers in `frontend/src/app` |
+| **Prerendered Static HTML Pages** | **76** | Output pages compiled by Next.js Turbopack via `generateStaticParams()` |
 
-*Reconciled from 54 discovered candidates — 3 removed as duplicates/not baseline-supported.*
+*Note: The initial 51-route total cited in earlier drafts was an interim estimate before the creation of the dedicated error boundary and reconciliation of dynamic mock instances.*

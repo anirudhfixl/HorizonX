@@ -3,7 +3,7 @@
 > **Project:** ProMiners Token & Launch Protocol  
 > **Milestone:** 1-A.1 (Foundation Audit & Visual QA)  
 > **Date:** 2026-10-30  
-> **Status:** AUDIT COMPLETE — PASSED WITH RECOMMENDATIONS  
+> **Status:** AUDIT COMPLETED — AWAITING PRODUCT OWNER APPROVAL  
 > **Target Branch:** `main`
 
 ---
@@ -13,7 +13,7 @@
 Following the completion of **Milestone 1-A (Documentation and Frontend Foundation)**, a comprehensive foundation audit and visual quality assurance inspection was conducted across the ProMiners codebase.
 
 The inspection verified:
-1. Complete route inventory and prerendering across all defined modules.
+1. Complete route inventory, distinguishing specifications (56 functional routes), physical route definitions (50 file routes), and static compiler output (76 prerendered HTML pages).
 2. Design system tokens, visual aesthetics, dark-mode styling, and responsive layout behavior.
 3. Modal lifecycle, keyboard navigation, focus management, and accessibility behavior.
 4. Centralization of navigation, design tokens, mock data, and environment variable configuration.
@@ -27,11 +27,31 @@ All identified small, safe bugs were corrected within the existing approved arch
 ## A. Route Verification Results
 
 ### 1. Route Count & Architecture Distinction
-- **Defined File Routes:** 50 route files (48 `page.tsx` route modules + 2 system routes: `not-found.tsx` and `error.tsx`).
-- **Prerendered Static HTML Pages:** 76 static HTML pages generated during `npm run build` using Next.js 16 Turbopack and `generateStaticParams()`.
-- **System Routes:**
-  - `frontend/src/app/not-found.tsx` (Custom 404 handler)
-  - `frontend/src/app/error.tsx` (Client exception error boundary)
+
+To ensure absolute clarity across project documentation, routes are tracked in three distinct layers:
+
+1. **Documented Functional Routes (56 Routes in Specification):**
+   - [MODULE_INVENTORY.md](file:///d:/Fixl_work/proMiners/docs/MODULE_INVENTORY.md) defines 56 functional route concepts across Modules 1 through 11.
+   - 8 of these functional routes represent owner management sub-views or tabbed sub-actions scheduled for deep-dive implementation in Phases 3 through 8 (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, `launchpad/launches/[id]/manage`, `airdrops/campaigns/[id]/manage`, `staking/pools/[id]/manage`, `exchange/pairs/[id]`, `projects/[id]/settings`). In Phase 1 Foundation, these sub-views are embedded directly within their parent detail page tab controls.
+   - The remaining **48 functional routes** represent distinct, top-level module views.
+
+2. **Physical File Route Definitions (50 File Routes in Next.js App Router):**
+   - **48 Module Pages:** Exactly 48 standalone `page.tsx` files located in `frontend/src/app`.
+   - **2 System Route Handlers:** Exactly 2 global system handlers — [not-found.tsx](file:///d:/Fixl_work/proMiners/frontend/src/app/not-found.tsx) (custom 404 page) and [error.tsx](file:///d:/Fixl_work/proMiners/frontend/src/app/error.tsx) (client error boundary).
+   - **Total File Route Definitions:** 48 + 2 = **50 file-based route handlers**.
+
+3. **Prerendered Static HTML Pages (76 Static HTML Output Paths):**
+   - During `npm run build`, Next.js 16 Turbopack compiles **76 static HTML paths**.
+   - This occurs because the 8 dynamic routes (`tokens/[id]`, `launchpad/presales/[id]`, `launchpad/launches/[id]`, `airdrops/campaigns/[id]`, `staking/pools/[id]`, `exchange/tokens/[id]`, `projects/[id]`, `docs/[slug]`) export `generateStaticParams()` matching mock catalog entries, generating pre-rendered static HTML for each entity instance alongside partial prefetch fallback shells.
+
+| Layer | Count | Description |
+|---|---|---|
+| Functional Specifications | 56 | Documented route concepts across Modules 1–11 |
+| Deferred Sub-routes | -8 | Owner management sub-tabs deferred to Phases 3–8 |
+| Active Module File Routes | 48 | Standalone `page.tsx` files in `frontend/src/app` |
+| System Route Handlers | 2 | `not-found.tsx` and `error.tsx` |
+| **Total Physical File Routes** | **50** | **Physical route files in Next.js App Router** |
+| **Compiler Static Pages** | **76** | **Static HTML output paths generated at build time** |
 
 ### 2. Module Route Verification Table
 
@@ -240,4 +260,4 @@ Strict compliance checks were conducted against the master baseline rules regard
 | **Build & Type Safety** | **PASSED** | Next.js 16 build passed with exit code 0; TypeScript check passed with 0 errors. |
 
 ### Conclusion
-**Milestone 1-A is fully verified and APPROVED.** The frontend foundation is stable, compliant with architectural decisions, and ready for future milestone planning.
+**Milestone 1-A.1 foundation audit is complete.** Status: **AUDIT COMPLETED — AWAITING PRODUCT OWNER APPROVAL**. The frontend foundation is verified, compliant with architectural decisions, and ready for product owner signoff before Milestone 1-B initiation.
