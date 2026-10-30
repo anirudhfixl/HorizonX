@@ -1,31 +1,33 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useWallet, SUPPORTED_NETWORKS } from "@/contexts/wallet-context";
+import { TOP_NAV_ITEMS } from "@/config/navigation";
+import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { TOP_NAV_ITEMS, CREATE_ITEMS } from "@/config/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
-import {
-  Search,
-  Plus,
-  ChevronDown,
-  Wallet,
-  Menu,
-  Sparkles,
-  Zap,
-  Loader2,
-  AlertTriangle,
-} from "lucide-react";
-import { MobileNav } from "./mobile-nav";
+import { Loader2, AlertTriangle, Wallet } from "lucide-react";
+
+function Chevron({ open = false }: { open?: boolean }) {
+  return (
+    <svg
+      className={`chevron ${open ? "is-open" : ""}`}
+      width="13"
+      height="13"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="m3.5 6 4.5 4.5L12.5 6"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 export function TopNav() {
   const pathname = usePathname();
@@ -35,225 +37,233 @@ export function TopNav() {
     isUnsupportedNetwork,
     shortAddress,
     balance,
-    network,
     switchNetwork,
   } = useWallet();
   const { openModal } = useModal();
+
+  const [scrolled, setScrolled] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [navTheme, setNavTheme] = useState<"light" | "dark">("dark");
+  const navRef = useRef<HTMLElement>(null);
+
+  // Scroll detection: window.scrollY > 36 activates subtle glass treatment
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 36);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
+  // Restore saved nav theme if present (scoped strictly to navbar)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("prominers_nav_theme") as "light" | "dark" | null;
+      if (saved === "light" || saved === "dark") {
+        requestAnimationFrame(() => setNavTheme(saved));
+      }
+    } catch {}
+  }, []);
+
+  // Click-outside and Escape key listener
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
+        setActiveMenu(null);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveMenu(null);
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
+  const toggleDropdown = (label: string) => {
+    setActiveMenu((current) => (current === label ? null : label));
+  };
+
+  const closeMenus = () => {
+    setActiveMenu(null);
+    setMobileOpen(false);
+  };
+
+  const toggleNavTheme = () => {
+    setNavTheme((prev) => {
+      const next = prev === "light" ? "dark" : "light";
+      try {
+        localStorage.setItem("prominers_nav_theme", next);
+      } catch {}
+      return next;
+    });
+  };
 
   return (
-    <>
-      <header className="sticky top-0 z-40 w-full border-b border-border/50 bg-background/85 backdrop-blur-xl supports-backdrop-filter:bg-background/70">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Left: Brand Logo & Main Nav */}
-          <div className="flex items-center gap-6 lg:gap-8">
-            <Link href="/" className="group flex items-center gap-2.5">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-amber-500 p-0.5 shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
-                <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-background/90 backdrop-blur-xs">
-                  <Zap className="h-5 w-5 text-primary animate-pulse" />
-                </div>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-base font-bold tracking-tight text-foreground flex items-center gap-1.5">
-                  ProMiners
-                  <span className="rounded bg-primary/15 px-1.5 py-0.2 text-[9px] font-semibold text-primary uppercase tracking-wider">
-                    v1.0
-                  </span>
-                </span>
-                <span className="text-[10px] text-muted-foreground hidden sm:block -mt-1 font-mono">
-                  Token & Launch Protocol
-                </span>
-              </div>
-            </Link>
+    <header
+      className={`navbar-shell theme-${navTheme} ${scrolled ? "is-scrolled" : ""}`}
+      ref={navRef}
+    >
+      <nav className="navbar" aria-label="Main navigation">
+        {/* Column 1: Brand Identity */}
+        <Link
+          className="brand"
+          href="/"
+          aria-label="ProMiners home"
+          onClick={closeMenus}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/prominers-logo.svg" alt="ProMiners" />
+        </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {TOP_NAV_ITEMS.map((item) => {
-                const isActive = item.href ? pathname.startsWith(item.href) : false;
+        {/* Column 2: Navigation Links */}
+        <div className={`nav-links ${mobileOpen ? "mobile-open" : ""}`}>
+          {TOP_NAV_ITEMS.map((item) => {
+            const hasChildren = Boolean(item.children && item.children.length > 0);
+            const isMenuOpen = activeMenu === item.label;
+            const isCurrent = item.href ? pathname.startsWith(item.href) : false;
 
-                if (item.children && item.children.length > 0) {
-                  return (
-                    <DropdownMenu key={item.label}>
-                      <DropdownMenuTrigger
-                        className={`inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-secondary/60 hover:text-foreground outline-none cursor-pointer ${
-                          isActive ? "text-primary font-semibold" : "text-muted-foreground"
-                        }`}
-                      >
-                        {item.label}
-                        <ChevronDown className="h-3.5 w-3.5 opacity-60" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-56 p-1.5 bg-popover/95 backdrop-blur-xl border-border/60 shadow-xl">
-                        {item.description && (
-                          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1">
-                            {item.description}
-                          </DropdownMenuLabel>
-                        )}
-                        {item.children.map((child) => (
-                          <DropdownMenuItem key={child.label}>
-                            <Link
-                              href={child.href || "/"}
-                              className="flex flex-col gap-0.5 px-2 py-1.5 rounded-md hover:bg-secondary w-full"
-                            >
-                              <span className="text-xs font-medium text-foreground">
-                                {child.label}
-                              </span>
-                              {child.description && (
-                                <span className="text-[10px] text-muted-foreground line-clamp-1">
-                                  {child.description}
-                                </span>
-                              )}
-                            </Link>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  );
-                }
-
-                return (
-                  <Link
-                    key={item.label}
-                    href={item.href || "/"}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors hover:bg-secondary/60 hover:text-foreground ${
-                      isActive ? "text-primary font-semibold" : "text-muted-foreground"
-                    }`}
+            if (hasChildren) {
+              return (
+                <div className="nav-item has-dropdown" key={item.label}>
+                  <button
+                    type="button"
+                    className={`nav-link ${isMenuOpen || isCurrent ? "active" : ""}`}
+                    onClick={() => toggleDropdown(item.label)}
+                    aria-expanded={isMenuOpen}
                   >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
+                    <span>{item.label}</span>
+                    <Chevron open={isMenuOpen} />
+                  </button>
+                  <div
+                    className={`dropdown-panel ${isMenuOpen ? "visible" : ""}`}
+                    role="menu"
+                  >
+                    {item.children!.map((child) => (
+                      <Link
+                        key={child.label}
+                        href={child.href || "/"}
+                        role="menuitem"
+                        onClick={closeMenus}
+                      >
+                        <span className="dropdown-label">{child.label}</span>
+                        {child.description && (
+                          <span className="dropdown-detail">
+                            {child.description}
+                          </span>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              );
+            }
 
-          {/* Right Actions: Create, Search, Network, Wallet, Mobile Trigger */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Create Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="hidden sm:inline-flex items-center gap-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/25 text-xs font-semibold h-8 px-3 rounded-lg cursor-pointer outline-none">
-                <Plus className="h-3.5 w-3.5" />
-                <span>Create</span>
-                <ChevronDown className="h-3 w-3 opacity-60" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 p-1.5 bg-popover/95 backdrop-blur-xl border-border/60 shadow-xl">
-                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1">
-                  Creation Tools
-                </DropdownMenuLabel>
-                {CREATE_ITEMS.map((createItem) => (
-                  <DropdownMenuItem key={createItem.label}>
-                    <Link
-                      href={createItem.href || "/"}
-                      className="flex items-center justify-between px-2 py-1.5 text-xs font-medium w-full"
-                    >
-                      <span>{createItem.label}</span>
-                      <Sparkles className="h-3 w-3 text-primary/70" />
-                    </Link>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Quick Command Search Button */}
-            <button
-              onClick={() => openModal("COMMAND_PALETTE")}
-              className="hidden md:flex items-center gap-2 rounded-lg border border-border/60 bg-secondary/30 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-border hover:bg-secondary/60 hover:text-foreground cursor-pointer"
-            >
-              <Search className="h-3.5 w-3.5" />
-              <span className="pr-2">Search...</span>
-              <kbd className="rounded border border-border/50 bg-background/80 px-1.5 py-0.2 text-[10px] font-mono">
-                ⌘K
-              </kbd>
-            </button>
-
-            {/* Network Selector / Unsupported Network Alert */}
-            {isUnsupportedNetwork ? (
-              <Button
-                size="sm"
-                onClick={() => switchNetwork(11155111)}
-                className="h-8 gap-1.5 bg-amber-500/15 border border-amber-500/40 text-amber-400 hover:bg-amber-500/25 text-xs font-semibold px-2.5 rounded-lg animate-pulse"
-                title="Click to switch to Ethereum Sepolia Testnet"
+            return (
+              <Link
+                key={item.label}
+                className={`nav-link ${isCurrent ? "active" : ""}`}
+                href={item.href || "/"}
+                onClick={closeMenus}
               >
-                <AlertTriangle className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline-block">Switch to Sepolia</span>
-              </Button>
-            ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger className="h-8 inline-flex items-center gap-1.5 border border-border/60 bg-secondary/20 hover:bg-secondary/50 text-xs px-2.5 rounded-lg cursor-pointer outline-none">
-                  <span className="text-sm">{network.icon}</span>
-                  <span className="hidden sm:inline-block font-medium">{network.name}</span>
-                  <ChevronDown className="h-3 w-3 opacity-50" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52 p-1.5 bg-popover/95 backdrop-blur-xl border-border/60 shadow-xl">
-                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1">
-                    Active EVM Network (D-04)
-                  </DropdownMenuLabel>
-                  {SUPPORTED_NETWORKS.map((net) => (
-                    <DropdownMenuItem
-                      key={net.id}
-                      onClick={() => switchNetwork(net.chainId)}
-                      className="flex items-center justify-between px-2 py-2 text-xs cursor-pointer"
-                    >
-                      <span className="flex items-center gap-2">
-                        <span>{net.icon}</span>
-                        <span className={net.chainId === network.chainId ? "font-semibold text-primary" : ""}>
-                          {net.name}
-                        </span>
-                      </span>
-                      {net.chainId === network.chainId && (
-                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-            {/* Wallet Button */}
-            {isConnecting ? (
-              <Button
-                size="sm"
-                disabled
-                className="h-8 gap-1.5 bg-secondary border border-border/70 text-muted-foreground text-xs font-mono font-medium px-3 rounded-lg"
-              >
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                <span>Connecting...</span>
-              </Button>
-            ) : isConnected ? (
-              <Button
-                size="sm"
-                onClick={() => openModal("WALLET_DETAILS")}
-                className="h-8 gap-1.5 bg-secondary border border-border/70 hover:border-primary/40 text-foreground text-xs font-mono font-medium px-3 rounded-lg shadow-xs"
-              >
-                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="hidden md:inline-block text-muted-foreground mr-0.5">{balance} ETH</span>
-                <span>{shortAddress}</span>
-              </Button>
-            ) : (
-              <Button
-                size="sm"
-                onClick={() => openModal("CONNECT_WALLET")}
-                className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3.5 rounded-lg shadow-sm shadow-primary/25"
-              >
-                <Wallet className="h-3.5 w-3.5" />
-                <span>Connect Wallet</span>
-              </Button>
-            )}
-
-            {/* Mobile Menu Toggle Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setMobileOpen(true)}
-              className="h-8 w-8 p-0 lg:hidden text-muted-foreground hover:text-foreground"
-              aria-label="Toggle navigation menu"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
+                {item.label}
+              </Link>
+            );
+          })}
         </div>
-      </header>
 
-      {/* Mobile Nav Drawer */}
-      <MobileNav isOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
-    </>
+        {/* Column 3: Actions (Dashboard, Scoped Theme Toggle, Connect Wallet) */}
+        <div className="nav-actions">
+          <Link
+            className="dashboard-link"
+            href="/explore"
+            onClick={closeMenus}
+          >
+            Dashboard
+          </Link>
+
+          {/* Scoped Theme Toggle (36px circular button) */}
+          <button
+            className="theme-toggle"
+            type="button"
+            onClick={toggleNavTheme}
+            aria-label={`Switch navbar to ${navTheme === "light" ? "dark" : "light"} mode`}
+            title={`Switch navbar to ${navTheme === "light" ? "dark" : "light"} mode`}
+          >
+            {navTheme === "light" ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20.2 15.1A8.4 8.4 0 0 1 8.9 3.8 8.7 8.7 0 1 0 20.2 15.1Z" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+              </svg>
+            )}
+          </button>
+
+          {/* Real ProMiners Connect Wallet Control (41px height) */}
+          {isConnecting ? (
+            <button
+              type="button"
+              className="wallet-btn wallet-btn-loading"
+              disabled
+              aria-label="Connecting wallet"
+            >
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span>Connecting...</span>
+            </button>
+          ) : isUnsupportedNetwork ? (
+            <button
+              type="button"
+              className="wallet-btn wallet-btn-warning"
+              onClick={() => switchNetwork(11155111)}
+              title="Click to switch to Ethereum Sepolia Testnet"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              <span>Switch to Sepolia</span>
+            </button>
+          ) : isConnected ? (
+            <button
+              type="button"
+              className="wallet-btn wallet-btn-connected"
+              onClick={() => openModal("WALLET_DETAILS")}
+              title="View wallet details"
+            >
+              <span className="wallet-dot" />
+              <span className="wallet-balance">{balance} ETH</span>
+              <span className="wallet-address">{shortAddress}</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="wallet-btn wallet-btn-connect"
+              onClick={() => openModal("CONNECT_WALLET")}
+            >
+              <Wallet className="h-4 w-4" />
+              <span>Connect Wallet</span>
+            </button>
+          )}
+        </div>
+
+        {/* Mobile Menu Toggle Hamburger */}
+        <button
+          className={`mobile-toggle ${mobileOpen ? "opened" : ""}`}
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label="Toggle navigation"
+          aria-expanded={mobileOpen}
+          type="button"
+        >
+          <span />
+          <span />
+        </button>
+      </nav>
+    </header>
   );
 }

@@ -38,7 +38,7 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 | `/explore/projects` | Project directory | Public | 2 | COMPLETE |
 | `/explore/presales` | Presales discovery | Public | 2 | COMPLETE |
 | `/explore/launches` | Fair launches discovery | Public | 2 | COMPLETE |
-| `/explore/airdrops` | Airdrop discovery | Public | 2 | SHELL |
+| `/explore/airdrops` | Airdrop discovery | Public | 2 | COMPLETE |
 | `/explore/staking` | Staking pool discovery | Public | 2 | SHELL |
 
 **Note:** Explore is a discovery hub. Each sub-route links to the canonical detail route in its owning module. Search, filters, sort, pagination and empty/loading/error states required.
@@ -88,7 +88,7 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 | Route | View | Auth | Phase | Status |
 |---|---|---|---|---|
 | `/airdrops` | Airdrop dashboard / hub | Public | 5 | SHELL |
-| `/airdrops/campaigns` | All campaigns listing | Public | 5 | SHELL |
+| `/airdrops/campaigns` | All campaigns listing | Public | 5 | COMPLETE |
 | `/airdrops/campaigns/create` | Create Airdrop Campaign wizard | Wallet-gated | 5 | SHELL |
 | `/airdrops/campaigns/[id]` | Campaign detail | Public | 5 | SHELL |
 | `/airdrops/campaigns/[id]/manage` | Campaign management (owner) | Owner | 5 | SHELL |

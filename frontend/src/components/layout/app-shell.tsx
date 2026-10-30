@@ -22,11 +22,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="absolute top-2/3 -right-40 h-[400px] w-[600px] rounded-full bg-amber-600/5 blur-3xl" />
           </div>
 
-          <Suspense fallback={<div className="h-16 border-b border-border/50 bg-background/85" />}>
+          <Suspense fallback={<div className="h-[68px]" />}>
             <TopNav />
           </Suspense>
 
-          <main className="flex-1 pb-16">
+          <main className="flex-1 pt-24 sm:pt-28 pb-16">
             <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading...</div>}>
               {children}
             </Suspense>

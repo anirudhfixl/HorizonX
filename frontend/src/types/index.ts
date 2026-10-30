@@ -163,6 +163,7 @@ export interface AirdropCampaign {
   id: string;
   title: string;
   description?: string;
+  category?: string;
   type: AirdropCampaignType;
   tokenId: string;
   projectId?: string;

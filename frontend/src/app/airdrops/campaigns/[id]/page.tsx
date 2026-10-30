@@ -6,7 +6,7 @@ import { MetricCard } from "@/components/shared/metric-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { MOCK_AIRDROPS } from "@/lib/mock-data";
-import { Gift, ShieldCheck, Users, ExternalLink } from "lucide-react";
+import { Gift, Users } from "lucide-react";
 
 export function generateStaticParams() {
   return MOCK_AIRDROPS.map((a) => ({ id: a.id }));

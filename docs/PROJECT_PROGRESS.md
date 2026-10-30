@@ -5,8 +5,8 @@
 - Baseline version: 1.0
 - Architecture decisions: 1.1
 - Current phase: 2 — Explore & Discovery
-- Current module: Milestone 2-E (Fair Launch Discovery)
-- Overall status: COMPLETE (Awaiting product owner review before starting Milestone 2-F)
+- Current module: Milestone 2-F (Airdrop Discovery)
+- Overall status: COMPLETE (Awaiting product owner review before starting Milestone 2-G)
 - Last updated: 2026-10-30
 
 ## Completed in this task
@@ -235,6 +235,55 @@
     - Enriched typed mock dataset `MOCK_FAIR_LAUNCHES` in `frontend/src/lib/mock-data.ts` to 8 realistic fair launches (5 Ethereum Sepolia D-04 items, 3 cross-chain discovery items on Base, Arbitrum One, Polygon).
     - Cleaned unused imports in `frontend/src/app/launchpad/launches/[id]/page.tsx` for optimal lint hygiene.
     - Created automated unit test suite `frontend/src/tests/fair-launch-directory.test.ts` verifying schema, progress math, search, filtering, Sepolia D-04 scope compliance, sorting, pagination, and detail link integrity.
+11. **ProMiners Navbar Preview v6 Replication & Integration**:
+    - Replicated the approved floating capsule pill geometry from standalone preview v6:
+      - Desktop width: `85.4%`, horizontal offset: `left: 7.3%`, top offset: `top: 16px`, height: `68px`, border-radius: `999px` (fully rounded pill).
+      - Border: `none`, inner shining border: `none`, outer shadow: `0 8px 28px rgba(0,0,0,.08)`.
+      - Permanent desktop geometry: no resizing, shrinking, or jumping on scroll.
+    - Replicated smooth scroll & subtle glass treatment:
+      - Scrolled threshold: `window.scrollY > 36` applies `.navbar-shell.is-scrolled`.
+      - Glass backdrop: `color-mix(in srgb, var(--nav-bg) 72%, transparent)`, `-webkit-backdrop-filter: blur(24px) saturate(145%)`, shadow `0 9px 35px rgba(0,0,0,.12)`.
+    - Integrated official ProMiners brand identity:
+      - Asset: `public/prominers-logo.svg` (160px width, inverted off-white filter in dark mode).
+    - Integrated centralized ProMiners navigation (`frontend/src/config/navigation.ts`):
+      - 6 navigation items: `Explore`, `Tokens`, `Launchpad`, `Airdrops`, `Staking`, `Markets`.
+      - Typography: 17px font, font-weight 400, letter-spacing -0.035em, color `var(--nav-muted)`, hover `#E9762B`.
+      - Dropdown panels: 14px bold item titles with 11px descriptions; chevron animation; click-outside and Escape key dismissal.
+    - Implemented strictly scoped Navbar-only Light and Dark Mode:
+      - 36px circular toggle button switches `.theme-light` vs `.theme-dark` exclusively on `.navbar-shell`.
+      - Navbar surface, text, icons, dropdown panels, and wallet buttons adapt locally; global page background remains warm black `#0C0C0B` (zero global theme pollution).
+    - Integrated live ProMiners Web3 Connect Wallet control:
+      - Height: `41px` (matching preview avatar height).
+      - Disconnected: 41px pill button ("Connect Wallet", wallet icon), opens `openModal("CONNECT_WALLET")`.
+      - Connecting: 41px pill button with spinner + "Connecting...".
+      - Unsupported Network: 41px amber warning button with "Switch to Sepolia" (`switchNetwork(11155111)`).
+      - Connected: 41px pill button with emerald pulsing dot, live Sepolia ETH balance, shortened address, opens `openModal("WALLET_DETAILS")` with disconnect and account details.
+    - Implemented responsive mobile header:
+      - 1180px tablet layout adaptation.
+      - 860px mobile header (76px height) with brand logo, theme toggle, Connect Wallet button, and animated hamburger toggle opening vertical navigation menu with accordion dropdowns.
+      - 520px compact layout preventing horizontal overflow.
+    - Updated layout spacing:
+      - Added `pt-24 sm:pt-28` to `<main>` in `app-shell.tsx` ensuring top content begins right below the 68px floating capsule pill with `scroll-padding-top: 112px`.
+
+12. **Milestone 2-F Airdrop Discovery**:
+    - Built a shared, reusable `AirdropDirectory` component (`frontend/src/components/airdrops/airdrop-directory.tsx`) powering both `/airdrops/campaigns` (canonical airdrop directory) and `/explore/airdrops` (discovery entry) with 0 duplicate logic.
+    - Designed dual presentation: responsive 3-column Grid View and high-density Table View with sortable columns, claim progress bars, and mobile responsiveness.
+    - Preserved existing airdrop detail (`/airdrops/campaigns/[id]`), creation wizard (`/airdrops/campaigns/create`), claim portal (`/airdrops/claim`), and user airdrops (`/airdrops/my`) routes without modifying workflows.
+    - Integrated dynamic claim progress calculation (`claimedCount / recipientCount * 100`) and reward distribution metrics.
+    - Built multi-criteria filter toolbar:
+      - Search: instant client-side matching across campaign title, token symbol, token name, project name, and description.
+      - Status filter: `active`, `pending`, `ended`, `draft`.
+      - Network filter: strictly restricted per Architecture Decision D-04 to `All Networks` and `Ethereum Sepolia (11155111 — Active)`; non-Sepolia campaigns preserved in centralized mock catalog for cross-chain discovery without wallet/claim claims.
+      - Category filter: all categories derived from campaigns and linked tokens (`Governance`, `AI & Compute`, `Infrastructure`, `DeFi`, `Security & Privacy`, `DePIN`).
+      - Campaign Type filter: `merkle`, `batch`, `quest`, `governance`, `referral`.
+    - Built full sorting across 5 dimensions (title, start/creation date, total reward pool, recipient count, claim progress).
+    - Implemented configurable pagination (`4`, `6`, `12` items per page) with page number pills, previous/next controls, result count indicators, and automatic reset to page 1 on filter or search changes.
+    - Implemented component-level `EmptyState` fallback with a 1-click "Reset All Filters" action.
+    - Embedded explicit demonstration data disclaimers complying with D-04 and BUG-M2.
+    - Expanded `AirdropCampaign` interface in `frontend/src/types/index.ts` with optional `category?: string;`.
+    - Enriched typed mock dataset `MOCK_AIRDROPS` in `frontend/src/lib/mock-data.ts` to 8 realistic campaigns (5 Ethereum Sepolia D-04 items, 3 cross-chain discovery items on Arbitrum One, Base, Polygon).
+    - Cleaned unused imports in `frontend/src/app/airdrops/campaigns/[id]/page.tsx` for optimal lint hygiene.
+    - Created automated unit test suite `frontend/src/tests/airdrop-directory.test.ts` verifying schema, progress math, search, filtering, Sepolia D-04 scope compliance, sorting, pagination, and detail link integrity.
 
 ## Files created or modified
 
@@ -256,6 +305,7 @@
 - `frontend/src/app/explore/projects/page.tsx`
 - `frontend/src/app/explore/presales/page.tsx`
 - `frontend/src/app/explore/launches/page.tsx`
+- `frontend/src/app/explore/airdrops/page.tsx`
 - `frontend/src/app/tokens/page.tsx`
 - `frontend/src/app/tokens/explore/page.tsx`
 - `frontend/src/app/tokens/create/page.tsx`
@@ -268,6 +318,12 @@
 - `frontend/src/app/launchpad/launches/create/page.tsx`
 - `frontend/src/app/launchpad/presales/page.tsx`
 - `frontend/src/app/launchpad/presales/create/page.tsx`
+- `frontend/src/app/airdrops/page.tsx`
+- `frontend/src/app/airdrops/campaigns/page.tsx`
+- `frontend/src/app/airdrops/campaigns/[id]/page.tsx`
+- `frontend/src/app/airdrops/campaigns/create/page.tsx`
+- `frontend/src/app/airdrops/claim/page.tsx`
+- `frontend/src/app/airdrops/my/page.tsx`
 - `frontend/src/app/account/page.tsx`
 - `frontend/src/app/docs/page.tsx`
 - `frontend/src/components/layout/app-shell.tsx`
@@ -291,22 +347,27 @@
 - `frontend/src/tests/presale-directory.test.ts`
 - `frontend/src/components/launchpad/fair-launch-directory.tsx`
 - `frontend/src/tests/fair-launch-directory.test.ts`
+- `frontend/src/components/airdrops/airdrop-directory.tsx`
+- `frontend/src/tests/airdrop-directory.test.ts`
+- `frontend/public/prominers-logo.svg`
+- `frontend/src/app/layout.tsx`
 
 ## Tests and verification
 
-- Build: **PASSED** (`npm run build` completed successfully, 105/105 static routes prerendered with 0 errors)
+- Build: **PASSED** (`npm run build` completed successfully, 111/111 static routes prerendered with 0 errors)
 - Type-check: **PASSED** (TypeScript 5.x passed with 0 errors)
-- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 64 warnings across legacy files; 0 errors/warnings in Fair Launch Discovery files)
-- Automated tests: **PASSED** (`npm test` — all five test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, and `fair-launch-directory.test.ts` passed 100%)
+- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 59 warnings across legacy files; 0 errors/warnings in Airdrop Discovery files)
+- Automated tests: **PASSED** (`npm test` — all six test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, `fair-launch-directory.test.ts`, and `airdrop-directory.test.ts` passed 100%)
 - Local HTTP check: **PASSED** (`HTTP/1.1 200 OK` on `http://localhost:3000`)
+- Navbar v6 verification: **PASSED** (Floating capsule pill at 85.4% width, 7.3% offset, 68px height, 16px top offset, 999px radius, 0 border, subtle outer shadow; permanent geometry on scroll with smooth glass backdrop blur; 6 ProMiners navigation dropdowns; strictly scoped 36px circular theme toggle; live Ethereum Sepolia 41px Connect Wallet button and modal integration; mobile responsive layout verified)
 - Theme verification: **PASSED** (Warm black `#0C0C0B`, warm off-white `#E9E4DA`, signature orange `#E9762B`, high-contrast button text verified)
 - Halftone footer verification: **PASSED** (Giant dotted `Horizon X` wordmark, 2D canvas particle physics, pointer displacement, click shockwave ripple animation, print grain overlay, 3 navigation columns, brand info, and smooth back-to-top scroll verified)
-- Layout stability: **PASSED** (Zero horizontal overflow; clean mobile breakpoints down to 320px/400px viewports)
+- Layout stability: **PASSED** (Zero horizontal overflow; clean mobile breakpoints down to 320px/400px viewports; main content padded with `pt-24 sm:pt-28` below fixed capsule)
 
 ## Known issues
 
 - **KI-001 (Severity: INFO):** Real EVM Web3 wallet integration and native balance retrieval is live on Ethereum Sepolia Testnet. Smart contract actions and external market feeds remain mock-adapted for this phase. (Accepted for Phase 1.)
-- **KI-002 (Severity: LOW):** 64 unused variable/import warnings reported by ESLint across legacy page and wizard files (Fair Launch Discovery, Presales Discovery, Project Directory, and Token Explorer files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
+- **KI-002 (Severity: LOW):** 59 unused variable/import warnings reported by ESLint across legacy page and wizard files (Airdrop Discovery, Fair Launch Discovery, Presales Discovery, Project Directory, and Token Explorer files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
 - **KI-003 (Severity: INFO):** Next.js 16 Turbopack logs a prefetch warning when accessing dynamic `await params` outside of `<Suspense>` during instant navigation. Static page generation succeeds with 0 errors; planned resolution is wrapping dynamic route parameter access inside `<Suspense>` during future refactoring.
 - **KI-004 (Severity: INFO):** 8 owner-management sub-routes from `MODULE_INVENTORY.md` (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, etc.) are currently accessible via tabbed views within parent detail pages rather than isolated sub-route URLs. Planned resolution is dedicated sub-route partitioning during Phase 3–8 module milestones.
 
@@ -319,7 +380,7 @@
 
 ## Next exact task
 
-Milestone 2-F: Airdrop Discovery (`/explore/airdrops` discovery entry and `/airdrops/campaigns` canonical listing). Awaiting product owner review of Milestone 2-E before proceeding.
+Milestone 2-G: Staking Opportunities Discovery (`/explore/staking` discovery entry and `/staking/pools` canonical listing). Awaiting product owner review of Milestone 2-F before proceeding.
 
 ## Baseline compliance
 

@@ -263,3 +263,552 @@
     border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────────
+   Navbar Preview v6 — Exact Replication & Scoped Integration
+   Approved geometry:
+   - Width: 85.4%
+   - Left: 7.3%
+   - Top: 16px
+   - Height: 68px
+   - Radius: 999px (fully rounded pill)
+   - Border: none
+   - Outer shadow: 0 8px 28px rgba(0,0,0,.08)
+   - Inner shining border: none
+   - Permanent floating pill geometry (no resizing, shrinking or jumping on scroll)
+   ────────────────────────────────────────────────────────────────────────────── */
+
+.navbar-shell {
+  --nav-height: 68px;
+  position: fixed;
+  z-index: 1000;
+  top: 16px;
+  left: 7.3%;
+  width: 85.4%;
+  height: var(--nav-height);
+  padding: 0 27px;
+  display: flex;
+  align-items: center;
+  background: var(--nav-bg);
+  color: var(--nav-text);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.08);
+  transition:
+    background-color .32s ease,
+    border-color .32s ease,
+    box-shadow .38s cubic-bezier(.22,1,.36,1),
+    backdrop-filter .38s ease;
+  will-change: background-color, box-shadow, backdrop-filter;
+  box-sizing: border-box;
+}
+
+/* Scoped Theme Palettes — Affects ONLY navbar and its children */
+.navbar-shell.theme-light {
+  --nav-bg: rgba(249,249,248,.98);
+  --nav-text: #171715;
+  --nav-muted: #565653;
+  --nav-panel: rgba(255,255,254,.98);
+  --nav-panel-hover: #f5eee8;
+  --nav-border: rgba(15,15,15,.09);
+  --nav-shadow: 0 18px 55px rgba(0,0,0,.13);
+  --nav-control-bg: rgba(20,20,18,.055);
+  --nav-control-hover: rgba(233,118,43,.13);
+}
+
+.navbar-shell.theme-dark {
+  --nav-bg: rgba(12,12,11,.98);
+  --nav-text: #e9e4da;
+  --nav-muted: #b6b0a6;
+  --nav-panel: rgba(18,18,16,.98);
+  --nav-panel-hover: rgba(233,118,43,.13);
+  --nav-border: rgba(233,228,218,.14);
+  --nav-shadow: 0 18px 55px rgba(0,0,0,.38);
+  --nav-control-bg: rgba(233,228,218,.09);
+  --nav-control-hover: rgba(233,118,43,.18);
+}
+
+.navbar-shell.theme-dark .brand img {
+  filter: brightness(0) invert(1);
+}
+
+.navbar-shell.theme-dark .dropdown-detail {
+  color: #aaa399;
+}
+
+/* Scrolled state: identical geometry, subtle glass backdrop */
+.navbar-shell.is-scrolled {
+  top: 16px;
+  left: 7.3%;
+  width: 85.4%;
+  height: 68px;
+  padding: 0 27px;
+  border: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--nav-bg) 72%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(24px) saturate(145%);
+  box-shadow: 0 9px 35px rgba(0,0,0,.12);
+}
+
+.navbar-shell.is-scrolled .brand,
+.navbar-shell.is-scrolled .brand img {
+  width: 160px;
+}
+
+/* 3-Column Navigation Grid */
+.navbar-shell .navbar {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) auto minmax(170px, 1fr);
+  align-items: center;
+  gap: 28px;
+}
+
+/* Brand Column */
+.navbar-shell .brand {
+  display: inline-flex;
+  align-items: center;
+  width: 160px;
+  min-width: 160px;
+  text-decoration: none;
+}
+
+.navbar-shell .brand img {
+  display: block;
+  width: 160px;
+  height: auto;
+}
+
+/* Center Column: Links */
+.navbar-shell .nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 1.8vw, 32px);
+  white-space: nowrap;
+}
+
+.navbar-shell .nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-shell .nav-link {
+  border: 0;
+  padding: 10px 0;
+  background: transparent;
+  color: var(--nav-muted);
+  font-family: var(--font-dm-sans, "DM Sans", Inter, system-ui, sans-serif);
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -.035em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color .2s ease;
+  text-decoration: none;
+}
+
+.navbar-shell .nav-link:hover,
+.navbar-shell .nav-link.active {
+  color: #e9762b;
+}
+
+.navbar-shell .chevron {
+  opacity: .5;
+  transition: transform .2s ease;
+}
+
+.navbar-shell .chevron.is-open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Panels */
+.navbar-shell .dropdown-panel {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: -22px;
+  width: 280px;
+  padding: 9px;
+  border: 1px solid var(--nav-border);
+  border-radius: 15px;
+  background: var(--nav-panel);
+  color: var(--nav-text);
+  box-shadow: var(--nav-shadow);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity .18s ease, transform .18s ease, visibility .18s;
+  z-index: 100;
+}
+
+.navbar-shell .dropdown-panel.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.navbar-shell .dropdown-panel a {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: var(--nav-text);
+  text-decoration: none;
+  transition: background .15s ease, color .15s ease;
+  box-sizing: border-box;
+}
+
+.navbar-shell .dropdown-panel a:hover {
+  background: var(--nav-panel-hover);
+  color: #e9762b;
+}
+
+.navbar-shell .dropdown-label {
+  font-family: var(--font-dm-sans, "DM Sans", Inter, system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--nav-text);
+}
+
+.navbar-shell .dropdown-panel a:hover .dropdown-label {
+  color: #e9762b;
+}
+
+.navbar-shell .dropdown-detail {
+  color: var(--nav-muted);
+  font-size: 11px;
+}
+
+/* Right Column: Actions */
+.navbar-shell .nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 22px;
+}
+
+.navbar-shell .dashboard-link {
+  font-family: var(--font-dm-sans, "DM Sans", Inter, system-ui, sans-serif);
+  font-size: 17px;
+  letter-spacing: -.035em;
+  color: var(--nav-text);
+  transition: color .2s ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.navbar-shell .dashboard-link:hover {
+  color: #e9762b;
+}
+
+/* Theme Toggle Button (36px circular) */
+.navbar-shell .theme-toggle {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--nav-border);
+  border-radius: 50%;
+  background: var(--nav-control-bg);
+  color: var(--nav-text);
+  cursor: pointer;
+  transition: color .22s ease, background .22s ease, border-color .22s ease, transform .22s ease;
+}
+
+.navbar-shell .theme-toggle:hover {
+  color: #e9762b;
+  background: var(--nav-control-hover);
+  transform: rotate(-8deg);
+}
+
+.navbar-shell .theme-toggle svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Connect Wallet Button (41px height matching v6 avatar control) */
+.navbar-shell .wallet-btn {
+  height: 41px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-family: var(--font-dm-sans, "DM Sans", Inter, system-ui, sans-serif);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
+  border: none;
+  box-sizing: border-box;
+}
+
+.navbar-shell .wallet-btn-connect {
+  background: #e9762b;
+  color: #0c0c0b;
+  box-shadow: 0 4px 14px rgba(233,118,43,.25);
+}
+
+.navbar-shell .wallet-btn-connect:hover {
+  background: #f28a45;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(233,118,43,.35);
+}
+
+.navbar-shell.theme-light .wallet-btn-connect {
+  background: #0c0c0b;
+  color: #e9e4da;
+  box-shadow: 0 4px 14px rgba(0,0,0,.15);
+}
+
+.navbar-shell.theme-light .wallet-btn-connect:hover {
+  background: #e9762b;
+  color: #0c0c0b;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(233,118,43,.3);
+}
+
+.navbar-shell .wallet-btn-connected {
+  border: 1px solid var(--nav-border);
+  background: var(--nav-control-bg);
+  color: var(--nav-text);
+  font-family: var(--font-geist-mono, monospace);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0 15px;
+}
+
+.navbar-shell .wallet-btn-connected:hover {
+  background: var(--nav-control-hover);
+  border-color: rgba(233,118,43,.35);
+  transform: translateY(-1px);
+}
+
+.navbar-shell .wallet-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  flex-shrink: 0;
+}
+
+.navbar-shell .wallet-balance {
+  color: var(--nav-muted);
+  font-size: 12px;
+}
+
+.navbar-shell .wallet-address {
+  color: var(--nav-text);
+  font-weight: 600;
+}
+
+.navbar-shell .wallet-btn-warning {
+  background: rgba(245, 158, 11, .15);
+  border: 1px solid rgba(245, 158, 11, .4);
+  color: #f59e0b;
+  font-size: 13px;
+}
+
+.navbar-shell .wallet-btn-warning:hover {
+  background: rgba(245, 158, 11, .25);
+}
+
+.navbar-shell .wallet-btn-loading {
+  background: var(--nav-control-bg);
+  border: 1px solid var(--nav-border);
+  color: var(--nav-muted);
+  cursor: default;
+}
+
+/* Mobile Toggle Hamburger */
+.navbar-shell .mobile-toggle {
+  display: none;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1180px) {
+  .navbar-shell {
+    padding: 0 35px;
+  }
+  .navbar-shell .navbar {
+    grid-template-columns: 150px 1fr auto;
+    gap: 16px;
+  }
+  .navbar-shell .brand,
+  .navbar-shell .brand img {
+    width: 145px;
+    min-width: 145px;
+  }
+  .navbar-shell .nav-links {
+    gap: 16px;
+  }
+  .navbar-shell .nav-link,
+  .navbar-shell .dashboard-link {
+    font-size: 15px;
+  }
+  .navbar-shell .nav-actions {
+    gap: 16px;
+  }
+  .navbar-shell.is-scrolled {
+    left: 3%;
+    width: 94%;
+    padding: 0 22px;
+  }
+}
+
+@media (max-width: 860px) {
+  .navbar-shell,
+  .navbar-shell.is-scrolled {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 76px;
+    padding: 0 20px;
+    border-radius: 0;
+    background: var(--nav-bg);
+    color: var(--nav-text);
+    border: 0;
+    box-shadow: 0 1px 0 rgba(0,0,0,.07);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .navbar-shell .navbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .navbar-shell .brand,
+  .navbar-shell .brand img {
+    width: 140px;
+    min-width: 140px;
+  }
+  .navbar-shell .nav-links {
+    display: none;
+    position: absolute;
+    top: 84px;
+    left: 14px;
+    right: 14px;
+    padding: 14px;
+    border: 1px solid var(--nav-border);
+    border-radius: 15px;
+    background: var(--nav-panel);
+    color: var(--nav-text);
+    box-shadow: var(--nav-shadow);
+    align-items: stretch;
+    flex-direction: column;
+    gap: 2px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+  .navbar-shell .nav-links.mobile-open {
+    display: flex;
+  }
+  .navbar-shell .nav-links .nav-item {
+    display: block;
+    width: 100%;
+  }
+  .navbar-shell .nav-link {
+    width: 100%;
+    justify-content: space-between;
+    padding: 12px 10px;
+    font-size: 15px;
+    color: var(--nav-text);
+  }
+  .navbar-shell .dropdown-panel {
+    position: static;
+    display: none;
+    width: 100%;
+    margin: 0 0 6px;
+    box-shadow: none;
+    border: 0;
+    background: var(--nav-control-bg);
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+  }
+  .navbar-shell .dropdown-panel.visible {
+    display: block;
+  }
+  .navbar-shell .nav-actions {
+    margin-left: auto;
+    gap: 12px;
+  }
+  .navbar-shell .theme-toggle {
+    width: 35px;
+    height: 35px;
+  }
+  .navbar-shell .dashboard-link {
+    font-size: 14px;
+  }
+  .navbar-shell .mobile-toggle {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--nav-border);
+    border-radius: 50%;
+    background: var(--nav-control-bg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .navbar-shell .mobile-toggle span {
+    width: 15px;
+    height: 1.5px;
+    background: var(--nav-text);
+    transition: transform .2s ease;
+  }
+  .navbar-shell .mobile-toggle.opened span:first-child {
+    transform: translateY(3.25px) rotate(45deg);
+  }
+  .navbar-shell .mobile-toggle.opened span:last-child {
+    transform: translateY(-3.25px) rotate(-45deg);
+  }
+}
+
+@media (max-width: 520px) {
+  .navbar-shell,
+  .navbar-shell.is-scrolled {
+    padding: 0 14px;
+  }
+  .navbar-shell .brand,
+  .navbar-shell .brand img {
+    width: 124px;
+    min-width: 124px;
+  }
+  .navbar-shell .nav-actions {
+    gap: 8px;
+  }
+  .navbar-shell .dashboard-link {
+    display: none;
+  }
+  .navbar-shell .wallet-btn {
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  .navbar-shell .wallet-balance {
+    display: none;
+  }
+}
