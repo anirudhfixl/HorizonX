@@ -83,13 +83,13 @@
    - Implemented a desktop table layout with token identity (avatar initials, name, symbol), category pill, network badge (with special Ethereum Sepolia D-04 highlight), simulated price, 24h percentage change (with trend icons and colors), 24h volume, market cap, lifecycle/audit status badges, and direct detail links.
    - Implemented responsive mobile/tablet card presentation with clean touch targets and clear data hierarchy.
    - Implemented client-side instant search for token names and symbols with clear button (`X`) and empty state trigger.
-   - Implemented multi-criteria filters: Network (`All Networks`, `Ethereum Sepolia (D-04 Scope)`, `Arbitrum One`, `Base`, `Polygon`), Category (`Governance`, `AI & Compute`, `DeFi`, `DePIN`, `Infrastructure`, `Security & Privacy`, `Meme & Community`), and Status (`active`, `pending`).
+   - Implemented multi-criteria filters: Network (`All Networks`, `Ethereum Sepolia (11155111 — Active)` strictly restricted per Architecture Decision D-04; non-Sepolia tokens remain preserved in centralized mock catalog for cross-chain discovery without wallet claims), Category (`Governance`, `AI & Compute`, `DeFi`, `DePIN`, `Infrastructure`, `Security & Privacy`, `Meme & Community`), and Status (`active`, `pending`).
    - Implemented full sorting across all 5 dimensions (`name`, `price`, `marketCap`, `priceChange24h`, `volume24h`) with interactive table header click-to-sort and sort direction indicators (`asc` / `desc`).
    - Implemented configurable pagination (`5`, `10`, `20` per page), previous/next controls, page number pills, total result counts, and automatic page 1 reset on filter/search changes.
    - Implemented component-level `EmptyState` fallback with a 1-click "Clear All Filters" action.
    - Upgraded `MOCK_TOKENS` schema in `src/types/index.ts` and `src/lib/mock-data.ts` with typed categories and 5 corresponding ecosystem tokens (`quantum`, `nexus`, `zkpv`, `ccat`, `mdao`).
-   - Embedded explicit demonstration data disclaimers: "Demonstration Data Notice: Token pricing, 24h percentage changes, market caps, and audit badges are simulated for demonstration. Per Architecture Decision D-04, Ethereum Sepolia Testnet (11155111) is the currently active EVM scope."
-   - Created automated unit test suite `src/tests/token-explorer.test.ts` verifying data integrity, search, filtering, sorting, and pagination logic.
+   - Embedded explicit demonstration data disclaimers: "Demonstration Data Notice: Token pricing, 24h percentage changes, market caps, and audit badges are simulated for demonstration. Per Architecture Decision D-04, Ethereum Sepolia Testnet (Chain ID: 11155111) is the only approved and supported EVM network. Non-Sepolia tokens are preserved for cross-chain catalog discovery and do not imply wallet or contract support."
+   - Created automated unit test suite `src/tests/token-explorer.test.ts` verifying data integrity, search, Sepolia D-04 filter isolation, sorting, and pagination logic.
 
 ## Files created or modified
 

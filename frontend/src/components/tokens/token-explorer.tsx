@@ -79,14 +79,6 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
     return Array.from(set).sort();
   }, []);
 
-  const uniqueNetworks = useMemo(() => {
-    const set = new Set<string>();
-    MOCK_TOKENS.forEach((t) => {
-      if (t.network) set.add(t.network);
-    });
-    return Array.from(set).sort();
-  }, []);
-
   // Filter Change Handlers with immediate page reset
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
@@ -262,11 +254,11 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
             <span>
               <strong className="text-foreground">Demonstration Data Notice:</strong> Token pricing, 24h percentage
               changes, market caps, and audit badges are simulated for demonstration. Per Architecture Decision{" "}
-              <strong className="text-foreground">D-04</strong>, Ethereum Sepolia Testnet (11155111) is the currently active EVM scope.
+              <strong className="text-foreground">D-04</strong>, Ethereum Sepolia Testnet (Chain ID: 11155111) is the only approved and supported EVM network. Non-Sepolia tokens are preserved for cross-chain catalog discovery and do not imply wallet or contract support.
             </span>
           </div>
           <Badge variant="outline" className="border-primary/30 text-primary font-mono text-[11px] self-start sm:self-auto shrink-0">
-            D-04: Sepolia Active
+            D-04: Sepolia (11155111) Only
           </Badge>
         </div>
       </div>
@@ -295,7 +287,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
             )}
           </div>
 
-          {/* Network Filter Select (3 cols) */}
+          {/* Network Filter Select (3 cols) - Restricted to Ethereum Sepolia per D-04 */}
           <div className="lg:col-span-3">
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] text-muted-foreground shrink-0 hidden sm:inline">Network:</span>
@@ -303,16 +295,10 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
                 value={networkFilter}
                 onChange={(e) => handleNetworkChange(e.target.value)}
                 className="w-full rounded-lg border border-border/70 bg-secondary/30 px-2.5 py-2 text-xs text-foreground focus:border-primary focus:outline-none"
+                aria-label="Filter tokens by network"
               >
                 <option value="all">All Networks ({MOCK_TOKENS.length})</option>
-                <option value="sepolia">Ethereum Sepolia (D-04 Scope)</option>
-                {uniqueNetworks
-                  .filter((net) => !net.toLowerCase().includes("sepolia") && net.toLowerCase() !== "ethereum")
-                  .map((net) => (
-                    <option key={net} value={net}>
-                      {net}
-                    </option>
-                  ))}
+                <option value="sepolia">Ethereum Sepolia (11155111 — Active)</option>
               </select>
             </div>
           </div>

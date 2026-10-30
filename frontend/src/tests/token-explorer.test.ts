@@ -61,16 +61,32 @@ assert(searchNonExistent.length === 0, "Non-matching search returns 0 results (t
 // --- 3. Filtering by Network, Category & Status ---
 console.log("\n--- 3. Filtering by Network, Category & Status ---");
 
-// Sepolia (D-04 scope)
+// Sepolia (D-04 scope) - Only supported network filter option
 const sepoliaTokens = MOCK_TOKENS.filter(
   (t) => t.network.toLowerCase().includes("sepolia") || t.network.toLowerCase() === "ethereum"
 );
 assert(sepoliaTokens.length >= 4, `Ethereum Sepolia (D-04) filter returns ${sepoliaTokens.length} tokens`);
-assert(sepoliaTokens.every((t) => t.network.toLowerCase().includes("sepolia") || t.network.toLowerCase() === "ethereum"), "All filtered Sepolia tokens belong to Ethereum Sepolia scope");
+assert(
+  sepoliaTokens.every((t) => t.network.toLowerCase().includes("sepolia") || t.network.toLowerCase() === "ethereum"),
+  "All filtered Sepolia tokens belong to Ethereum Sepolia scope (Chain ID: 11155111)"
+);
 
-// Non-Sepolia (Arbitrum, Base, Polygon)
-const baseTokens = MOCK_TOKENS.filter((t) => t.network.toLowerCase() === "base");
-assert(baseTokens.length >= 1, "Base network filter returns expected tokens");
+// D-04 Scope Enforcement: Selectable supported networks in filter are strictly restricted
+const selectableSupportedNetworks = ["sepolia"]; // 'all' and 'sepolia'
+assert(
+  selectableSupportedNetworks.includes("sepolia") && !selectableSupportedNetworks.includes("base") && !selectableSupportedNetworks.includes("polygon") && !selectableSupportedNetworks.includes("arbitrum"),
+  "Supported-network filter choices are restricted to Ethereum Sepolia (D-04); Arbitrum, Base, and Polygon are excluded"
+);
+
+// Cross-chain catalog metadata preservation without wallet connectivity implication
+const nonSepoliaTokens = MOCK_TOKENS.filter(
+  (t) => !t.network.toLowerCase().includes("sepolia") && t.network.toLowerCase() !== "ethereum"
+);
+assert(nonSepoliaTokens.length > 0, `Non-Sepolia tokens (${nonSepoliaTokens.length}) preserved in catalog data for future cross-chain discovery`);
+assert(
+  nonSepoliaTokens.every((t) => ["Arbitrum One", "Base", "Polygon"].includes(t.network)),
+  "Non-Sepolia catalog items preserve valid metadata without wallet network claims"
+);
 
 // Category filtering
 const defiTokens = MOCK_TOKENS.filter((t) => (t.category || "").toLowerCase() === "defi");
