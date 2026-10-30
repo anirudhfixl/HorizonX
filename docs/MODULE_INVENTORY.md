@@ -39,7 +39,7 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 | `/explore/presales` | Presales discovery | Public | 2 | COMPLETE |
 | `/explore/launches` | Fair launches discovery | Public | 2 | COMPLETE |
 | `/explore/airdrops` | Airdrop discovery | Public | 2 | COMPLETE |
-| `/explore/staking` | Staking pool discovery | Public | 2 | SHELL |
+| `/explore/staking` | Staking pool discovery | Public | 2 | COMPLETE |
 
 **Note:** Explore is a discovery hub. Each sub-route links to the canonical detail route in its owning module. Search, filters, sort, pagination and empty/loading/error states required.
 
@@ -105,7 +105,7 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 | Route | View | Auth | Phase | Status |
 |---|---|---|---|---|
 | `/staking` | Staking dashboard | Public | 6 | SHELL |
-| `/staking/pools` | Pool discovery listing | Public | 6 | SHELL |
+| `/staking/pools` | Pool discovery listing | Public | 6 | COMPLETE |
 | `/staking/pools/create` | Create Staking Pool wizard | Wallet-gated | 6 | SHELL |
 | `/staking/pools/[id]` | Pool detail | Public | 6 | SHELL |
 | `/staking/pools/[id]/manage` | Pool management (owner) | Owner | 6 | SHELL |

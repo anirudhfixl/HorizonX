@@ -5,8 +5,8 @@
 - Baseline version: 1.0
 - Architecture decisions: 1.1
 - Current phase: 2 — Explore & Discovery
-- Current module: Milestone 2-F (Airdrop Discovery)
-- Overall status: COMPLETE (Awaiting product owner review before starting Milestone 2-G)
+- Current module: Milestone 2-G (Staking Opportunities Discovery)
+- Overall status: COMPLETE (Awaiting product owner review before proceeding to Milestone 3)
 - Last updated: 2026-10-30
 
 ## Completed in this task
@@ -124,6 +124,40 @@
    - Implemented component-level `EmptyState` fallback with a 1-click "Clear All Filters" action.
    - Embedded explicit demonstration data disclaimers complying with D-04 and BUG-M2.
    - Created automated unit test suite `src/tests/presale-directory.test.ts` verifying schema, progress math, search, filtering, Sepolia D-04 scope compliance, sorting, pagination, and detail link integrity.
+
+10. **Milestone 2-E Fair Launch Discovery**:
+   - Built a shared, reusable `FairLaunchDirectory` component (`src/components/launchpad/fair-launch-directory.tsx`) powering both `/launchpad/launches` (canonical fair launch directory) and `/explore/launches` (discovery entry) with 0 duplicate code.
+   - Responsive 3-column Grid View and Table View with fair allocation progress, market caps, participants, and softcap status.
+   - Multi-criteria filter toolbar: search (launch name, token name/symbol, project, description), status (`active`, `pending`, `ended`, `draft`), network (restricted per D-04 to All and Sepolia), and categories.
+   - Configurable pagination (`4`, `6`, `12` items) and sorting across 4 dimensions.
+   - Automated unit test suite `src/tests/fair-launch-directory.test.ts` (40+ assertions passing 100%).
+
+11. **Milestone 2-F Airdrop Campaign Discovery**:
+   - Built a shared, reusable `AirdropDirectory` component (`src/components/airdrops/airdrop-directory.tsx`) powering both `/airdrops/campaigns` (canonical airdrop directory) and `/explore/airdrops` (discovery entry) with 0 duplicate logic.
+   - Responsive Grid View and Table View with merkle verification tags, claim progress bars, recipient counts, and campaign timeline metrics.
+   - Multi-criteria filter toolbar: search, status, network (D-04 Sepolia scope), category, and campaign type (`batch`, `quest`, `governance`, `recurring`, `merkle`).
+   - Automated unit test suite `src/tests/airdrop-directory.test.ts` (40+ assertions passing 100%).
+
+12. **Milestone 2-G Staking Opportunities Discovery**:
+   - Built a shared, reusable `StakingPoolDirectory` component (`src/components/staking/staking-pool-directory.tsx`) powering both `/staking/pools` (canonical staking directory) and `/explore/staking` (discovery entry) with 0 duplicated logic.
+   - Responsive 3-column Grid View and high-density Table View with lock duration indicators, APY highlights, total staked metrics, and mobile cards without horizontal overflow.
+   - Preserved existing routes: `/staking/pools/[id]`, `/staking/pools/create`, and `/staking/my` without workflow modifications.
+   - Enforced strict Architecture Decision D-04 compliance:
+     - Selectable supported network filter restricted to `Ethereum Sepolia (11155111 — Active)` and `All Networks`.
+     - Non-Sepolia staking metadata preserved in centralized mock catalog for cross-chain discovery without wallet claims.
+   - Integrated simulated metric disclosures: APY, TVL, and total staked amounts explicitly disclosed as simulated demonstration data.
+   - Distinguished flexible staking (`lockPeriodDays === 0`) with instant withdrawals from fixed-duration lockups (`lockPeriodDays > 0`).
+   - Built multi-criteria filter toolbar:
+     - Search: instant client-side matching across pool name, token symbol, token name, project name, and description keywords.
+     - Status filter: `all`, `active`, `pending`, `ended`, `draft`.
+     - Network filter: strictly restricted per D-04 to `All Networks` and `Ethereum Sepolia (11155111 — Active)`.
+     - Category filter: all unique categories across pools and linked tokens (`Governance`, `AI & Compute`, `DeFi`, `Infrastructure`, `Security & Privacy`, `DePIN`).
+     - Lock Type filter: `All Lock Types`, `Flexible (No Lock)`, and `Fixed Duration Lock`.
+   - Built comprehensive sorting across 5 dimensions: APY (highest/lowest), Total Staked, Lock Duration (shortest/longest), Name (A-Z/Z-A), and Created Date (newest/oldest).
+   - Configurable pagination (`4`, `6`, `12` items per page) with page pills, boundary handling, and auto-reset on filter changes.
+   - Component-level `EmptyState` fallback with 1-click filter reset.
+   - Expanded `MOCK_STAKING_POOLS` in `src/lib/mock-data.ts` to 8 realistic pools (5 Sepolia D-04 pools, 3 cross-chain discovery pools).
+   - Created automated unit test suite `src/tests/staking-pool-directory.test.ts` (45+ assertions passing 100%).
 
 ## Files created or modified
 
@@ -349,15 +383,17 @@
 - `frontend/src/tests/fair-launch-directory.test.ts`
 - `frontend/src/components/airdrops/airdrop-directory.tsx`
 - `frontend/src/tests/airdrop-directory.test.ts`
+- `frontend/src/components/staking/staking-pool-directory.tsx`
+- `frontend/src/tests/staking-pool-directory.test.ts`
 - `frontend/public/prominers-logo.svg`
 - `frontend/src/app/layout.tsx`
 
 ## Tests and verification
 
-- Build: **PASSED** (`npm run build` completed successfully, 111/111 static routes prerendered with 0 errors)
+- Build: **PASSED** (`npm run build` completed successfully, 116/116 static routes prerendered with 0 errors)
 - Type-check: **PASSED** (TypeScript 5.x passed with 0 errors)
-- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 59 warnings across legacy files; 0 errors/warnings in Airdrop Discovery files)
-- Automated tests: **PASSED** (`npm test` — all six test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, `fair-launch-directory.test.ts`, and `airdrop-directory.test.ts` passed 100%)
+- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 51 warnings across legacy files; 0 errors/warnings in Staking Discovery files)
+- Automated tests: **PASSED** (`npm test` — all seven test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, `fair-launch-directory.test.ts`, `airdrop-directory.test.ts`, and `staking-pool-directory.test.ts` (45/45) passed 100%)
 - Local HTTP check: **PASSED** (`HTTP/1.1 200 OK` on `http://localhost:3000`)
 - Navbar v6 verification: **PASSED** (Floating capsule pill at 85.4% width, 7.3% offset, 68px height, 16px top offset, 999px radius, 0 border, subtle outer shadow; permanent geometry on scroll with smooth glass backdrop blur; 6 ProMiners navigation dropdowns; strictly scoped 36px circular theme toggle; live Ethereum Sepolia 41px Connect Wallet button and modal integration; mobile responsive layout verified)
 - Theme verification: **PASSED** (Warm black `#0C0C0B`, warm off-white `#E9E4DA`, signature orange `#E9762B`, high-contrast button text verified)
@@ -367,7 +403,7 @@
 ## Known issues
 
 - **KI-001 (Severity: INFO):** Real EVM Web3 wallet integration and native balance retrieval is live on Ethereum Sepolia Testnet. Smart contract actions and external market feeds remain mock-adapted for this phase. (Accepted for Phase 1.)
-- **KI-002 (Severity: LOW):** 59 unused variable/import warnings reported by ESLint across legacy page and wizard files (Airdrop Discovery, Fair Launch Discovery, Presales Discovery, Project Directory, and Token Explorer files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
+- **KI-002 (Severity: LOW):** 51 unused variable/import warnings reported by ESLint across legacy page and wizard files (Staking Discovery, Airdrop Discovery, Fair Launch Discovery, Presales Discovery, Project Directory, and Token Explorer files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
 - **KI-003 (Severity: INFO):** Next.js 16 Turbopack logs a prefetch warning when accessing dynamic `await params` outside of `<Suspense>` during instant navigation. Static page generation succeeds with 0 errors; planned resolution is wrapping dynamic route parameter access inside `<Suspense>` during future refactoring.
 - **KI-004 (Severity: INFO):** 8 owner-management sub-routes from `MODULE_INVENTORY.md` (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, etc.) are currently accessible via tabbed views within parent detail pages rather than isolated sub-route URLs. Planned resolution is dedicated sub-route partitioning during Phase 3–8 module milestones.
 
@@ -380,7 +416,7 @@
 
 ## Next exact task
 
-Milestone 2-G: Staking Opportunities Discovery (`/explore/staking` discovery entry and `/staking/pools` canonical listing). Awaiting product owner review of Milestone 2-F before proceeding.
+Milestone 2 complete. Awaiting product owner review and approval of Milestone 2-G before beginning Milestone 3 (Tokens Management & Token Lifecycle).
 
 ## Baseline compliance
 

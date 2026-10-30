@@ -200,6 +200,8 @@ export interface StakingPool {
   contractAddress?: string;
   startTime?: string;
   endTime?: string;
+  description?: string;
+  category?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,12 +1,11 @@
 import React from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { MetricCard } from "@/components/shared/metric-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { MOCK_STAKING_POOLS } from "@/lib/mock-data";
-import { Layers, ShieldCheck, Lock, Unlock } from "lucide-react";
+import { Layers } from "lucide-react";
 
 export function generateStaticParams() {
   return MOCK_STAKING_POOLS.map((p) => ({ id: p.id }));

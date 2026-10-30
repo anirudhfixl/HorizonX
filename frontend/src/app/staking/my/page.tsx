@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { Layers, Plus, Wallet } from "lucide-react";
+import { Layers, Wallet } from "lucide-react";
 
 export default function MyStakingPositionsPage() {
   const { isConnected } = useWallet();
