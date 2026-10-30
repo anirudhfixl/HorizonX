@@ -44,6 +44,7 @@ export interface Token {
   description?: string;
   logoUrl?: string;
   network: string;
+  category?: string;
   contractAddress?: string;
   standard?: string;
   totalSupply?: string;
