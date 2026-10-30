@@ -5,8 +5,8 @@
 - Baseline version: 1.0
 - Architecture decisions: 1.1
 - Current phase: 3 — Tokens Management & Token Lifecycle
-- Current module: Milestone 3-A (Token Management Architecture & Implementation Audit)
-- Overall status: AUDIT COMPLETE — AWAITING PRODUCT OWNER APPROVAL
+- Current module: Milestone 3-B (Token Dashboard & Navigation Architecture)
+- Overall status: COMPLETE — AWAITING PRODUCT OWNER APPROVAL TO PROCEED TO PHASE 3-C
 - Last updated: 2026-10-30
 
 ## Completed in this task
@@ -328,6 +328,45 @@
     - Cleaned unused imports in `frontend/src/app/airdrops/campaigns/[id]/page.tsx` for optimal lint hygiene.
     - Created automated unit test suite `frontend/src/tests/airdrop-directory.test.ts` verifying schema, progress math, search, filtering, Sepolia D-04 scope compliance, sorting, pagination, and detail link integrity.
 
+13. **Milestone 2-G Staking Opportunities Discovery**:
+    - Built a unified `StakingPoolDirectory` component (`frontend/src/components/staking/staking-pool-directory.tsx`) powering both `/staking/pools` (canonical staking directory) and `/explore/staking` (discovery entry) with 0 duplicate logic.
+    - Integrated multi-criteria filtering, APY/TVL sorting, lock duration filters, D-04 Sepolia scoping, and comprehensive test suite (`frontend/src/tests/staking-pool-directory.test.ts`).
+
+14. **Phase 3-A Token Management Architecture & Implementation Audit**:
+    - Conducted comprehensive audit of existing token routes (`/tokens`, `/tokens/explore`, `/tokens/create`, `/tokens/my`, `/tokens/[id]`), components, and mock structures.
+    - Documented completed vs simulated state, risk register, and phase breakdown in `docs/PHASE_3A_AUDIT.md`.
+
+15. **Milestone 3-B Token Dashboard & Navigation Architecture**:
+    - Transformed `/tokens` (`frontend/src/app/tokens/page.tsx`) from a static shell into a polished, high-performance Token Management Dashboard and central entry point for the tokens module.
+    - Derived all overview metrics dynamically from the centralized token catalog (`MOCK_TOKENS`):
+      - 9 Tokens Cataloged (7 active, 2 pending).
+      - $818.75M Simulated Market Cap derived from circulating supply * price.
+      - $9.90M 24h Aggregated Trading Volume.
+      - 5 Sepolia Active Deployments (strictly conforming to Architecture Decision D-04).
+    - Designed prominent demonstration and simulation disclaimer notice banners making it explicit that catalog aggregations are simulated estimates rather than live blockchain telemetry.
+    - Integrated live Connected Wallet Orientation:
+      - Reactive connection via `useWallet()` displaying connected address, active network indicator, and live native Sepolia ETH balance.
+      - Dynamic CTA navigating to personal portfolio (`/tokens/my`) when connected or opening `ConnectWalletModal` when disconnected.
+    - Designed Quick Navigation Action cards:
+      - Explore Tokens (`/tokens/explore`) with catalog asset counter.
+      - Deploy & Register Token (`/tokens/create`) with 4-step wizard guide.
+      - My Tokens (`/tokens/my`) with connected wallet filter notice.
+    - Integrated Featured & Highlighted Assets spotlight:
+      - Featured 4 flagship ecosystem tokens (`PMIN`, `QNET`, `ZKPV`, `CCAT`) with direct links to `/tokens/[id]`.
+      - Displays token identity, category, 24h change badge, verified status badge, market cap, and primary action button.
+    - Implemented Token Distribution & Status Summaries:
+      - Category distribution with proportional progress bars and percentage calculation.
+      - Verification & Lifecycle status breakdown (Official Verified, Ecosystem Community, Deploying & Pending).
+    - Implemented Recently Added Tokens section:
+      - Chronologically ordered descending by `createdAt` catalog timestamp.
+      - Displays token identity, category, creation date, network deployment badge, simulated price, and direct link to token details.
+    - Strictly enforced Architecture Decision D-04:
+      - Ethereum Sepolia (11155111) is the only supported transaction network.
+      - Preserved cross-chain catalog items for informational discovery while explicitly labeling their host chains without claiming multi-chain wallet support.
+    - Built comprehensive automated unit test suite `frontend/src/tests/tokens-dashboard.test.ts`:
+      - 6 unit test suites covering Schema & Data Integrity, Dashboard Metric Calculations, Recent Tokens Sorting, Featured Tokens Selection, Currency & Number Formatters, and D-04 Network Compliance.
+      - 100% passing across all 8 project test suites.
+
 ## Files created or modified
 
 - `docs/PROJECT_PROGRESS.md`
@@ -396,13 +435,16 @@
 - `frontend/src/tests/staking-pool-directory.test.ts`
 - `frontend/public/prominers-logo.svg`
 - `frontend/src/app/layout.tsx`
+- `docs/PHASE_3A_AUDIT.md`
+- `frontend/src/app/tokens/page.tsx`
+- `frontend/src/tests/tokens-dashboard.test.ts`
 
 ## Tests and verification
 
 - Build: **PASSED** (`npm run build` completed successfully, 116/116 static routes prerendered with 0 errors)
 - Type-check: **PASSED** (TypeScript 5.x passed with 0 errors)
-- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 51 warnings across legacy files; 0 errors/warnings in Staking Discovery files)
-- Automated tests: **PASSED** (`npm test` — all seven test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, `fair-launch-directory.test.ts`, `airdrop-directory.test.ts`, and `staking-pool-directory.test.ts` (45/45) passed 100%)
+- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 49 warnings across legacy files; 0 errors/warnings in Phase 3-B Token Dashboard files)
+- Automated tests: **PASSED** (`npm test` — all eight test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, `project-directory.test.ts`, `presale-directory.test.ts`, `fair-launch-directory.test.ts`, `airdrop-directory.test.ts`, `staking-pool-directory.test.ts` (45/45), and `tokens-dashboard.test.ts` (6/6) passed 100%)
 - Local HTTP check: **PASSED** (`HTTP/1.1 200 OK` on `http://localhost:3000`)
 - Navbar v6 verification: **PASSED** (Floating capsule pill at 85.4% width, 7.3% offset, 68px height, 16px top offset, 999px radius, 0 border, subtle outer shadow; permanent geometry on scroll with smooth glass backdrop blur; 6 ProMiners navigation dropdowns; strictly scoped 36px circular theme toggle; live Ethereum Sepolia 41px Connect Wallet button and modal integration; mobile responsive layout verified)
 - Theme verification: **PASSED** (Warm black `#0C0C0B`, warm off-white `#E9E4DA`, signature orange `#E9762B`, high-contrast button text verified)
@@ -412,7 +454,7 @@
 ## Known issues
 
 - **KI-001 (Severity: INFO):** Real EVM Web3 wallet integration and native balance retrieval is live on Ethereum Sepolia Testnet. Smart contract actions and external market feeds remain mock-adapted for this phase. (Accepted for Phase 1.)
-- **KI-002 (Severity: LOW):** 51 unused variable/import warnings reported by ESLint across legacy page and wizard files (Staking Discovery, Airdrop Discovery, Fair Launch Discovery, Presales Discovery, Project Directory, and Token Explorer files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
+- **KI-002 (Severity: LOW):** 49 unused variable/import warnings reported by ESLint across legacy page and wizard files (Phase 3-B Token Dashboard and test files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
 - **KI-003 (Severity: INFO):** Next.js 16 Turbopack logs a prefetch warning when accessing dynamic `await params` outside of `<Suspense>` during instant navigation. Static page generation succeeds with 0 errors; planned resolution is wrapping dynamic route parameter access inside `<Suspense>` during future refactoring.
 - **KI-004 (Severity: INFO):** 8 owner-management sub-routes from `MODULE_INVENTORY.md` (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, etc.) are currently accessible via tabbed views within parent detail pages rather than isolated sub-route URLs. Planned resolution is dedicated sub-route partitioning during Phase 3–8 module milestones.
 
@@ -425,7 +467,7 @@
 
 ## Next exact task
 
-Phase 3-A audit complete. Awaiting product owner review and approval of Phase 3-A audit report and proposed milestone breakdown before beginning Milestone 3-B (Token Dashboard & Navigation Architecture).
+Milestone 3-B complete. Awaiting product owner review and approval before proceeding to Milestone 3-C: Enhanced Token Detail, Contract & Activity Hub (`/tokens/[id]`).
 
 ## Baseline compliance
 
