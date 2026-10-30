@@ -318,7 +318,7 @@ export default function CreateTokenPage() {
             <Button
               size="sm"
               onClick={handleDeploy}
-              className="bg-gradient-to-r from-primary to-indigo-600 text-primary-foreground text-xs font-semibold gap-1.5 px-5 shadow-lg shadow-primary/20"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold gap-1.5 px-5 shadow-lg shadow-primary/25"
             >
               <Sparkles className="h-4 w-4" /> Deploy Token Contract
             </Button>

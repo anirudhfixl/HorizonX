@@ -17,31 +17,40 @@
 
 ## 2. Color System
 
-Defined as CSS custom properties in `src/styles/globals.css` and mapped to Tailwind via `tailwind.config.ts`.
+Defined as CSS custom properties in `src/app/globals.css` and mapped to Tailwind utilities.
+
+### Official ProMiners Color Palette (Approved D-01)
+
+| Purpose | Color | HEX | Usage |
+|---|---|---|---|
+| Primary background | Warm black | `#0C0C0B` | Root page background, deep surfaces |
+| Primary accent | Orange | `#E9762B` | Primary CTAs, active nav, selected tabs, focus rings |
+| Primary text | Warm off-white | `#E9E4DA` | Headings, readable body text |
+| Primary foreground | Warm black | `#0C0C0B` | High-contrast text on primary orange buttons |
 
 ### Dark theme tokens (default)
 
-| Token | CSS variable | Purpose |
-|---|---|---|
-| Background | `--background` | Page background |
-| Foreground | `--foreground` | Primary text |
-| Card | `--card` | Card/surface background |
-| Card foreground | `--card-foreground` | Card text |
-| Popover | `--popover` | Popover/dropdown background |
-| Popover foreground | `--popover-foreground` | Popover text |
-| Primary | `--primary` | Brand accent; CTAs |
-| Primary foreground | `--primary-foreground` | Text on primary |
-| Secondary | `--secondary` | Secondary surfaces |
-| Secondary foreground | `--secondary-foreground` | Text on secondary |
-| Muted | `--muted` | Subdued backgrounds |
-| Muted foreground | `--muted-foreground` | Subdued text |
-| Accent | `--accent` | Highlight, hover |
-| Accent foreground | `--accent-foreground` | Text on accent |
-| Destructive | `--destructive` | Errors, destructive actions |
-| Destructive foreground | `--destructive-foreground` | Text on destructive |
-| Border | `--border` | Dividers and borders |
-| Input | `--input` | Input field borders |
-| Ring | `--ring` | Focus ring |
+| Token | CSS variable | Value | Purpose |
+|---|---|---|---|
+| Background | `--background` | `#0C0C0B` | Page background |
+| Foreground | `--foreground` | `#E9E4DA` | Primary text |
+| Card | `--card` | `#141412` | Card/surface background |
+| Card foreground | `--card-foreground` | `#E9E4DA` | Card text |
+| Popover | `--popover` | `#141412` | Popover/dropdown background |
+| Popover foreground | `--popover-foreground` | `#E9E4DA` | Popover text |
+| Primary | `--primary` | `#E9762B` | Brand accent; CTAs |
+| Primary foreground | `--primary-foreground` | `#0C0C0B` | Text on primary |
+| Secondary | `--secondary` | `#1E1D1A` | Secondary surfaces |
+| Secondary foreground | `--secondary-foreground` | `#E9E4DA` | Text on secondary |
+| Muted | `--muted` | `#191815` | Subdued backgrounds |
+| Muted foreground | `--muted-foreground` | `#9B978D` | Subdued text |
+| Accent | `--accent` | `#24221D` | Highlight, hover |
+| Accent foreground | `--accent-foreground` | `#E9E4DA` | Text on accent |
+| Destructive | `--destructive` | `#EF4444` | Errors, destructive actions |
+| Destructive foreground | `--destructive-foreground` | `#0C0C0B` | Text on destructive |
+| Border | `--border` | `#282622` | Dividers and borders |
+| Input | `--input` | `#201F1B` | Input field borders |
+| Ring | `--ring` | `#E9762B` | Focus ring |
 
 ### Semantic status colors
 

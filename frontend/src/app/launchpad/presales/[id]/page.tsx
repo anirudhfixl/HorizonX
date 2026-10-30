@@ -48,7 +48,7 @@ export default async function PresaleDetailPage({
               </div>
               <div className="h-3 w-full rounded-full bg-secondary overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary via-indigo-500 to-violet-500"
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-amber-500"
                   style={{ width: "79%" }}
                 />
               </div>

@@ -55,7 +55,7 @@ export default function ExplorePresalesPage() {
                 </div>
                 <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-primary to-indigo-500"
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-amber-500"
                     style={{ width: "75%" }}
                   />
                 </div>

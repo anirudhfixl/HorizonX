@@ -45,8 +45,8 @@ export function StatusBadge({ status, variant, className, pulse }: StatusBadgePr
     colorClasses = "border-destructive/30 bg-destructive/10 text-destructive";
     dotClass = "bg-destructive";
   } else if (norm === "draft") {
-    colorClasses = "border-violet-500/30 bg-violet-500/10 text-violet-400";
-    dotClass = "bg-violet-400";
+    colorClasses = "border-border/60 bg-muted/60 text-muted-foreground";
+    dotClass = "bg-muted-foreground";
   }
 
   const label = status.charAt(0).toUpperCase() + status.slice(1);

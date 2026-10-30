@@ -33,7 +33,7 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 
 | Route | View | Auth | Phase | Status |
 |---|---|---|---|---|
-| `/explore` | Discovery Hub landing | Public | 2 | SHELL |
+| `/explore` | Discovery Hub landing | Public | 2 | COMPLETE |
 | `/explore/tokens` | Token explorer (cross-module) | Public | 2 | SHELL |
 | `/explore/projects` | Project directory | Public | 2 | SHELL |
 | `/explore/presales` | Presales discovery | Public | 2 | SHELL |

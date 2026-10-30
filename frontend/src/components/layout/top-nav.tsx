@@ -48,7 +48,7 @@ export function TopNav() {
           {/* Left: Brand Logo & Main Nav */}
           <div className="flex items-center gap-6 lg:gap-8">
             <Link href="/" className="group flex items-center gap-2.5">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-indigo-600 to-violet-600 p-0.5 shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-amber-500 p-0.5 shadow-md shadow-primary/20 transition-transform group-hover:scale-105">
                 <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-background/90 backdrop-blur-xs">
                   <Zap className="h-5 w-5 text-primary animate-pulse" />
                 </div>
@@ -231,7 +231,7 @@ export function TopNav() {
               <Button
                 size="sm"
                 onClick={() => openModal("CONNECT_WALLET")}
-                className="h-8 gap-1.5 bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-500 text-primary-foreground text-xs font-semibold px-3.5 rounded-lg shadow-sm shadow-primary/20"
+                className="h-8 gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold px-3.5 rounded-lg shadow-sm shadow-primary/25"
               >
                 <Wallet className="h-3.5 w-3.5" />
                 <span>Connect Wallet</span>

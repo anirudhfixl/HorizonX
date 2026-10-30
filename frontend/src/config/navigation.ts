@@ -100,23 +100,24 @@ export const USER_MENU_ITEMS: NavItem[] = [
 // ─── Footer nav ────────────────────────────────────────────────────────────────
 
 export const FOOTER_NAV: Record<string, NavItem[]> = {
-  Platform: [
-    { label: 'Home', href: '/' },
-    { label: 'Explore', href: '/explore' },
+  Explore: [
+    { label: 'Ecosystem', href: '/explore' },
     { label: 'Tokens', href: '/tokens' },
     { label: 'Launchpad', href: '/launchpad' },
     { label: 'Airdrops', href: '/airdrops' },
     { label: 'Staking', href: '/staking' },
-    { label: 'Markets', href: '/exchange' },
   ],
   Resources: [
     { label: 'Documentation', href: '/docs' },
-    { label: 'Guides', href: '/docs/guides' },
-    { label: 'FAQ', href: '/docs/faq' },
+    { label: 'Guides & FAQ', href: '/docs/guides' },
     { label: 'Risk Disclosure', href: '/docs/risk' },
-  ],
-  Legal: [
     { label: 'Terms of Service', href: '/docs/terms' },
     { label: 'Privacy Policy', href: '/docs/privacy' },
+  ],
+  Connect: [
+    { label: 'X / Twitter', href: 'https://x.com/prominers' },
+    { label: 'Discord', href: 'https://discord.gg/prominers' },
+    { label: 'GitHub', href: 'https://github.com/prominers' },
+    { label: 'Contact', href: 'mailto:hello@prominers.io' },
   ],
 };

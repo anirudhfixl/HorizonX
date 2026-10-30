@@ -27,7 +27,7 @@ export default function DocsHomePage() {
       title: "Terms of Service",
       slug: "terms",
       description: "Platform usage terms, permissionless contract boundaries, and disclaimers.",
-      icon: <FileText className="h-5 w-5 text-indigo-400" />,
+      icon: <FileText className="h-5 w-5 text-primary" />,
     },
     {
       title: "Privacy Policy",

@@ -31,7 +31,7 @@ export default function AccountOverviewPage() {
       {/* Profile Card */}
       <div className="rounded-2xl border border-border/60 bg-card/60 p-6 sm:p-8 backdrop-blur-md flex flex-col sm:flex-row sm:items-center justify-between gap-6 shadow-xl">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-violet-600 text-white font-bold text-2xl shadow-lg shadow-primary/20">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-amber-600 text-primary-foreground font-bold text-2xl shadow-lg shadow-primary/25">
             {isConnected ? "0x" : "?"}
           </div>
           <div>
@@ -111,7 +111,7 @@ export default function AccountOverviewPage() {
           className="flex items-center justify-between p-4.5 hover:bg-secondary/40 transition-colors"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-violet-400">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary text-primary">
               <Settings className="h-4 w-4" />
             </div>
             <div>

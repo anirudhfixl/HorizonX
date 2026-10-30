@@ -4,9 +4,9 @@
 
 - Baseline version: 1.0
 - Architecture decisions: 1.1
-- Current phase: 1 — Foundation
-- Current module: Milestone 1-B (Wallet Integration & Web3 State Management)
-- Overall status: COMPLETE
+- Current phase: 2 — Explore & Discovery
+- Current module: Milestone 2-A (Explore & Discovery Foundation)
+- Overall status: COMPLETE (Awaiting review before starting Milestone 2-B)
 - Last updated: 2026-10-30
 
 ## Completed in this task
@@ -37,7 +37,18 @@
    - Updated `TopNav` and `MobileNav` to display live Sepolia network indicator, short address, and live ETH balance.
    - Documented all required environment variables in `frontend/.env.example`.
    - Created automated test suite `src/tests/wallet-state.test.ts` (16/16 tests passing).
-   - Re-ran production build (`npm run build`) and ESLint checks (`npm run lint`), passing with 0 errors.
+4. **Milestone 2-A Explore & Discovery Foundation**:
+   - Rebuilt the central Explore landing page (`/explore` route) as the unified ecosystem discovery hub.
+   - Built discovery ecosystem metric cards (16 Indexed Assets, Top Gainer PMIN +14.2%, 5 Launchpad Deals, 38.2% Max Staking APY).
+   - Designed 6 specialized hero category cards for all 6 discovery pillars (Tokens, Projects, Presales, Fair Launches, Airdrops, Staking Pools) with badge counts, rich icon graphics, and direct navigation links.
+   - Implemented real-time discovery search entry point with clear button, query highlight, and matching count indicator.
+   - Built category navigation tabs with live asset counts and instant reactive filtering.
+   - Added quick filter presets: `All Assets`, `Live / Active Only`, `Audited Only`, `Ethereum / Sepolia`.
+   - Built dual presentation modes: unified matching results view when filtering, and a curated categorized showcase (Featured Tokens, Featured Protocols & Projects, Launchpad Spotlight, Rewards & Yield) when in default overview.
+   - Built structured `EmptyState` fallback with a 1-click filter reset button when queries return 0 matches.
+   - Integrated creator action callout banner with `useWallet` and `useModal` hooks for "Deploy Token" and "Connect Wallet".
+   - Integrated explicit Phase 1 demonstration alert banner complying with BUG-M2.
+   - Preserved existing wallet and web3 integration; strictly adhered to scope boundaries without modifying sub-listing pages.
 
 ## Files created or modified
 
@@ -137,7 +148,7 @@
 ## Known issues
 
 - **KI-001 (Severity: INFO):** Real EVM Web3 wallet integration and native balance retrieval is live on Ethereum Sepolia Testnet. Smart contract actions and external market feeds remain mock-adapted for this phase. (Accepted for Phase 1.)
-- **KI-002 (Severity: LOW):** 86 unused variable/import warnings reported by ESLint across page and wizard files. Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
+- **KI-002 (Severity: LOW):** 85 unused variable/import warnings reported by ESLint across page and wizard files (reduced from 86; `frontend/src/app/explore/page.tsx` has 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
 - **KI-003 (Severity: INFO):** Next.js 16 Turbopack logs a prefetch warning when accessing dynamic `await params` outside of `<Suspense>` during instant navigation. Static page generation succeeds with 0 errors; planned resolution is wrapping dynamic route parameter access inside `<Suspense>` during future refactoring.
 - **KI-004 (Severity: INFO):** 8 owner-management sub-routes from `MODULE_INVENTORY.md` (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, etc.) are currently accessible via tabbed views within parent detail pages rather than isolated sub-route URLs. Planned resolution is dedicated sub-route partitioning during Phase 3–8 module milestones.
 
@@ -150,7 +161,7 @@
 
 ## Next exact task
 
-Milestone 2: Explore & Token Discovery Module (token explorer, search/filters, project directory, presale/launch discovery hubs).
+Milestone 2-B: Token Explorer (`/explore/tokens` cross-module explorer and `/tokens/explore` canonical listing with sorting, pagination, search, and deep-link integration). Awaiting product owner review of Milestone 2-A before proceeding.
 
 ## Baseline compliance
 

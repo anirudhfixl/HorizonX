@@ -10,7 +10,7 @@
 | ID | Severity | Module | Route | Description | Workaround | Status |
 |---|---|---|---|---|---|---|
 | KI-001 | INFO | All | All | Real EVM Web3 wallet integration and native balance retrieval is live on Ethereum Sepolia Testnet. Smart contract actions and external market feeds remain mock-adapted for this phase. | By design — mock data adapters and demo sandbox indicators are clearly marked. | ACCEPTED for Phase 1 |
-| KI-002 | LOW | Code Hygiene | Multiple | 86 unused variable/import warnings reported by ESLint across page and wizard files. | Harmless to runtime; schedule tree-shaking cleanup in future refactor. | LOGGED |
+| KI-002 | LOW | Code Hygiene | Multiple | 85 unused variable/import warnings reported by ESLint across page and wizard files (`frontend/src/app/explore/page.tsx` has 0 warnings/errors). | Harmless to runtime; schedule tree-shaking cleanup in future refactor. | LOGGED |
 | KI-003 | INFO | Dynamic Routing | `/[id]` routes | Next.js 16 Turbopack logs prefetch warning when accessing `await params` outside of `<Suspense>` during instant navigation. | Static generation via `generateStaticParams()` works with 0 errors; wrap with Suspense in future refactor. | LOGGED |
 | KI-004 | INFO | Sub-routes | Tokens, Launchpad, Staking, Projects | 8 owner-management sub-routes from `MODULE_INVENTORY.md` are currently accessible via tabbed views on parent `[id]` detail pages rather than isolated URL sub-routes. | Feature-complete for Phase 1; partition into dedicated sub-routes during Phase 3–8 module milestones. | LOGGED |
 

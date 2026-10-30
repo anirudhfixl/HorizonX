@@ -60,7 +60,7 @@ const SEARCH_ITEMS: SearchResultItem[] = [
     title: "Create Staking Pool",
     subtitle: "Provide yield incentive pools for your token community",
     href: "/staking/pools/create",
-    icon: <Layers className="h-4 w-4 text-violet-400" />,
+    icon: <Layers className="h-4 w-4 text-primary" />,
   },
   // Navigation
   {
@@ -93,7 +93,7 @@ const SEARCH_ITEMS: SearchResultItem[] = [
     title: "Staking Pools",
     subtitle: "Earn yield with locked and flexible staking",
     href: "/staking",
-    icon: <Layers className="h-4 w-4 text-violet-400" />,
+    icon: <Layers className="h-4 w-4 text-primary" />,
   },
   {
     id: "nav-exchange",
