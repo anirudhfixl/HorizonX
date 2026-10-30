@@ -16,7 +16,7 @@ interface MobileNavProps {
 
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const pathname = usePathname();
-  const { isConnected, shortAddress } = useWallet();
+  const { isConnected, isUnsupportedNetwork, shortAddress, balance, switchNetwork } = useWallet();
   const { openModal } = useModal();
 
   if (!isOpen) return null;
@@ -48,9 +48,19 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
             </button>
           </div>
 
-          {/* Wallet CTA */}
+          {/* Wallet CTA & Network State */}
           <div className="space-y-2">
-            {isConnected ? (
+            {isUnsupportedNetwork ? (
+              <Button
+                variant="destructive"
+                className="w-full text-xs font-semibold bg-amber-500/15 border border-amber-500/40 text-amber-400 hover:bg-amber-500/25"
+                onClick={() => {
+                  switchNetwork(11155111);
+                }}
+              >
+                Switch to Sepolia (11155111)
+              </Button>
+            ) : isConnected ? (
               <Button
                 variant="outline"
                 className="w-full justify-between text-xs font-mono border-border/60"
@@ -61,9 +71,9 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
               >
                 <span className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                  {shortAddress}
+                  <span>{shortAddress}</span>
                 </span>
-                <span className="text-[10px] text-muted-foreground">Manage</span>
+                <span className="text-[11px] font-semibold text-primary">{balance} ETH</span>
               </Button>
             ) : (
               <Button

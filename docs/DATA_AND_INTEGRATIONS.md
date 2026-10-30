@@ -44,26 +44,29 @@ Real API implementations replace mock adapters without changing consumer compone
 
 ## Integrations inventory
 
-| Integration | Library | Status | PENDING |
+| Integration | Library | Status | Notes |
 |---|---|---|---|
-| Wallet connection | Wagmi + Viem | NOT STARTED | D-04 |
-| Blockchain RPC reads | Viem / provider | NOT STARTED | D-04 |
-| Subgraph / indexer | TBD | NOT STARTED | D-04 |
-| Market data API | TBD | NOT STARTED | D-08 |
-| KYC provider | TBD | NOT STARTED | D-09 |
+| Wallet connection | Wagmi v3 + Viem v2 | COMPLETE (Sepolia) | MetaMask, WalletConnect, Coinbase Wallet, Browser Injected (D-04 resolved) |
+| Blockchain RPC reads | Viem v2 / Wagmi v3 | COMPLETE (Sepolia) | Native ETH balance, network detection, and chain switching on Sepolia 11155111 |
+| Subgraph / indexer | TBD | NOT STARTED | Future milestone |
+| Market data API | TBD | NOT STARTED | PENDING D-08 |
+| KYC provider | TBD | NOT STARTED | PENDING D-09 |
 | Application backend API | Express.js REST | NOT STARTED | Phase 2+ backend |
-| Authentication | TBD (wallet-based or JWT) | NOT STARTED | D-11 |
+| Authentication | TBD (wallet-based or JWT) | NOT STARTED | PENDING D-11 |
 
 ---
 
-## Environment variables (planned)
+## Environment variables (planned and active)
 
 See `.env.example` for variable names and safe placeholder values.
 
 | Variable | Scope | Purpose |
 |---|---|---|
 | `NEXT_PUBLIC_APP_URL` | Public | Public application URL for metadata/OG |
-| `NEXT_PUBLIC_CHAIN_ID` | Public | Default network chain ID (PENDING D-04) |
+| `NEXT_PUBLIC_DEFAULT_CHAIN_ID` | Public | Default network chain ID (`11155111` for Ethereum Sepolia Testnet) |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Public | WalletConnect Cloud Project ID (from cloud.reown.com) |
+| `NEXT_PUBLIC_SEPOLIA_RPC_URL` | Public (optional) | Custom Sepolia RPC endpoint (Infura, Alchemy, or public RPC) |
+| `NEXT_PUBLIC_EXPLORER_URL` | Public | Block explorer base URL (`https://sepolia.etherscan.io`) |
 | `API_BASE_URL` | Server only | Backend API base URL |
 | `DATABASE_URL` | Server only | MongoDB connection string (LATER) |
 

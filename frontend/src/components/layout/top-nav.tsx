@@ -22,12 +22,22 @@ import {
   Menu,
   Sparkles,
   Zap,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { MobileNav } from "./mobile-nav";
 
 export function TopNav() {
   const pathname = usePathname();
-  const { isConnected, shortAddress, network, switchNetwork } = useWallet();
+  const {
+    isConnected,
+    isConnecting,
+    isUnsupportedNetwork,
+    shortAddress,
+    balance,
+    network,
+    switchNetwork,
+  } = useWallet();
   const { openModal } = useModal();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -154,45 +164,67 @@ export function TopNav() {
               </kbd>
             </button>
 
-            {/* Network Selector Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="h-8 inline-flex items-center gap-1.5 border border-border/60 bg-secondary/20 hover:bg-secondary/50 text-xs px-2.5 rounded-lg cursor-pointer outline-none">
-                <span className="text-sm">{network.icon}</span>
-                <span className="hidden sm:inline-block font-medium">{network.name}</span>
-                <ChevronDown className="h-3 w-3 opacity-50" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 p-1.5 bg-popover/95 backdrop-blur-xl border-border/60 shadow-xl">
-                <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1">
-                  Select Network
-                </DropdownMenuLabel>
-                {SUPPORTED_NETWORKS.map((net) => (
-                  <DropdownMenuItem
-                    key={net.id}
-                    onClick={() => switchNetwork(net.id)}
-                    className="flex items-center justify-between px-2 py-2 text-xs cursor-pointer"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span>{net.icon}</span>
-                      <span className={net.id === network.id ? "font-semibold text-primary" : ""}>
-                        {net.name}
+            {/* Network Selector / Unsupported Network Alert */}
+            {isUnsupportedNetwork ? (
+              <Button
+                size="sm"
+                onClick={() => switchNetwork(11155111)}
+                className="h-8 gap-1.5 bg-amber-500/15 border border-amber-500/40 text-amber-400 hover:bg-amber-500/25 text-xs font-semibold px-2.5 rounded-lg animate-pulse"
+                title="Click to switch to Ethereum Sepolia Testnet"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline-block">Switch to Sepolia</span>
+              </Button>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="h-8 inline-flex items-center gap-1.5 border border-border/60 bg-secondary/20 hover:bg-secondary/50 text-xs px-2.5 rounded-lg cursor-pointer outline-none">
+                  <span className="text-sm">{network.icon}</span>
+                  <span className="hidden sm:inline-block font-medium">{network.name}</span>
+                  <ChevronDown className="h-3 w-3 opacity-50" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52 p-1.5 bg-popover/95 backdrop-blur-xl border-border/60 shadow-xl">
+                  <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 py-1">
+                    Active EVM Network (D-04)
+                  </DropdownMenuLabel>
+                  {SUPPORTED_NETWORKS.map((net) => (
+                    <DropdownMenuItem
+                      key={net.id}
+                      onClick={() => switchNetwork(net.chainId)}
+                      className="flex items-center justify-between px-2 py-2 text-xs cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <span>{net.icon}</span>
+                        <span className={net.chainId === network.chainId ? "font-semibold text-primary" : ""}>
+                          {net.name}
+                        </span>
                       </span>
-                    </span>
-                    {net.id === network.id && (
-                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    )}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                      {net.chainId === network.chainId && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {/* Wallet Button */}
-            {isConnected ? (
+            {isConnecting ? (
+              <Button
+                size="sm"
+                disabled
+                className="h-8 gap-1.5 bg-secondary border border-border/70 text-muted-foreground text-xs font-mono font-medium px-3 rounded-lg"
+              >
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                <span>Connecting...</span>
+              </Button>
+            ) : isConnected ? (
               <Button
                 size="sm"
                 onClick={() => openModal("WALLET_DETAILS")}
                 className="h-8 gap-1.5 bg-secondary border border-border/70 hover:border-primary/40 text-foreground text-xs font-mono font-medium px-3 rounded-lg shadow-xs"
               >
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="hidden md:inline-block text-muted-foreground mr-0.5">{balance} ETH</span>
                 <span>{shortAddress}</span>
               </Button>
             ) : (

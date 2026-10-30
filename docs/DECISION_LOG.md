@@ -12,6 +12,7 @@
 | D-01 | Product brand and visual direction | Premium dark-first design; light theme planned for later phase. Exact logo, name and colour palette to evolve. | 2026-10-30 | Product owner | Established in Architecture Decisions v1.1 |
 | D-02 | Existing repo or greenfield build | **Greenfield confirmed.** No existing application code was found in workspace. Git initialized on `main`. | 2026-10-30 | Antigravity (inspection) | Milestone 0 inspection found only the baseline DOCX |
 | D-03 | Frontend / backend / database stack | Frontend: Next.js (App Router) + React + TypeScript + Tailwind CSS + shadcn/ui + Radix UI. Backend (later): Node.js + TypeScript + Express.js. Database (later): MongoDB + Mongoose. | 2026-10-30 | Product owner | Approved in Architecture Decisions v1.1 |
+| D-04 | Approve initial networks and testnets | **Ethereum Sepolia Testnet only (Chain ID: 11155111).** EVM wallet integration via Wagmi + Viem. Centralized network configuration (`src/config/chains.ts`) enables future network additions without redesigning wallet state. | 2026-10-30 | Product owner | Approved initial network scope for Milestone 1-B |
 
 ---
 
@@ -19,7 +20,6 @@
 
 | ID | Decision required | Why it matters | Status |
 |---|---|---|---|
-| D-04 | Approve initial networks and testnets | Wallet library selection, contract deployment, indexing and QA flow | PENDING |
 | D-05 | Approve token standards and configurable features | Token factory design and security review scope | PENDING |
 | D-06 | Choose upgrade pattern and authority per contract family | Stable-address upgrade requirement | PENDING |
 | D-07 | Exchange: market analytics only or actual trading | Major scope, security and integration difference | PENDING |
@@ -38,3 +38,4 @@
 | Date | Change | Reason | Author |
 |---|---|---|---|
 | 2026-10-30 | Milestone 1-A initiated; documentation scaffold created | Phase 0 exit criteria met | Antigravity |
+| 2026-10-30 | Milestone 1-B: D-04 resolved (Sepolia Testnet only); Wagmi + Viem Web3 wallet integration completed | Approved network scope implementation | Antigravity |

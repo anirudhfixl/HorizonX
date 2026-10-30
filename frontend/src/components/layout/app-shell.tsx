@@ -5,13 +5,15 @@ import { TopNav } from "./top-nav";
 import { Footer } from "./footer";
 import { GlobalModalRenderer } from "@/components/modals/modal-provider";
 import { Toaster } from "sonner";
+import { Web3Provider } from "@/components/providers/web3-provider";
 import { WalletProvider } from "@/contexts/wallet-context";
 import { ModalProvider } from "@/contexts/modal-context";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <WalletProvider>
-      <ModalProvider>
+    <Web3Provider>
+      <WalletProvider>
+        <ModalProvider>
         <div className="relative min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
           {/* Subtle Ambient Glow Gradients in Background */}
           <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -48,5 +50,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </ModalProvider>
     </WalletProvider>
-  );
+  </Web3Provider>
+);
 }
