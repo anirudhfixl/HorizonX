@@ -81,6 +81,8 @@ export interface Project {
   ownerAddress: string;
   status: LifecycleStatus;
   verificationStatus?: VerificationStatus;
+  category?: string;
+  ecosystem?: string;
   tokenIds: string[];
   createdAt: string;
   updatedAt: string;

@@ -5,8 +5,8 @@
 - Baseline version: 1.0
 - Architecture decisions: 1.1
 - Current phase: 2 — Explore & Discovery
-- Current module: Milestone 2-B (Token Explorer)
-- Overall status: COMPLETE (Awaiting review before starting Milestone 2-C)
+- Current module: Milestone 2-C (Project Directory)
+- Overall status: COMPLETE (Awaiting review before starting Milestone 2-D)
 - Last updated: 2026-10-30
 
 ## Completed in this task
@@ -90,6 +90,24 @@
    - Upgraded `MOCK_TOKENS` schema in `src/types/index.ts` and `src/lib/mock-data.ts` with typed categories and 5 corresponding ecosystem tokens (`quantum`, `nexus`, `zkpv`, `ccat`, `mdao`).
    - Embedded explicit demonstration data disclaimers: "Demonstration Data Notice: Token pricing, 24h percentage changes, market caps, and audit badges are simulated for demonstration. Per Architecture Decision D-04, Ethereum Sepolia Testnet (Chain ID: 11155111) is the only approved and supported EVM network. Non-Sepolia tokens are preserved for cross-chain catalog discovery and do not imply wallet or contract support."
    - Created automated unit test suite `src/tests/token-explorer.test.ts` verifying data integrity, search, Sepolia D-04 filter isolation, sorting, and pagination logic.
+
+8. **Milestone 2-C Project Directory**:
+   - Built a shared, reusable `ProjectDirectory` component (`src/components/projects/project-directory.tsx`) powering both `/projects` (canonical Project Directory) and `/explore/projects` (discovery entry) with 0 duplicate logic.
+   - Designed a dual-presentation layout: responsive 3-column Grid View and high-density Table View with sticky headers, sortable columns, and responsive mobile card presentation.
+   - Integrated initial-based avatar branding box with ProMiners gradient styling and external website links.
+   - Built multi-criteria filter toolbar:
+     - Search: instant client-side matching across project name, description, and symbols/names of linked tokens (e.g. searching "$PMIN" finds ProMiners Foundation).
+     - Category filter: all unique categories (Governance, AI & Compute, DeFi, DePIN, Infrastructure, Security & Privacy, Meme & Community).
+     - Ecosystem filter: strictly restricted per Architecture Decision D-04 to `All Ecosystems` and `Ethereum Sepolia (11155111 — Active)`; non-Sepolia tokens/projects preserved in centralized mock catalog without wallet claims.
+     - Lifecycle status filter: `active`, `pending`.
+     - Verification tier filter: `audit_available`, `contract_source_verified`, `project_reviewed`, `not_reviewed`.
+   - Built full sorting across 3 dimensions (`name`, `createdAt` date, `tokenIds` count) with table header click-to-sort and sort direction indicators.
+   - Implemented configurable pagination (`6`, `12`, `24` items per page) with page number pills, previous/next controls, and automatic reset to page 1 on filter or search changes.
+   - Implemented component-level `EmptyState` fallback with a 1-click "Clear All Filters" action.
+   - Enforced linked token relationship integrity: associated tokens are resolved dynamically from `MOCK_TOKENS` via `tokenIds` and link to `/tokens/${token.id}`; projects with zero tokens (`nexus-open-infra`) display "No tokens currently associated" without fabricating relationships.
+   - Embedded explicit demonstration data disclaimers: "Demonstration Data Notice: Project listings, verification tiers, and ecosystem affiliations are simulated for demonstration. Per Architecture Decision D-04, Ethereum Sepolia Testnet (Chain ID: 11155111) is the only approved and supported EVM wallet network. Ecosystem metadata reflects protocol origins and does not imply wallet connectivity or transaction support for non-Sepolia networks."
+   - Updated `src/app/projects/[id]/page.tsx` to dynamically resolve linked tokens from `MOCK_TOKENS` and render metadata without hardcoded slice or fake associations.
+   - Created automated unit test suite `src/tests/project-directory.test.ts` verifying schema, search, filtering, Sepolia D-04 scope compliance, token relationship integrity, sorting, and pagination logic.
 
 ## Files created or modified
 
@@ -181,13 +199,15 @@
 - `frontend/src/types/index.ts`
 - `frontend/src/components/tokens/token-explorer.tsx`
 - `frontend/src/tests/token-explorer.test.ts`
+- `frontend/src/components/projects/project-directory.tsx`
+- `frontend/src/tests/project-directory.test.ts`
 
 ## Tests and verification
 
-- Build: **PASSED** (`npm run build` completed successfully, 86/86 static routes prerendered with 0 errors)
+- Build: **PASSED** (`npm run build` completed successfully, 94/94 static routes prerendered with 0 errors)
 - Type-check: **PASSED** (TypeScript 5.x passed with 0 errors)
-- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 83 warnings)
-- Automated tests: **PASSED** (`npm test` — both `wallet-state.test.ts` (16/16) and `token-explorer.test.ts` passed 100%)
+- Lint: **PASSED** (`npm run lint` completed successfully with 0 errors, 78 warnings across legacy files; 0 errors/warnings in Project Directory)
+- Automated tests: **PASSED** (`npm test` — all three test suites: `wallet-state.test.ts` (16/16), `token-explorer.test.ts`, and `project-directory.test.ts` passed 100%)
 - Local HTTP check: **PASSED** (`HTTP/1.1 200 OK` on `http://localhost:3000`)
 - Theme verification: **PASSED** (Warm black `#0C0C0B`, warm off-white `#E9E4DA`, signature orange `#E9762B`, high-contrast button text verified)
 - Halftone footer verification: **PASSED** (Giant dotted `Horizon X` wordmark, 2D canvas particle physics, pointer displacement, click shockwave ripple animation, print grain overlay, 3 navigation columns, brand info, and smooth back-to-top scroll verified)
@@ -196,7 +216,7 @@
 ## Known issues
 
 - **KI-001 (Severity: INFO):** Real EVM Web3 wallet integration and native balance retrieval is live on Ethereum Sepolia Testnet. Smart contract actions and external market feeds remain mock-adapted for this phase. (Accepted for Phase 1.)
-- **KI-002 (Severity: LOW):** 83 unused variable/import warnings reported by ESLint across page and wizard files (Token Explorer files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
+- **KI-002 (Severity: LOW):** 78 unused variable/import warnings reported by ESLint across legacy page and wizard files (Project Directory and Token Explorer files have 0 warnings/errors). Runtime is unaffected; planned resolution is a tree-shaking and import hygiene cleanup pass during future refactoring.
 - **KI-003 (Severity: INFO):** Next.js 16 Turbopack logs a prefetch warning when accessing dynamic `await params` outside of `<Suspense>` during instant navigation. Static page generation succeeds with 0 errors; planned resolution is wrapping dynamic route parameter access inside `<Suspense>` during future refactoring.
 - **KI-004 (Severity: INFO):** 8 owner-management sub-routes from `MODULE_INVENTORY.md` (`tokens/[id]/contract`, `tokens/[id]/activity`, `launchpad/presales/[id]/manage`, etc.) are currently accessible via tabbed views within parent detail pages rather than isolated sub-route URLs. Planned resolution is dedicated sub-route partitioning during Phase 3–8 module milestones.
 
@@ -209,7 +229,7 @@
 
 ## Next exact task
 
-Milestone 2-C: Project Directory (`/explore/projects` cross-module discovery and `/projects` directory with protocol filtering, linked token badges, and project detail linking). Awaiting product owner review of Milestone 2-B before proceeding.
+Milestone 2-D: Presales Discovery (`/explore/presales` discovery entry and `/launchpad/presales` canonical presale listing). Awaiting product owner review of Milestone 2-C before proceeding.
 
 ## Baseline compliance
 
