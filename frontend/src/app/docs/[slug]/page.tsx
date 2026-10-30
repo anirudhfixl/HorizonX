@@ -119,17 +119,10 @@ export default async function DocSlugPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const doc = DOCS_DATA[slug] || {
-    title: `${slug.charAt(0).toUpperCase() + slug.slice(1)} Documentation`,
-    subtitle: `Official reference documentation for ${slug}.`,
-    lastUpdated: "2026-10-30",
-    sections: [
-      {
-        heading: "Overview",
-        body: `This guide outlines the protocol specifications and operational rules for ${slug}.`,
-      },
-    ],
-  };
+  const doc = DOCS_DATA[slug];
+  if (!doc) {
+    notFound();
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">

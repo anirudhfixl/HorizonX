@@ -23,8 +23,8 @@ export default function CreateStakingPoolPage() {
       openModal("CONNECT_WALLET");
       return;
     }
-    toast.success("Staking Pool Created", {
-      description: "Reward vault smart contract simulated for deployment. (Phase 1 Mock)",
+    toast.success("Staking Pool Simulation Configured", {
+      description: "Phase 1 demonstration: Form parameters validated. No on-chain contract deployed.",
     });
   };
 

@@ -11,7 +11,7 @@ export default function ExchangeDashboardPage() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       <PageHeader
         title="Markets & Analytics"
-        description="Live market telemetry, decentralised liquidity analytics, price indices, and trading pairs."
+        description="Demonstration market telemetry, simulated liquidity analytics, price indices, and trading pairs."
         breadcrumbs={[{ label: "Markets" }]}
         actions={
           <Button asChild variant="outline" size="sm" className="text-xs border-border/60">

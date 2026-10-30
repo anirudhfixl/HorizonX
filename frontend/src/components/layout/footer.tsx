@@ -26,11 +26,11 @@ export function Footer() {
             </p>
 
             {/* Protocol Status Indicator */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-secondary/30 px-3 py-1 text-[11px] text-muted-foreground">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>All Systems Operational</span>
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-[11px] text-muted-foreground">
+              <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <span>Phase 1 Foundation</span>
               <span className="text-border">|</span>
-              <span className="text-primary font-mono text-[10px]">EVM Ready</span>
+              <span className="text-primary font-mono text-[10px]">Demo Environment</span>
             </div>
           </div>
 

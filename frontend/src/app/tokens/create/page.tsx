@@ -48,8 +48,8 @@ export default function CreateTokenPage() {
       openModal("CONNECT_WALLET");
       return;
     }
-    toast.success("Token Deployment Requested", {
-      description: `Contract deployment simulation started for ${tokenName} ($${tokenSymbol.toUpperCase()}) on ${network.toUpperCase()}. (Phase 1 Mock)`,
+    toast.success("Token Deployment Simulated", {
+      description: `Phase 1 demonstration: Parameters validated for ${tokenName} ($${tokenSymbol.toUpperCase()}) on ${network.toUpperCase()}. No on-chain contract deployed.`,
     });
   };
 

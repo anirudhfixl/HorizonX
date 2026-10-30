@@ -74,8 +74,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
-    toast.success("Wallet Connected", {
-      description: `Connected to ${providerName} (${DEMO_ADDRESS.slice(0, 6)}...${DEMO_ADDRESS.slice(-4)})`,
+    toast.success("Wallet Connected (Demo Sandbox)", {
+      description: `Simulated session as ${providerName} (${DEMO_ADDRESS.slice(0, 6)}...${DEMO_ADDRESS.slice(-4)}) — Interface preview mode active.`,
     });
   };
 
@@ -89,7 +89,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
     toast.info("Wallet Disconnected", {
-      description: "You have disconnected your active wallet.",
+      description: "Demo sandbox wallet session ended.",
     });
   };
 
@@ -97,8 +97,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     const target = SUPPORTED_NETWORKS.find((n) => n.id === networkId);
     if (target) {
       setNetwork(target);
-      toast.success("Network Switched", {
-        description: `Active network changed to ${target.name}`,
+      toast.success("Simulated Network Switched", {
+        description: `Active preview network changed to ${target.name} (Simulated — no chain RPC call)`,
       });
     }
   };

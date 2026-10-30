@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { MetricCard } from "@/components/shared/metric-card";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -17,7 +18,10 @@ export default async function StakingPoolDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const pool = MOCK_STAKING_POOLS.find((p) => p.id === id) || MOCK_STAKING_POOLS[0];
+  const pool = MOCK_STAKING_POOLS.find((p) => p.id === id);
+  if (!pool) {
+    notFound();
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">

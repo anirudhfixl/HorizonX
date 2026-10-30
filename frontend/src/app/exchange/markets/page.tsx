@@ -9,7 +9,7 @@ export default function MarketsOverviewPage() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <PageHeader
         title="Market Overview"
-        description="Full listing of active trading pairs across ProMiners automated market maker liquidity pools."
+        description="Demonstration directory of simulated trading pairs and liquidity metrics (Phase 1 preview)."
         breadcrumbs={[
           { label: "Markets", href: "/exchange" },
           { label: "Overview" },

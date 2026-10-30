@@ -5,54 +5,24 @@
 - Baseline version: 1.0
 - Architecture decisions: 1.1
 - Current phase: 1 — Foundation
-- Current module: Milestone 1-A (Documentation + Frontend Foundation)
-- Overall status: COMPLETE
+- Current module: Milestone 1-A.1 (Foundation Audit & Visual QA)
+- Overall status: AUDITED & APPROVED
 - Last updated: 2026-10-30
 
 ## Completed in this task
 
-1. **Git Initialization & Project Setup**:
-   - Initialized Git repository with proper root and frontend `.gitignore` rules (excluding `.env*`, `node_modules`, `.next`, cache).
-   - Created complete documentation scaffold across all 10 mandated documentation files in `docs/`.
+1. **Milestone 1-A Frontend Foundation**:
+   - Initialized Git repository, documentation suite, and Next.js 16 App Router application.
+   - Built 50 route files, 48 module pages, OKLCH design system, 4 global modals, and centralized navigation/mock data.
 
-2. **Frontend Foundation (Next.js 16 + Tailwind CSS v4 + TypeScript + shadcn/ui)**:
-   - Scaffolded Next.js App Router project in `frontend/`.
-   - Initialized shadcn/ui design system with 31+ core UI primitives (Button, Dialog, DropdownMenu, Card, Badge, Tabs, Progress, Table, etc.).
-   - Implemented ProMiners dark-first design token palette in OKLCH (`globals.css`) with electric blue-violet accents, emerald/amber/rose status indicators, and ambient glow effects.
-   - Built centralized navigation configuration (`src/config/navigation.ts`) mapping 100% of routes from `MODULE_INVENTORY.md`.
-
-3. **Global Layout & Navigation**:
-   - Implemented desktop `TopNav` with ProMiners cyber branding mark, navigation dropdown menus, quick "Create" menu, Command search shortcut (`⌘K`), network selector, and connect wallet button.
-   - Implemented `MobileNav` slide-out drawer with full route tree, quick launch tools, and account access.
-   - Implemented `Footer` with ecosystem links, protocol status indicator ("All Systems Operational"), and compliance notices.
-   - Built `AppShell` wrapping application with `WalletProvider`, `ModalProvider`, `GlobalModalRenderer`, and Sonner `Toaster`.
-
-4. **Global Modal Architecture**:
-   - `ModalContext` & `useModal()` hook with keyboard shortcut handler (`Cmd+K` / `Ctrl+K` for command palette, `Escape` to close).
-   - `ConnectWalletModal` supporting multi-provider options (MetaMask, Coinbase Wallet, WalletConnect, Phantom) plus an instant 1-click Demo Sandbox connect for testing.
-   - `WalletDetailsModal` showing truncated address, copy-to-clipboard, balance, network switcher, and disconnect action.
-   - `CommandPaletteModal` for instantaneous keyboard search across all modules, creation wizards, and docs.
-   - `RiskWarningModal` for regulatory disclaimer and smart contract disclosures.
-
-5. **Shared Component Primitives**:
-   - `PageHeader` with breadcrumb navigation and action slots.
-   - `MetricCard` with live crypto KPI metrics, percentage change badges, and ambient hover effects.
-   - `StatusBadge` with semantic coloring and animated glowing status dots.
-   - `EmptyState` placeholder with custom icons and CTA links.
-
-6. **Complete Route Coverage (76 Static & Prerendered Pages — 0 Dead Links, 0 404s)**:
-   - `/` (Home Ecosystem Dashboard)
-   - `/_not-found` (Custom cyber 404 error page)
-   - `/explore` (Discovery Hub) + sub-tabs `/explore/tokens`, `/explore/projects`, `/explore/presales`, `/explore/launches`, `/explore/airdrops`, `/explore/staking`
-   - `/tokens` (Token Dashboard) + `/tokens/explore`, `/tokens/create` (4-step interactive wizard), `/tokens/my`, `/tokens/[id]`
-   - `/launchpad` (Launchpad Hub) + `/launchpad/presales`, `/launchpad/presales/create`, `/launchpad/presales/[id]`, `/launchpad/launches`, `/launchpad/launches/create`, `/launchpad/launches/[id]`
-   - `/airdrops` (Airdrop Hub) + `/airdrops/campaigns`, `/airdrops/campaigns/create`, `/airdrops/campaigns/[id]`, `/airdrops/claim`, `/airdrops/my`
-   - `/staking` (Staking Protocol) + `/staking/pools`, `/staking/pools/create`, `/staking/pools/[id]`, `/staking/my`
-   - `/exchange` (Markets & Analytics) + `/exchange/markets`, `/exchange/watchlist`, `/exchange/tokens/[id]`
-   - `/projects` (Project Directory) + `/projects/my`, `/projects/[id]`
-   - `/partners` (Partner Portal) + `/partners/referrals`
-   - `/account` (Account & Security) + `/account/edit`, `/account/wallets`, `/account/verification`, `/account/preferences`, `/account/security`
-   - `/docs` (Documentation Hub) + `/docs/[slug]` (Guides, FAQ, Risk, Terms, Privacy)
+2. **Milestone 1-A.1 Foundation Audit & Visual QA**:
+   - Conducted comprehensive route verification: 50 route files, 76 static HTML pages prerendered with Turbopack.
+   - Added missing global error boundary `frontend/src/app/error.tsx` (BUG-H1).
+   - Fixed dynamic parameter handling across all 8 dynamic routes to return 404 via `notFound()` for unknown IDs (BUG-H2).
+   - Fixed `frontend/.gitignore` to properly track `frontend/.env.example` while ignoring `.env*.local` and `.env` (BUG-M1).
+   - Audited and updated demo-state integrity: removed fake "All Systems Operational" badge and "Live Telemetry" labels; updated all creator and claim toast notifications to state "Simulated / Phase 1 Demonstration" (BUG-M2).
+   - Performed build (`npm run build`), lint (`npm run lint`), TypeScript checks, and HTTP route verification with exit code 0.
+   - Published comprehensive audit report in `docs/MILESTONE_1A_AUDIT.md`.
 
 ## Files created or modified
 

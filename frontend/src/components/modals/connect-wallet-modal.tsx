@@ -77,7 +77,7 @@ export function ConnectWalletModal() {
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground">
-            Select an approved Web3 provider to interact with tokens, presales, and staking.
+            Phase 1 Foundation Preview: Selecting a provider launches a simulated wallet session for UI exploration without requiring real Web3 extensions or on-chain assets.
           </DialogDescription>
         </DialogHeader>
 

@@ -22,8 +22,8 @@ export default function CreateFairLaunchPage() {
       openModal("CONNECT_WALLET");
       return;
     }
-    toast.success("Fair Launch Created", {
-      description: "Fair launch contract deployment simulated. (Phase 1 Mock)",
+    toast.success("Fair Launch Simulated", {
+      description: "Phase 1 demonstration: Launch parameters validated. No contract deployed.",
     });
   };
 

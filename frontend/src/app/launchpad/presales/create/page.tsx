@@ -25,8 +25,8 @@ export default function CreatePresalePage() {
       openModal("CONNECT_WALLET");
       return;
     }
-    toast.success("Presale Contract Simulation Created", {
-      description: "Presale parameters submitted for deployment. (Phase 1 Mock)",
+    toast.success("Presale Simulation Configured", {
+      description: "Phase 1 demonstration: Presale escrow parameters validated. No on-chain contract deployed.",
     });
   };
 

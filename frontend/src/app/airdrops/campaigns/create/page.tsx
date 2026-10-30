@@ -24,7 +24,7 @@ export default function CreateAirdropCampaignPage() {
       return;
     }
     toast.success("Airdrop Campaign Configured", {
-      description: "Merkle root and smart contract generated for distribution. (Phase 1 Mock)",
+      description: "Phase 1 demonstration: Merkle root simulated. No on-chain contract deployed.",
     });
   };
 

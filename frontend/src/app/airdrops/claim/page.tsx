@@ -15,8 +15,8 @@ export default function ClaimAirdropPage() {
 
   const handleClaim = () => {
     setClaimed(true);
-    toast.success("Airdrop Claimed Successfully!", {
-      description: "250 PMIN tokens transferred to your connected wallet. (Phase 1 Mock)",
+    toast.success("Airdrop Claim Simulated", {
+      description: "Demo interaction recorded for testing. No on-chain tokens transferred.",
     });
   };
 

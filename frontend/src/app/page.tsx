@@ -111,7 +111,9 @@ export default function Home() {
             <Activity className="h-4 w-4 text-primary" />
             <h2 className="text-lg font-bold text-foreground">Protocol Highlights</h2>
           </div>
-          <span className="text-xs font-mono text-muted-foreground">Live Telemetry</span>
+          <span className="rounded bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
+            Demonstration Telemetry
+          </span>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

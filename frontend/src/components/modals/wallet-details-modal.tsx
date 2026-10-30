@@ -57,9 +57,9 @@ export function WalletDetailsModal() {
                 </DialogDescription>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Active
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              Demo Sandbox
             </span>
           </div>
         </DialogHeader>
@@ -67,7 +67,7 @@ export function WalletDetailsModal() {
         {/* Balance Card */}
         <div className="my-3 rounded-xl border border-border/60 bg-secondary/30 p-4 text-center">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Total Balance
+            Total Balance (Simulated)
           </p>
           <p className="mt-1 text-3xl font-bold tracking-tight text-foreground">
             {balance} <span className="text-lg font-semibold text-primary">{network.symbol}</span>
@@ -105,7 +105,10 @@ export function WalletDetailsModal() {
 
         {/* Network Switcher Section */}
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">Switch Active Network</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted-foreground">Switch Active Network</p>
+            <span className="text-[10px] text-muted-foreground italic">(Simulated switch)</span>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             {SUPPORTED_NETWORKS.map((n) => {
               const isCurrent = n.id === network.id;

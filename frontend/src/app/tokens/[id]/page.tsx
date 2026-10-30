@@ -27,7 +27,10 @@ export default async function TokenDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const token = MOCK_TOKENS.find((t) => t.id === id) || MOCK_TOKENS[0];
+  const token = MOCK_TOKENS.find((t) => t.id === id);
+  if (!token) {
+    notFound();
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
