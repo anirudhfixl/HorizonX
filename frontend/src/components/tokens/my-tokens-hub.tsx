@@ -263,7 +263,7 @@ export function MyTokensHub() {
 
     setLocalSupplies((prev) => ({ ...prev, [managementToken.id]: nextSupply }));
     toast.success("Simulated Mint Complete (Local State)", {
-      description: `Simulated ${mintAmount} ${managementToken.symbol} minted to ${mintRecipient.slice(0, 6)}... (Note: Does not persist across page refresh).`,
+      description: `Simulated ${mintAmount} ${managementToken.symbol} minted to ${mintRecipient.slice(0, 6)}... (Note: In-memory simulation state resets upon page reload).`,
     });
     setMintAmount("");
   };
@@ -698,7 +698,7 @@ export function MyTokensHub() {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Simulated deployment receipts generated in your current browser session via the Token Creation Wizard.
+                    Simulated deployment receipts generated via the Token Creation Wizard are stored in client-side <code className="text-amber-400 font-mono">sessionStorage</code>. They persist across page reloads in this browser tab and clear automatically when the tab session ends. Not permanently persisted on-chain or in a backend.
                   </p>
                 </div>
                 <span className="text-xs text-muted-foreground font-mono">

@@ -439,7 +439,7 @@
       - **Separation of Predefined Catalog vs. Temporary Session Simulation Receipts**:
         - Predefined catalog tokens (`MOCK_TOKENS`) are badged as "Catalog Asset".
         - Tokens created during the current browser session via `/tokens/create` are persisted client-side in `sessionStorage` (`prominers_session_tokens`) and displayed in a distinct section labeled "Temporary Simulated Creator Assets".
-        - Clearly disclosed that session assets do not survive a page refresh / session termination and are not permanently persisted, avoiding any claims of backend or on-chain permanence.
+        - Clearly disclosed that session assets are stored strictly in client-side `sessionStorage`, persisting across page reloads within the active browser tab but clearing automatically when the tab or browser session ends, with zero claims of backend or on-chain permanence.
       - **Accurate Telemetry Metrics (Zero "Active Contracts" Claims)**:
         - Accurately labeled metric cards:
           - `Managed Tokens`: Total active tokens managed in current creator view.
@@ -453,7 +453,7 @@
         - **Simulated Burn**: Validates positive integer amounts, validates against current supply upper bounds, executes `BigInt` supply subtraction, and updates local state.
         - **Simulated Pause/Unpause**: Toggles pause status in local state with emergency control badges.
         - **Simulated Ownership Transfer**: Validates 42-character EVM hex address and explicit confirmation acknowledgment before updating local state.
-        - **Strict Non-Execution Boundaries**: Zero `writeContract`, `sendTransaction`, wallet signatures, or RPC writes; explicitly states all updates are local simulation state that resets upon page refresh.
+        - **Strict Non-Execution Boundaries**: Zero `writeContract`, `sendTransaction`, wallet signatures, or RPC writes; explicitly states all administrative state modifications (mint/burn/pause/transfer) are in-memory component simulation states that reset upon page reload.
         - Comprehensive callouts regarding pending Architecture Decisions D-05 (token standards / extensions) and D-06 (authority / upgradeability).
       - **Canonical Navigation**:
         - Linked directly to canonical `/tokens/${token.id}` detail hub routes without fragile hash fragments (`#contract`).
