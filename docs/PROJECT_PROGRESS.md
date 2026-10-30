@@ -342,7 +342,7 @@
       - 9 Tokens Cataloged (7 active, 2 pending).
       - $818.75M Simulated Market Cap derived from circulating supply * price.
       - $9.90M 24h Aggregated Trading Volume.
-      - 5 Sepolia Active Deployments (strictly conforming to Architecture Decision D-04).
+      - 5 Sepolia Catalog Assets (strictly conforming to Architecture Decision D-04 without implying verified on-chain contract deployment).
     - Designed prominent demonstration and simulation disclaimer notice banners making it explicit that catalog aggregations are simulated estimates rather than live blockchain telemetry.
     - Integrated live Connected Wallet Orientation:
       - Reactive connection via `useWallet()` displaying connected address, active network indicator, and live native Sepolia ETH balance.
@@ -356,7 +356,7 @@
       - Displays token identity, category, 24h change badge, verified status badge, market cap, and primary action button.
     - Implemented Token Distribution & Status Summaries:
       - Category distribution with proportional progress bars and percentage calculation.
-      - Verification & Lifecycle status breakdown (Official Verified, Ecosystem Community, Deploying & Pending).
+      - Verification tier breakdown reconciling canonical schema tiers: Audit Available (4), Contract Source Verified (2), Project Reviewed (2), and Not Reviewed (1).
     - Implemented Recently Added Tokens section:
       - Chronologically ordered descending by `createdAt` catalog timestamp.
       - Displays token identity, category, creation date, network deployment badge, simulated price, and direct link to token details.

@@ -23,6 +23,7 @@ import {
   Calendar,
   Layers,
   CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 
 export type TokenWithMarket = Token & { market: TokenMarketData };
@@ -262,10 +263,10 @@ export default function TokensDashboardPage() {
           icon={<TrendingUp className="h-4 w-4 text-emerald-400" />}
         />
         <MetricCard
-          title="Sepolia Active (D-04)"
+          title="Sepolia Catalog Assets"
           value={metrics.sepoliaTokens.toString()}
           subtitle="Chain ID: 11155111"
-          change="Audit Verified"
+          change="D-04 Standard"
           trend="neutral"
           icon={<ShieldCheck className="h-4 w-4 text-primary" />}
         />
@@ -525,9 +526,9 @@ export default function TokensDashboardPage() {
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                 <div>
-                  <div className="font-medium text-foreground">Independent Audit Available</div>
+                  <div className="font-medium text-foreground">Audit Available</div>
                   <div className="text-[10px] text-muted-foreground">
-                    Verified through Tier 1 security analysis
+                    Independent security audit report available
                   </div>
                 </div>
               </div>
@@ -555,14 +556,29 @@ export default function TokensDashboardPage() {
               <div className="flex items-center gap-2">
                 <Info className="h-4 w-4 text-muted-foreground" />
                 <div>
-                  <div className="font-medium text-foreground">Project Team Reviewed</div>
+                  <div className="font-medium text-foreground">Project Reviewed</div>
                   <div className="text-[10px] text-muted-foreground">
-                    Metadata and team identities confirmed
+                    Ecosystem project profile and team reviewed
                   </div>
                 </div>
               </div>
               <span className="font-mono font-semibold text-foreground">
                 {metrics.verificationBreakdown["project_reviewed"] || 0}
+              </span>
+            </div>
+
+            <div className="rounded-xl border border-border/40 bg-secondary/20 p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-400" />
+                <div>
+                  <div className="font-medium text-foreground">Not Reviewed</div>
+                  <div className="text-[10px] text-muted-foreground">
+                    Community submission — pending review and audit
+                  </div>
+                </div>
+              </div>
+              <span className="font-mono font-semibold text-amber-400">
+                {metrics.verificationBreakdown["not_reviewed"] || 0}
               </span>
             </div>
           </div>
