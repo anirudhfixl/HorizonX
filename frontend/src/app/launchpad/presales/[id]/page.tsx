@@ -1,15 +1,22 @@
 import React from "react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { MetricCard } from "@/components/shared/metric-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { MOCK_PRESALES } from "@/lib/mock-data";
-import { Rocket, ShieldCheck, Clock, Users, ArrowRight } from "lucide-react";
+import { Users } from "lucide-react";
 
 export function generateStaticParams() {
   return MOCK_PRESALES.map((ps) => ({ id: ps.id }));
+}
+
+function calculateProgress(totalRaised?: string, hardCap?: string): number {
+  if (!totalRaised || !hardCap) return 0;
+  const raisedNum = parseFloat(totalRaised.replace(/[^0-9.]/g, ""));
+  const capNum = parseFloat(hardCap.replace(/[^0-9.]/g, ""));
+  if (isNaN(raisedNum) || isNaN(capNum) || capNum === 0) return 0;
+  return Math.min(100, Math.max(0, (raisedNum / capNum) * 100));
 }
 
 export default async function PresaleDetailPage({
@@ -22,6 +29,11 @@ export default async function PresaleDetailPage({
   if (!presale) {
     notFound();
   }
+
+  const progress = calculateProgress(presale.totalRaised, presale.hardCap);
+  const softCapNum = parseFloat((presale.softCap || "0").replace(/[^0-9.]/g, ""));
+  const raisedNum = parseFloat((presale.totalRaised || "0").replace(/[^0-9.]/g, ""));
+  const softCapReached = raisedNum >= softCapNum && softCapNum > 0;
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -48,12 +60,14 @@ export default async function PresaleDetailPage({
               </div>
               <div className="h-3 w-full rounded-full bg-secondary overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-amber-500"
-                  style={{ width: "79%" }}
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-amber-500 transition-all duration-500"
+                  style={{ width: `${progress}%` }}
                 />
               </div>
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Softcap: {presale.softCap} (Reached)</span>
+                <span>
+                  Softcap: {presale.softCap} {softCapReached && "(Reached)"}
+                </span>
                 <span>Hardcap: {presale.hardCap}</span>
               </div>
             </div>
@@ -83,7 +97,7 @@ export default async function PresaleDetailPage({
         <div className="rounded-2xl border border-border/60 bg-card/80 p-6 backdrop-blur-md space-y-5 h-fit shadow-xl">
           <h3 className="text-base font-bold text-foreground">Contribute to Presale</h3>
           <p className="text-xs text-muted-foreground">
-            Deposit {presale.network === "BNB Chain" ? "BNB" : "ETH"} into the contract to receive tokens upon completion.
+            Deposit ETH into the non-custodial contract to receive tokens upon completion.
           </p>
 
           <div className="space-y-2">
@@ -98,7 +112,7 @@ export default async function PresaleDetailPage({
                 className="w-full bg-transparent text-sm font-mono text-foreground focus:outline-none"
               />
               <span className="text-xs font-semibold text-primary">
-                {presale.network === "BNB Chain" ? "BNB" : "ETH"}
+                ETH
               </span>
             </div>
           </div>

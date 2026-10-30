@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "npx tsx src/tests/wallet-state.test.ts && npx tsx src/tests/token-explorer.test.ts && npx tsx src/tests/project-directory.test.ts"
+    "test": "npx tsx src/tests/wallet-state.test.ts && npx tsx src/tests/token-explorer.test.ts && npx tsx src/tests/project-directory.test.ts && npx tsx src/tests/presale-directory.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

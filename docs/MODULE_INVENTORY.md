@@ -36,7 +36,7 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 | `/explore` | Discovery Hub landing | Public | 2 | COMPLETE |
 | `/explore/tokens` | Token explorer (cross-module) | Public | 2 | COMPLETE |
 | `/explore/projects` | Project directory | Public | 2 | COMPLETE |
-| `/explore/presales` | Presales discovery | Public | 2 | SHELL |
+| `/explore/presales` | Presales discovery | Public | 2 | COMPLETE |
 | `/explore/launches` | Fair launches discovery | Public | 2 | SHELL |
 | `/explore/airdrops` | Airdrop discovery | Public | 2 | SHELL |
 | `/explore/staking` | Staking pool discovery | Public | 2 | SHELL |
@@ -68,7 +68,7 @@ The Milestone 0 discovery report identified 54 candidate routes. After cross-ref
 | Route | View | Auth | Phase | Status |
 |---|---|---|---|---|
 | `/launchpad` | Launchpad dashboard | Public | 4 | SHELL |
-| `/launchpad/presales` | All presales listing | Public | 4 | SHELL |
+| `/launchpad/presales` | All presales listing | Public | 4 | COMPLETE |
 | `/launchpad/presales/create` | Create Presale wizard | Wallet-gated | 4 | SHELL |
 | `/launchpad/presales/[id]` | Presale detail | Public | 4 | SHELL |
 | `/launchpad/presales/[id]/manage` | Presale management (owner) | Owner | 4 | SHELL |

@@ -102,8 +102,10 @@ export type PresaleStatus =
 export interface Presale {
   id: string;
   title: string;
+  description?: string;
   tokenId: string;
   projectId?: string;
+  category?: string;
   ownerAddress: string;
   status: PresaleStatus;
   startTime?: string;
