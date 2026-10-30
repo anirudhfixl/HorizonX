@@ -36,7 +36,7 @@ export default async function PresaleDetailPage({
   const softCapReached = raisedNum >= softCapNum && softCapNum > 0;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <PageHeader
         title={presale.title}
         description={`Initial decentralized offering on ${presale.network} network with non-custodial lockup.`}

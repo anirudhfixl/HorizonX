@@ -25,7 +25,7 @@ import {
 
 export default function Home() {
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-16 py-8 sm:py-12">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 space-y-16 py-8 sm:py-12">
       {/* ─── Hero Section ────────────────────────────────────────────── */}
       <section className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-card/80 via-card/40 to-background/90 p-8 sm:p-14 backdrop-blur-xl shadow-2xl">
         {/* Glow Effects */}

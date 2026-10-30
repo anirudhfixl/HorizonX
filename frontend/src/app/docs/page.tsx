@@ -38,7 +38,7 @@ export default function DocsHomePage() {
   ];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       <PageHeader
         title="Documentation & Protocol Knowledge"
         description="Comprehensive guides, architecture overviews, developer references, and legal disclosures for ProMiners."

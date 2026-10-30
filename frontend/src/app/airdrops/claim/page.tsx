@@ -21,7 +21,7 @@ export default function ClaimAirdropPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <PageHeader
         title="Claim Airdrop Rewards"
         description="Verify your connected Web3 address against active merkle roots to claim token distributions."

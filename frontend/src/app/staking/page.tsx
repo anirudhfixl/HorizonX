@@ -9,7 +9,7 @@ import { Layers, Plus, ShieldCheck, ArrowRight } from "lucide-react";
 
 export default function StakingDashboardPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       <PageHeader
         title="Staking Protocol"
         description="Non-custodial smart vaults for high-yield token staking, LP incentives, and community governance locks."

@@ -4,7 +4,7 @@ import { ShieldCheck, AlertCircle, Lock } from "lucide-react";
 
 export default function AccountVerificationPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <PageHeader
         title="Identity & Trust Verification"
         description="Verification levels for launchpad creators, project owners, and compliant token distributions."

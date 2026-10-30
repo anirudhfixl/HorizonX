@@ -246,7 +246,7 @@ export default function ExploreHubPage() {
   const isFilteringActive = query.length > 0 || activeCategory !== "all" || quickFilter !== "all";
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       {/* 1. Header & Demonstration Notice */}
       <div className="space-y-4">
         <PageHeader

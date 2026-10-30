@@ -28,7 +28,7 @@ export default function CreateFairLaunchPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <PageHeader
         title="Create Fair Launch"
         description="Launch an un-tiered community offering where the final token price is determined dynamically by the total pool contributions."

@@ -9,7 +9,7 @@ import { Rocket, Sparkles, Plus, ArrowRight, ShieldCheck } from "lucide-react";
 
 export default function LaunchpadDashboardPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       <PageHeader
         title="Launchpad Hub"
         description="The primary launch protocol for initial token offerings, presales, and fair launches with built-in liquidity lockups."

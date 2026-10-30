@@ -12,7 +12,7 @@ export default function AccountWalletsPage() {
   const { openModal } = useModal();
 
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <PageHeader
         title="Wallet Connections"
         description="Active Web3 addresses associated with your ProMiners account."

@@ -14,7 +14,7 @@ export default function PartnersPage() {
   const { openModal } = useModal();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       <PageHeader
         title="Partner Portal"
         description="Collaborate with ProMiners to incubate projects, onboard developers, and earn protocol revenue share."

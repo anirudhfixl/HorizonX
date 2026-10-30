@@ -282,25 +282,42 @@
   --nav-height: 68px;
   position: fixed;
   z-index: 1000;
-  top: 16px;
+  top: 0px;
   left: 7.3%;
   width: 85.4%;
   height: var(--nav-height);
   padding: 0 27px;
   display: flex;
   align-items: center;
-  background: var(--nav-bg);
+  background: transparent;
   color: var(--nav-text);
   border: none;
   border-radius: 999px;
-  box-shadow: 0 8px 28px rgba(0,0,0,.08);
-  transition:
-    background-color .32s ease,
-    border-color .32s ease,
-    box-shadow .38s cubic-bezier(.22,1,.36,1),
-    backdrop-filter .38s ease;
-  will-change: background-color, box-shadow, backdrop-filter;
+  box-shadow: none;
   box-sizing: border-box;
+}
+
+/* The visual glass is a separate layer so it can expand without moving
+   or resizing the navigation content. */
+.navbar-shell::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  left: -8.548%;
+  width: 117.096%;
+  border-radius: 0;
+  background: var(--nav-bg);
+  box-shadow: 0 8px 28px rgba(0,0,0,.08);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(24px) saturate(145%);
+  transition:
+    width .58s cubic-bezier(.22,1,.36,1),
+    left .58s cubic-bezier(.22,1,.36,1),
+    border-radius .58s cubic-bezier(.22,1,.36,1),
+    background .32s ease,
+    box-shadow .38s cubic-bezier(.22,1,.36,1);
+  pointer-events: none;
 }
 
 /* Scoped Theme Palettes — Affects ONLY navbar and its children */
@@ -317,7 +334,7 @@
 }
 
 .navbar-shell.theme-dark {
-  --nav-bg: rgba(12,12,11,.98);
+  --nav-bg: rgba(12,12,11,.48);
   --nav-text: #e9e4da;
   --nav-muted: #b6b0a6;
   --nav-panel: rgba(18,18,16,.98);
@@ -338,16 +355,21 @@
 
 /* Scrolled state: identical geometry, subtle glass backdrop */
 .navbar-shell.is-scrolled {
-  top: 16px;
+  top: 0px;
   left: 7.3%;
   width: 85.4%;
   height: 68px;
   padding: 0 27px;
   border: none;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--nav-bg) 72%, transparent);
-  -webkit-backdrop-filter: blur(24px) saturate(145%);
-  backdrop-filter: blur(24px) saturate(145%);
+  background: transparent;
+  box-shadow: none;
+}
+
+.navbar-shell.is-scrolled::before {
+  left: 0;
+  width: 100%;
+  border-radius: 999px;
   box-shadow: 0 9px 35px rgba(0,0,0,.12);
 }
 
@@ -677,6 +699,12 @@
 }
 
 @media (max-width: 860px) {
+  .navbar-shell::before,
+  .navbar-shell.is-scrolled::before {
+    left: 0;
+    width: 100%;
+    border-radius: 0;
+  }
   .navbar-shell,
   .navbar-shell.is-scrolled {
     top: 0;
@@ -685,12 +713,10 @@
     height: 76px;
     padding: 0 20px;
     border-radius: 0;
-    background: var(--nav-bg);
+    background: transparent;
     color: var(--nav-text);
     border: 0;
-    box-shadow: 0 1px 0 rgba(0,0,0,.07);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
+    box-shadow: none;
   }
   .navbar-shell .navbar {
     display: flex;

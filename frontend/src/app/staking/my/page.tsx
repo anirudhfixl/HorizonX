@@ -14,7 +14,7 @@ export default function MyStakingPositionsPage() {
   const { openModal } = useModal();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <PageHeader
         title="My Staking Positions"
         description="Monitor your active staked assets, accumulated rewards, and harvest history."

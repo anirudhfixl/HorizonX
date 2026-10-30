@@ -29,7 +29,7 @@ export default function CreateStakingPoolPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       <PageHeader
         title="Deploy Staking Pool"
         description="Launch an audited staking vault for your token holders with custom reward APY and lockup terms."

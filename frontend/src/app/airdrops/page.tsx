@@ -9,7 +9,7 @@ import { Gift, Plus, ShieldCheck, ArrowRight } from "lucide-react";
 
 export default function AirdropsDashboardPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
       <PageHeader
         title="Airdrop Hub"
         description="Launch gas-efficient merkle distributions, reward loyal token communities, and claim eligible rewards."

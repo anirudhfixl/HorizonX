@@ -223,7 +223,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
       : [{ label: "Explore", href: "/explore" }, { label: "Tokens" }];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* 1. Page Header & Actions */}
       <div className="space-y-4">
         <PageHeader
