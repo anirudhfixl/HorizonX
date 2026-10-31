@@ -59,7 +59,7 @@ function DotMatrix({
       : source.length === 2
         ? [source[0], source[0], source[0], source[1], source[1], source[1]]
         : [source[0], source[0], source[1], source[1], source[2] ?? source[1], source[2] ?? source[1]];
-    return expanded.map((entry) => entry.map((channel) => channel / 255));
+    return expanded.map((entry) => entry.map((channel: number) => channel / 255));
   }, [colors]);
 
   const safeOpacities = useMemo(() => {

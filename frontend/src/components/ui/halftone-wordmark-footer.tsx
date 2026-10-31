@@ -186,7 +186,7 @@ export function hwfFitSize(measured: number, width: number): number {
 const HWF_CSS = `
 .hwf-root {
   position: relative; width: 100%; overflow: hidden; isolation: isolate;
-  background: var(--hwf-bg); color: var(--hwf-ink); -webkit-font-smoothing: antialiased;
+  background: var(--hwf-bg); color: var(--hwf-ink); transition: background-color 420ms ease, color 420ms ease; -webkit-font-smoothing: antialiased;
 }
 .hwf-root canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; }
 .hwf-top {
@@ -550,7 +550,6 @@ export default function HalftoneWordmarkFooter({
           "--hwf-bg": colors.background,
           "--hwf-ink": colors.ink,
           "--hwf-warm": colors.warm,
-          backgroundColor: "#080711",
           "--hwf-mono": monoFamily,
         } as React.CSSProperties
       }

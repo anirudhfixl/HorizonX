@@ -1,5 +1,12 @@
 import type { FairLaunch, PresaleStatus } from "@/types";
-import { formatUtc, parseAmountParts } from "@/lib/presale-detail";
+import {
+  formatUtc,
+  isAuthorizedCreator,
+  normalizePresaleStatus,
+  parseAmountParts,
+} from "@/lib/presale-detail";
+
+export { isAuthorizedCreator, normalizePresaleStatus };
 
 /**
  * Pure presentation helpers for `/launchpad/launches/[id]`.
@@ -71,15 +78,17 @@ export const COMMITMENT_UNAVAILABLE: Record<CommitmentUnavailableReason, string>
 
 export const CONCLUDED_STATUSES: PresaleStatus[] = ["ended", "finalized", "failed", "cancelled"];
 
-export function isConcluded(status: PresaleStatus): boolean {
-  return CONCLUDED_STATUSES.includes(status);
+export function isConcluded(status?: string): boolean {
+  const norm = normalizePresaleStatus(status);
+  return CONCLUDED_STATUSES.includes(norm);
 }
 
 /** Soft-cap wording. Tense follows the stored lifecycle status, never the clock. */
-export function softCapStatement(status: PresaleStatus, c: Commitment): string | null {
+export function softCapStatement(status: string | undefined, c: Commitment): string | null {
   if (!c.available) return null;
-  if (isConcluded(status)) return c.state === "reached" ? "Soft cap met" : "Soft cap not met";
-  if ((status === "draft" || status === "scheduled") && c.raised === 0) return "Nothing raised yet";
+  const norm = normalizePresaleStatus(status);
+  if (isConcluded(norm)) return c.state === "reached" ? "Soft cap met" : "Soft cap not met";
+  if ((norm === "draft" || norm === "scheduled") && c.raised === 0) return "Nothing raised yet";
   return c.state === "reached" ? "Soft cap reached" : "Soft cap not reached yet";
 }
 
@@ -115,10 +124,11 @@ const OUTCOME_LABEL: Record<PresaleStatus, string> = {
  * so nothing here can drift or fake a countdown.
  */
 export function buildMilestones(fl: Pick<FairLaunch, "status" | "createdAt" | "startTime" | "endTime" | "updatedAt">): Milestone[] {
-  const current = fl.status === "draft" ? 0 : fl.status === "scheduled" ? 1 : fl.status === "live" ? 2 : 3;
+  const norm = normalizePresaleStatus(fl.status);
+  const current = norm === "draft" ? 0 : norm === "scheduled" ? 1 : norm === "live" ? 2 : 3;
   const stateFor = (i: number): MilestoneState => (i < current ? "done" : i === current ? "current" : "upcoming");
-  const concluded = isConcluded(fl.status);
-  const draft = fl.status === "draft";
+  const concluded = isConcluded(norm);
+  const draft = norm === "draft";
 
   return [
     {
@@ -132,7 +142,7 @@ export function buildMilestones(fl: Pick<FairLaunch, "status" | "createdAt" | "s
       key: "opens",
       label: draft ? "Planned opening" : "Opens",
       at: fl.startTime,
-      note: draft ? "Planned start; not confirmed." : fl.status === "scheduled" ? "Scheduled opening." : "Opening time on the record.",
+      note: draft ? "Planned start; not confirmed." : norm === "scheduled" ? "Scheduled opening." : "Opening time on the record.",
       state: stateFor(1),
     },
     {
@@ -144,7 +154,7 @@ export function buildMilestones(fl: Pick<FairLaunch, "status" | "createdAt" | "s
     },
     {
       key: "outcome",
-      label: OUTCOME_LABEL[fl.status],
+      label: OUTCOME_LABEL[norm] || "Outcome",
       at: concluded ? fl.updatedAt : undefined,
       note: concluded
         ? "This is the date the catalog record was last updated, not a confirmed on-chain event."
@@ -164,8 +174,9 @@ export interface ParticipationState {
 }
 
 /** What the stored lifecycle status allows. Contributions are only offered while `live`. */
-export function participationState(fl: Pick<FairLaunch, "status" | "startTime" | "endTime">): ParticipationState {
-  switch (fl.status) {
+export function participationState(fl: { status?: string; startTime?: string; endTime?: string }): ParticipationState {
+  const norm = normalizePresaleStatus(fl.status);
+  switch (norm) {
     case "live":
       return {
         open: true,
@@ -216,9 +227,168 @@ export function participantsLabel(count?: number): string {
 
 export const NOT_RECORDED_TERMS: { label: string; detail: string }[] = [
   { label: "Hard cap", detail: "Fair launch records do not store a hard cap, so the raise is not capped here." },
-  { label: "Token price / allocation rule", detail: "No price, rate or rule for how contributions become tokens is stored." },
+  { label: "Token price / allocation rule", detail: "No fixed price or static conversion rate exists; tokens are distributed proportionally from the pool." },
   { label: "Vesting and unlock schedule", detail: "No vesting terms are stored." },
   { label: "Liquidity and lock terms", detail: "No liquidity pool, LP lock or burn terms are stored." },
   { label: "Refund rules", detail: "No refund or soft-cap-failure rules are stored." },
   { label: "Launch contract", detail: "No fair launch contract address is stored, so no figure here is read on-chain." },
 ];
+
+// ─── Status Transitions ──────────────────────────────────────────────────────
+
+export interface StatusTransitionRule {
+  target: PresaleStatus;
+  label: string;
+  description: string;
+  variant?: "default" | "destructive" | "outline" | "secondary";
+}
+
+/**
+ * Allowed status transitions for Fair Launch.
+ * Terminal states (finalized, cancelled, failed) cannot transition further.
+ */
+export function getAllowedFairLaunchStatusTransitions(currentStatus?: string): StatusTransitionRule[] {
+  const norm = normalizePresaleStatus(currentStatus);
+  switch (norm) {
+    case "draft":
+      return [
+        {
+          target: "scheduled",
+          label: "Schedule Launch",
+          description: "Schedule this fair launch for its planned opening time.",
+          variant: "outline",
+        },
+        {
+          target: "live",
+          label: "Go Live Immediately",
+          description: "Open the fair launch pool for contributions right away.",
+          variant: "default",
+        },
+        {
+          target: "cancelled",
+          label: "Cancel Simulation",
+          description: "Abort this simulation draft.",
+          variant: "destructive",
+        },
+      ];
+    case "scheduled":
+      return [
+        {
+          target: "live",
+          label: "Open Pool (Go Live)",
+          description: "Transition the fair launch to live contribution mode.",
+          variant: "default",
+        },
+        {
+          target: "cancelled",
+          label: "Cancel Simulation",
+          description: "Cancel this scheduled fair launch simulation.",
+          variant: "destructive",
+        },
+      ];
+    case "live":
+      return [
+        {
+          target: "ended",
+          label: "Close Pool (End)",
+          description: "Close contributions while awaiting pool settlement or finalization.",
+          variant: "outline",
+        },
+        {
+          target: "finalized",
+          label: "Finalize Fair Launch",
+          description: "Simulate soft-cap check, lock LP, and prepare proportional token distribution.",
+          variant: "default",
+        },
+        {
+          target: "cancelled",
+          label: "Cancel Fair Launch",
+          description: "Cancel the launch and open simulated refund claims.",
+          variant: "destructive",
+        },
+      ];
+    case "ended":
+      return [
+        {
+          target: "finalized",
+          label: "Finalize Fair Launch",
+          description: "Complete the fair launch settlement and calculate final token distribution.",
+          variant: "default",
+        },
+        {
+          target: "failed",
+          label: "Mark as Failed",
+          description: "Mark the fair launch as failed (e.g. soft cap not met).",
+          variant: "destructive",
+        },
+      ];
+    default:
+      return [];
+  }
+}
+
+// ─── Derived Terms & Allocation Calculations ────────────────────────────────
+
+export interface DerivedFairLaunchTerms {
+  totalSellingTokens?: number;
+  totalSellingUnit?: string;
+  softCapAmount?: number;
+  softCapUnit?: string;
+  totalRaisedAmount?: number;
+  totalRaisedUnit?: string;
+  tokensPerUnitAtSoftCap?: number;
+  currentTokensPerUnit?: number;
+  pctOfTotalSupply?: number;
+  hasDerivedCalculations: boolean;
+}
+
+/**
+ * Derives token math and proportional pool metrics from stored records.
+ * Never guesses or invents missing parameters.
+ */
+export function deriveFairLaunchTerms(
+  totalSellingStr?: string,
+  softCapStr?: string,
+  totalRaisedStr?: string,
+  tokenTotalSupplyStr?: string | number
+): DerivedFairLaunchTerms {
+  const sellingParts = parseAmountParts(totalSellingStr);
+  const softParts = parseAmountParts(softCapStr);
+  const raisedParts = parseAmountParts(totalRaisedStr);
+
+  let totalSupplyNum: number | undefined;
+  if (typeof tokenTotalSupplyStr === "number" && Number.isFinite(tokenTotalSupplyStr) && tokenTotalSupplyStr > 0) {
+    totalSupplyNum = tokenTotalSupplyStr;
+  } else if (typeof tokenTotalSupplyStr === "string") {
+    const parsed = parseAmountParts(tokenTotalSupplyStr);
+    if (parsed && parsed.value > 0) {
+      totalSupplyNum = parsed.value;
+    } else {
+      const clean = parseFloat(tokenTotalSupplyStr.replace(/,/g, ""));
+      if (Number.isFinite(clean) && clean > 0) {
+        totalSupplyNum = clean;
+      }
+    }
+  }
+
+  const sellingVal = sellingParts && sellingParts.value > 0 ? sellingParts.value : undefined;
+  const softVal = softParts && softParts.value > 0 ? softParts.value : undefined;
+  const raisedVal = raisedParts && raisedParts.value > 0 ? raisedParts.value : undefined;
+
+  const tokensPerUnitAtSoftCap = sellingVal && softVal ? sellingVal / softVal : undefined;
+  const currentTokensPerUnit = sellingVal && raisedVal ? sellingVal / raisedVal : undefined;
+  const pctOfTotalSupply = sellingVal && totalSupplyNum && totalSupplyNum > 0 ? (sellingVal / totalSupplyNum) * 100 : undefined;
+
+  return {
+    totalSellingTokens: sellingVal,
+    totalSellingUnit: sellingParts?.unit,
+    softCapAmount: softVal,
+    softCapUnit: softParts?.unit,
+    totalRaisedAmount: raisedVal,
+    totalRaisedUnit: raisedParts?.unit,
+    tokensPerUnitAtSoftCap,
+    currentTokensPerUnit,
+    pctOfTotalSupply,
+    hasDerivedCalculations: Boolean(tokensPerUnitAtSoftCap || currentTokensPerUnit || pctOfTotalSupply),
+  };
+}

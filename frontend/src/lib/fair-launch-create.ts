@@ -15,6 +15,18 @@ export interface FairLaunchDraft {
   tokenAddress: string;
   totalSelling: string;
   softCap: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  projectId?: string;
+  startTime?: string;
+  endTime?: string;
+  minContribution?: string;
+  maxContribution?: string;
+  tokenId?: string;
+  tokenName?: string;
+  tokenSymbol?: string;
+  tokenDecimals?: number;
 }
 
 /** Same defaults the form always started with. */
@@ -52,6 +64,31 @@ export function validateFairLaunch(d: FairLaunchDraft): FlErrors {
   const soft = parseNumber(d.softCap);
   if (soft === null) e.softCap = "Enter the soft cap as a plain number, for example 20.";
   else if (soft <= 0) e.softCap = "The soft cap must be greater than zero."; // (new)
+
+  if (d.minContribution !== undefined && d.minContribution !== "") {
+    const min = parseNumber(d.minContribution);
+    if (min === null) e.minContribution = "Enter the minimum contribution as a plain number.";
+    else if (min < 0) e.minContribution = "The minimum cannot be negative.";
+  }
+
+  if (d.maxContribution !== undefined && d.maxContribution !== "") {
+    const max = parseNumber(d.maxContribution);
+    if (max === null) e.maxContribution = "Enter the maximum contribution as a plain number.";
+    else if (max <= 0) e.maxContribution = "The maximum must be greater than zero.";
+    else if (d.minContribution) {
+      const min = parseNumber(d.minContribution);
+      if (min !== null && min > max) e.maxContribution = "The maximum must be at least the minimum.";
+    }
+  }
+
+  if (d.startTime && d.endTime) {
+    const start = new Date(d.startTime).getTime();
+    const end = new Date(d.endTime).getTime();
+    if (!Number.isNaN(start) && !Number.isNaN(end) && end <= start) {
+      e.endTime = "The end date/time must be after the start date/time.";
+    }
+  }
+
   return e;
 }
 

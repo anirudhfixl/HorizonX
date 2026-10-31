@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MOCK_FAIR_LAUNCHES, MOCK_TOKENS, MOCK_PROJECTS } from "@/lib/mock-data";
+import { readSessionLaunchesRaw, subscribeSessionLaunches, sessionFairLaunchToFairLaunch } from "@/lib/launch-storage";
 import { Token, Project, FairLaunch } from "@/types";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +25,7 @@ import {
   ArrowLeft,
   Users,
   SearchX,
+  Filter,
 } from "lucide-react";
 
 export type FairLaunchSortOption =
@@ -428,6 +431,7 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(6);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Maps for fast token and project metadata lookups
   const tokenMap = useMemo(() => {
@@ -442,16 +446,39 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
     return map;
   }, []);
 
+  // Read session-simulated fair launches if present
+  const sessionRaw = useSyncExternalStore(subscribeSessionLaunches, readSessionLaunchesRaw, () => "");
+  const sessionFairLaunches = useMemo<FairLaunch[]>(() => {
+    if (!sessionRaw) return [];
+    try {
+      const parsed = JSON.parse(sessionRaw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter((l: { kind: string }) => l.kind === "fair")
+        .map(sessionFairLaunchToFairLaunch);
+    } catch {
+      return [];
+    }
+  }, [sessionRaw]);
+
+  const allFairLaunches = useMemo(() => {
+    return [...sessionFairLaunches, ...MOCK_FAIR_LAUNCHES];
+  }, [sessionFairLaunches]);
+
+  const sessionLaunchIds = useMemo(() => {
+    return new Set(sessionFairLaunches.map((s) => s.id));
+  }, [sessionFairLaunches]);
+
   // Unique categories derived from launches and linked tokens
   const uniqueCategories = useMemo(() => {
     const set = new Set<string>();
-    MOCK_FAIR_LAUNCHES.forEach((fl) => {
+    allFairLaunches.forEach((fl) => {
       if (fl.category) set.add(fl.category);
       const token = tokenMap.get(fl.tokenId);
       if (token?.category) set.add(token.category);
     });
     return Array.from(set).sort();
-  }, [tokenMap]);
+  }, [allFairLaunches, tokenMap]);
 
   // Filter Change Handlers with immediate page reset
   const handleSearchChange = (value: string) => {
@@ -486,7 +513,7 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
   // Filtered fair launches
   const filteredLaunches = useMemo(
     () =>
-      MOCK_FAIR_LAUNCHES.filter((fl) =>
+      allFairLaunches.filter((fl) =>
         matchesFairLaunch(
           fl,
           { search: searchQuery, status: statusFilter, network: networkFilter, category: categoryFilter },
@@ -494,7 +521,7 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
           projectMap
         )
       ),
-    [searchQuery, statusFilter, networkFilter, categoryFilter, tokenMap, projectMap]
+    [allFairLaunches, searchQuery, statusFilter, networkFilter, categoryFilter, tokenMap, projectMap]
   );
 
   // Live facet counts: each control counts launches under the *other* active filters
@@ -505,11 +532,11 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
       network: networkFilter,
       category: categoryFilter,
     };
-    const rows = MOCK_FAIR_LAUNCHES.filter((fl) => matchesFairLaunch(fl, base, tokenMap, projectMap));
+    const rows = allFairLaunches.filter((fl) => matchesFairLaunch(fl, base, tokenMap, projectMap));
     const counts: Record<string, number> = { all: rows.length };
     STAGES.forEach((s) => (counts[s.value] = rows.filter((fl) => fl.status === s.value).length));
     return counts;
-  }, [searchQuery, networkFilter, categoryFilter, tokenMap, projectMap]);
+  }, [allFairLaunches, searchQuery, networkFilter, categoryFilter, tokenMap, projectMap]);
 
   const networkCounts = useMemo(() => {
     const base: FairLaunchFilters = {
@@ -518,9 +545,9 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
       network: "all",
       category: categoryFilter,
     };
-    const rows = MOCK_FAIR_LAUNCHES.filter((fl) => matchesFairLaunch(fl, base, tokenMap, projectMap));
+    const rows = allFairLaunches.filter((fl) => matchesFairLaunch(fl, base, tokenMap, projectMap));
     return { all: rows.length, sepolia: rows.filter((fl) => isSepoliaNetwork(fl.network)).length };
-  }, [searchQuery, statusFilter, categoryFilter, tokenMap, projectMap]);
+  }, [allFairLaunches, searchQuery, statusFilter, categoryFilter, tokenMap, projectMap]);
 
   // Sorted fair launches
   const sortedLaunches = useMemo(() => {
@@ -743,22 +770,78 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
             ))}
           </div>
 
-          <select
-            value={categoryFilter}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className={cn(selectClass, "h-10 self-start md:self-auto")}
-            aria-label="Category"
-          >
-            <option value="all" className="bg-card text-foreground">
-              All Categories
-            </option>
-            {uniqueCategories.map((cat) => (
-              <option key={cat} value={cat} className="bg-card text-foreground">
-                {cat}
+          <div className="flex items-center gap-2">
+            <select
+              value={categoryFilter}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              className={cn(selectClass, "h-10 self-start md:self-auto")}
+              aria-label="Category"
+            >
+              <option value="all" className="bg-card text-foreground">
+                All Categories
               </option>
-            ))}
-          </select>
+              {uniqueCategories.map((cat) => (
+                <option key={cat} value={cat} className="bg-card text-foreground">
+                  {cat}
+                </option>
+              ))}
+            </select>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMobileFiltersOpen((prev) => !prev)}
+              className="h-10 md:hidden gap-1.5 px-3 text-xs"
+            >
+              <Filter className="h-3.5 w-3.5" />
+              Filters
+            </Button>
+          </div>
         </div>
+
+        {/* Collapsible Mobile Filters */}
+        {mobileFiltersOpen && (
+          <div className="rounded-xl border border-border/80 bg-card p-4 space-y-3 md:hidden">
+            <div className="flex items-center justify-between border-b border-border/40 pb-2">
+              <span className="text-xs font-semibold text-foreground">Sort & Display Options</span>
+              {hasActiveFilters && (
+                <button onClick={handleResetFilters} className="text-xs text-primary hover:underline">
+                  Reset
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <label className="space-y-1">
+                <span className="text-muted-foreground">Sort by</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as FairLaunchSortOption)}
+                  className="w-full h-8 rounded-md border border-border bg-secondary/50 px-2 text-xs text-foreground"
+                >
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="name-asc">Name (A to Z)</option>
+                  <option value="name-desc">Name (Z to A)</option>
+                  <option value="progress-desc">Highest Progress</option>
+                  <option value="raised-desc">Total Raised</option>
+                </select>
+              </label>
+              <label className="space-y-1">
+                <span className="text-muted-foreground">Per page</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="w-full h-8 rounded-md border border-border bg-secondary/50 px-2 text-xs text-foreground"
+                >
+                  <option value={4}>4 per page</option>
+                  <option value={6}>6 per page</option>
+                  <option value={12}>12 per page</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 4. Results */}
@@ -895,7 +978,10 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                   className="group flex flex-col rounded-2xl bg-gradient-to-b from-card/80 to-card/20 p-5 ring-1 ring-border/50 transition-shadow hover:ring-primary/40"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
-                    <StatusBadge status={fl.status} />
+                    <div className="flex items-center gap-1.5">
+                      <StatusBadge status={fl.status} />
+                      <ProvenanceBadge kind={sessionLaunchIds.has(fl.id) ? "session" : "catalog"} />
+                    </div>
                     <div className="flex min-w-0 items-center gap-2">
                       {fl.category && (
                         <span className="max-w-[9rem] truncate text-[11px] text-muted-foreground">{fl.category}</span>
@@ -1044,7 +1130,10 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                           </div>
                         </td>
                         <td className="px-3 py-3.5">
-                          <StatusBadge status={fl.status} />
+                          <div className="flex flex-col gap-1 items-start">
+                            <StatusBadge status={fl.status} />
+                            <ProvenanceBadge kind={sessionLaunchIds.has(fl.id) ? "session" : "catalog"} />
+                          </div>
                         </td>
                         <td className="px-3 py-3.5 font-mono">
                           <div className="font-semibold text-foreground">{fl.totalRaised || "—"}</div>
@@ -1097,7 +1186,10 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                         <TokenTile symbol={token?.symbol} title={fl.title} size="sm" />
                         <IdentityLines fl={fl} token={token} project={project} />
                       </div>
-                      <StatusBadge status={fl.status} />
+                      <div className="flex flex-col items-end gap-1">
+                        <StatusBadge status={fl.status} />
+                        <ProvenanceBadge kind="catalog" />
+                      </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <NetworkChip network={fl.network} />

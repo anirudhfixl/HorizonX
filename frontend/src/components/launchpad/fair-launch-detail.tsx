@@ -1,22 +1,37 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/projects/copy-button";
+import {
+  LaunchpadDetailShell,
+  type LaunchpadDetailTab,
+} from "@/components/launchpad/launchpad-detail-shell";
 import { getExplorerBaseUrl, isSepoliaNetwork, toneFor } from "@/components/tokens/token-profile";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
 import { cn } from "@/lib/utils";
-import { formatAmount, formatUtc, parseAmountParts, validateContribution, verificationLabel, windowDuration } from "@/lib/presale-detail";
+import {
+  formatAmount,
+  formatUtc,
+  parseAmountParts,
+  validateContribution,
+  verificationLabel,
+  windowDuration,
+} from "@/lib/presale-detail";
 import {
   COMMITMENT_UNAVAILABLE,
   NOT_RECORDED_TERMS,
   buildMilestones,
   computeCommitment,
   contributionUnit,
+  deriveFairLaunchTerms,
   formatPct,
+  getAllowedFairLaunchStatusTransitions,
+  isAuthorizedCreator,
   isConcluded,
   participantsLabel,
   participationState,
@@ -24,8 +39,26 @@ import {
   type Commitment,
   type Milestone,
 } from "@/lib/fair-launch-detail";
-import type { FairLaunch, Presale, Project, Token } from "@/types";
-import { ArrowLeft, ArrowUpRight, Check, ExternalLink, Info, Wallet } from "lucide-react";
+import {
+  findSessionFairLaunchById,
+  updateSessionLaunch,
+} from "@/lib/launch-storage";
+import type { FairLaunch, Presale, PresaleStatus, Project, Token } from "@/types";
+import {
+  ArrowUpRight,
+  Check,
+  ExternalLink,
+  Info,
+  Wallet,
+  ShieldCheck,
+  Coins,
+  Scale,
+  RefreshCw,
+  Ban,
+  CheckCircle2,
+  AlertTriangle,
+  Lock,
+} from "lucide-react";
 
 export interface FairLaunchDetailProps {
   launch: FairLaunch;
@@ -33,6 +66,8 @@ export interface FairLaunchDetailProps {
   project?: Project;
   siblingLaunches: FairLaunch[];
   presales: Presale[];
+  initialTab?: string;
+  provenance?: "catalog" | "session";
 }
 
 // ─── Small pieces ─────────────────────────────────────────────────────────────
@@ -41,7 +76,17 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">{children}</p>;
 }
 
-function SectionHead({ id, eyebrow, title, aside }: { id: string; eyebrow: string; title: string; aside?: React.ReactNode }) {
+function SectionHead({
+  id,
+  eyebrow,
+  title,
+  aside,
+}: {
+  id: string;
+  eyebrow: string;
+  title: string;
+  aside?: React.ReactNode;
+}) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
       <div>
@@ -55,28 +100,9 @@ function SectionHead({ id, eyebrow, title, aside }: { id: string; eyebrow: strin
   );
 }
 
-function NetworkChip({ network }: { network: string }) {
-  const ok = isSepoliaNetwork(network);
-  return (
-    <span
-      className={cn(
-        "rounded px-1.5 py-0.5 font-mono text-[11px]",
-        ok ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
-      )}
-      title={ok ? "D-04 approved network (11155111)" : "Catalog origin — not an active network per D-04"}
-    >
-      {network}
-    </span>
-  );
-}
-
-function shorten(addr: string): string {
-  return addr.length > 14 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
-}
-
 function TermRow({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
-    <div className="grid grid-cols-[minmax(0,8.5rem)_minmax(0,1fr)] gap-x-4 gap-y-0.5 py-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
+    <div className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)] gap-x-4 gap-y-0.5 py-3 sm:grid-cols-[11rem_minmax(0,1fr)]">
       <dt className="text-sm text-muted-foreground">{label}</dt>
       <dd className="min-w-0 text-sm text-foreground">
         {children}
@@ -84,6 +110,10 @@ function TermRow({ label, children, hint }: { label: string; children: React.Rea
       </dd>
     </div>
   );
+}
+
+function shorten(addr: string): string {
+  return addr.length > 14 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
 }
 
 // ─── Launch window (horizontal on md+, vertical below) ───────────────────────
@@ -267,7 +297,6 @@ function ParticipationPanel({ launch }: { launch: FairLaunch }) {
     setAttempted(true);
     setNotice(false);
     if (check.status === "ok") {
-      // No contribution transaction exists in this build; say so instead of implying one was sent.
       setNotice(true);
     } else {
       inputRef.current?.focus();
@@ -279,7 +308,7 @@ function ParticipationPanel({ launch }: { launch: FairLaunch }) {
   return (
     <section
       aria-labelledby="participate-title"
-      className="rounded-2xl bg-card p-5 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.9)] ring-1 ring-border/70 sm:p-6"
+      className="rounded-3xl bg-card p-6 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.9)] ring-1 ring-border/70 sm:p-7"
     >
       <Eyebrow>Commit</Eyebrow>
       <div className="mt-2 flex items-center gap-2">
@@ -442,7 +471,7 @@ function ParticipationPanel({ launch }: { launch: FairLaunch }) {
       )}
 
       <p className="mt-5 text-xs text-muted-foreground">
-        How a contribution converts into tokens (price, share or allocation rule) is not recorded for this launch, so none is shown.
+        Fair Launch tokens are distributed proportionally based on your contribution against the final total raised.
       </p>
       <p className="mt-3 flex gap-2 border-t border-border/60 pt-4 text-xs text-muted-foreground">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -455,332 +484,670 @@ function ParticipationPanel({ launch }: { launch: FairLaunch }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 
-export function FairLaunchDetail({ launch, token, project, siblingLaunches, presales }: FairLaunchDetailProps) {
+export function FairLaunchDetail({
+  launch: initialLaunch,
+  token,
+  project,
+  siblingLaunches,
+  presales,
+  initialTab,
+  provenance: initialProvenance,
+}: FairLaunchDetailProps) {
+  const { isConnected, address: userAddress } = useWallet();
+  const { openModal } = useModal();
+  const [, startTransition] = useTransition();
+
+  // Local state for live simulation transitions
+  const [launch, setLaunch] = useState<FairLaunch>(initialLaunch);
+
+  // Tab state with direct URL parameter normalization
+  const resolveInitialTab = (): LaunchpadDetailTab => {
+    const raw = initialTab?.toLowerCase().trim();
+    if (raw === "terms" || raw === "allocation") return "terms";
+    if (raw === "management" || raw === "creator" || raw === "owner") return "management";
+    return "overview";
+  };
+
+  const [activeTab, setActiveTab] = useState<LaunchpadDetailTab>(resolveInitialTab);
+
+  const handleTabChange = (tab: LaunchpadDetailTab) => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "overview") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tab);
+      }
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
+
+  const provenance =
+    initialProvenance ??
+    (launch.id.startsWith("session-") || Boolean(findSessionFairLaunchById(launch.id)) ? "session" : "catalog");
+
   const commitment = computeCommitment(launch);
   const milestones = buildMilestones(launch);
   const duration = windowDuration(launch.startTime, launch.endTime);
-  const tone = toneFor(token?.category ?? launch.category);
-  const tileText = (token?.symbol ?? launch.title).slice(0, 4).toUpperCase();
   const explorerBase = token ? getExplorerBaseUrl(token.network) : undefined;
   const socials = Object.entries(project?.socialLinks ?? {}).filter(([, url]) => /^https?:\/\//i.test(url));
   const hasRelated = siblingLaunches.length > 0 || presales.length > 0;
 
+  // Derived terms and proportional pool calculations
+  const derivedTerms = deriveFairLaunchTerms(
+    launch.totalSelling,
+    launch.softCap,
+    launch.totalRaised,
+    token?.totalSupply
+  );
+
+  // Creator authorization check
+  const isAuthorized = isAuthorizedCreator(launch.ownerAddress, userAddress, isConnected);
+  const allowedTransitions = getAllowedFairLaunchStatusTransitions(launch.status);
+
+  // Action Handler for Creator Status Transitions
+  const handleStatusTransition = (newStatus: PresaleStatus, _label: string) => {
+    if (!isAuthorized) {
+      toast.error("Unauthorized: Connected wallet does not match the creator address.");
+      return;
+    }
+
+    startTransition(() => {
+      if (provenance === "session") {
+        const ok = updateSessionLaunch(launch.id, { status: newStatus });
+        if (ok) {
+          setLaunch((prev) => ({ ...prev, status: newStatus }));
+          toast.success(`Simulation Updated: Fair Launch is now ${newStatus}`);
+        } else {
+          toast.error("Failed to update session simulation.");
+        }
+      } else {
+        // Catalog simulation override
+        setLaunch((prev) => ({ ...prev, status: newStatus }));
+        toast.success(`Catalog Simulation: Fair launch status changed to ${newStatus}`, {
+          description: "Note: Catalog data changes are client-side simulations for this session.",
+        });
+      }
+    });
+  };
+
   return (
-    <div className="mx-auto w-full max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/launchpad/launches"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        Fair launches
-      </Link>
-
-      {/* ── Masthead: identity + launch window ────────────────────────────── */}
-      <header className="relative mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-primary/10 via-card/40 to-transparent px-5 py-7 ring-1 ring-border/60 sm:px-8 sm:py-9">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-          <span
-            className={cn(
-              "flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br font-mono text-lg font-bold sm:h-20 sm:w-20 sm:text-xl",
-              tone.tile
-            )}
-            aria-hidden="true"
-          >
-            {tileText}
-          </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <StatusBadge status={launch.status} />
-              <NetworkChip network={launch.network} />
-              <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">Fair launch</span>
-              {launch.category && <span className="text-xs text-muted-foreground">{launch.category}</span>}
+    <LaunchpadDetailShell
+      kind="fair"
+      id={launch.id}
+      title={launch.title}
+      description={launch.description}
+      status={launch.status}
+      network={launch.network}
+      category={launch.category}
+      ownerAddress={launch.ownerAddress}
+      provenance={provenance}
+      isSimulated={true}
+      token={token}
+      project={project}
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+    >
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 1: OVERVIEW                                                        */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "overview" && (
+        <div className="grid grid-cols-1 gap-x-12 gap-y-12 lg:grid-cols-[minmax(0,1fr)_380px]">
+          {/* Left Column: Raise, Timeline, Spotlights */}
+          <div className="space-y-12">
+            {/* Simulation Disclosure Banner */}
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="space-y-1 text-xs">
+                  <p className="font-semibold text-foreground">
+                    {provenance === "session"
+                      ? "User-Created Fair Launch Simulation"
+                      : "Catalog Demonstration Fair Launch"}
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {provenance === "session"
+                      ? "This fair launch was configured and simulated during your local browser session. Saved in client storage (pm_session_launches_v1), under Ethereum Sepolia scope (D-04)."
+                      : "This record is a pre-seeded demonstration launch from the ProMiners catalog. No real blockchain transactions or escrow deposits exist."}
+                  </p>
+                </div>
+              </div>
             </div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{launch.title}</h1>
-            {launch.description && (
-              <p className="mt-3 max-w-2xl text-base text-muted-foreground">
-                {launch.description}
-                <span className="mt-1 block text-xs">Listing description from the sample catalog. It is not a verified or enforced term.</span>
-              </p>
-            )}
-            <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-              <span>
-                Listed by <span className="font-mono text-foreground/90">{launch.ownerAddress}</span>
-              </span>
-              {token && (
-                <span>
-                  Token{" "}
-                  <Link href={`/tokens/${token.id}`} className="font-mono text-foreground/90 hover:text-primary">
-                    {token.symbol}
-                  </Link>
-                </span>
-              )}
-              <span>Record updated {formatUtc(launch.updatedAt, false)}</span>
-            </p>
-          </div>
-        </div>
 
-        <div className="mt-8 border-t border-border/50 pt-6">
-          <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Launch window</p>
-          <WindowTrack milestones={milestones} duration={duration} />
-        </div>
-      </header>
-
-      <div className="mt-10 grid grid-cols-1 gap-x-12 gap-y-12 lg:grid-cols-[minmax(0,1fr)_380px]">
-        {/* ── Commitment + terms ───────────────────────────────────────────── */}
-        <div className="space-y-14 lg:col-start-1 lg:row-start-1">
-          <section aria-labelledby="commitment-title">
-            <SectionHead
-              id="commitment-title"
-              eyebrow="Commitment"
-              title="Raise against the soft cap"
-              aside={<span className="text-xs text-muted-foreground">Catalog record · not read from a contract</span>}
-            />
-            <div className="mt-6">
-              <CommitmentGauge launch={launch} commitment={commitment} />
-            </div>
-          </section>
-
-          <section aria-labelledby="terms-title">
-            <SectionHead id="terms-title" eyebrow="Terms" title="Stored launch terms" />
-            <dl className="mt-5 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-10">
-              <div>
-                <dt className="text-xs text-muted-foreground">Total tokens for sale</dt>
-                <dd className="mt-1 font-mono text-2xl font-semibold text-foreground">{launch.totalSelling ?? "Not recorded"}</dd>
+            {/* Raise Progress Instrument (Commitment Gauge) */}
+            <section aria-labelledby="commitment-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+              <SectionHead
+                id="commitment-title"
+                eyebrow="Commitment"
+                title="Raise against the soft cap"
+                aside={<span className="text-xs text-muted-foreground">Catalog record · not read from a contract</span>}
+              />
+              <div className="mt-6">
+                <CommitmentGauge launch={launch} commitment={commitment} />
               </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Soft cap</dt>
-                <dd className="mt-1 font-mono text-2xl font-semibold text-foreground">{launch.softCap ?? "Not recorded"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Contribution range (per entry)</dt>
-                <dd className="mt-1 font-mono text-lg text-foreground">
-                  {launch.minContribution ?? "—"} <span className="text-muted-foreground">to</span> {launch.maxContribution ?? "—"}
-                </dd>
-                <dd className="mt-0.5 text-xs text-muted-foreground">Stored limits; how they apply per wallet is not recorded.</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Participants (recorded)</dt>
-                <dd className="mt-1 font-mono text-lg text-foreground">{participantsLabel(launch.participantCount)}</dd>
-              </div>
-            </dl>
-            <dl className="mt-6 divide-y divide-border/60 border-y border-border/60">
-              <TermRow label="Opens">{launch.startTime ? <span className="font-mono">{formatUtc(launch.startTime)}</span> : "Not recorded"}</TermRow>
-              <TermRow label="Closes">{launch.endTime ? <span className="font-mono">{formatUtc(launch.endTime)}</span> : "Not recorded"}</TermRow>
-              <TermRow label="Network">
-                <NetworkChip network={launch.network} />
-              </TermRow>
-            </dl>
+            </section>
 
-            <details className="group mt-5">
-              <summary className="cursor-pointer list-none text-sm text-muted-foreground transition-colors hover:text-foreground [&::-webkit-details-marker]:hidden">
-                <span className="text-primary">Not recorded for this launch</span> · {NOT_RECORDED_TERMS.length} terms
-                <span className="ml-1 text-xs group-open:hidden">(show)</span>
-              </summary>
-              <ul className="mt-3 space-y-2 border-l border-dashed border-border pl-4">
-                {NOT_RECORDED_TERMS.map((t) => (
-                  <li key={t.label} className="text-sm">
-                    <span className="text-foreground">{t.label}</span>
-                    <span className="block text-xs text-muted-foreground">{t.detail}</span>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          </section>
-        </div>
+            {/* Timeline Milestones */}
+            <section aria-labelledby="schedule-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+              <SectionHead
+                id="schedule-title"
+                eyebrow="Schedule"
+                title="Launch timeline"
+                aside={<span className="text-xs text-muted-foreground">Times are stored UTC values</span>}
+              />
+              <div className="mt-6">
+                <WindowTrack milestones={milestones} duration={duration} />
+              </div>
+            </section>
 
-        {/* ── Participation rail ───────────────────────────────────────────── */}
-        <aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <div className="lg:sticky lg:top-24">
-            <ParticipationPanel launch={launch} />
-          </div>
-        </aside>
-
-        {/* ── Context ──────────────────────────────────────────────────────── */}
-        <div className="space-y-14 lg:col-start-1 lg:row-start-2">
-          <section aria-labelledby="context-title">
-            <SectionHead id="context-title" eyebrow="Context" title="Token and project" />
-            <div className="mt-4 grid grid-cols-1 gap-x-12 gap-y-8 xl:grid-cols-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Token</p>
-                {token ? (
-                  <>
-                    <div className="mt-3 flex items-center gap-3">
-                      <span
-                        className={cn(
-                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br font-mono text-xs font-bold",
-                          toneFor(token.category).tile
-                        )}
-                        aria-hidden="true"
-                      >
-                        {token.symbol.slice(0, 4)}
-                      </span>
-                      <div className="min-w-0">
-                        <Link href={`/tokens/${token.id}`} className="block truncate text-base font-medium text-foreground hover:text-primary">
-                          {token.name}
-                        </Link>
-                        <p className="font-mono text-xs text-muted-foreground">{token.symbol}</p>
+            {/* Token & Project Spotlights */}
+            <section aria-labelledby="spotlight-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+              <SectionHead id="spotlight-title" eyebrow="Context" title="Token & Project Spotlight" />
+              <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">
+                {/* Token Spotlight */}
+                <div className="space-y-3 rounded-2xl border border-border/40 bg-secondary/15 p-5">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+                    <Coins className="h-3.5 w-3.5" />
+                    <span>Token Spotlight</span>
+                  </div>
+                  {token ? (
+                    <>
+                      <div className="flex items-center gap-3 pt-1">
+                        <span
+                          className={cn(
+                            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-mono text-sm font-bold shadow-sm",
+                            toneFor(token.category).tile
+                          )}
+                        >
+                          {token.symbol.slice(0, 4)}
+                        </span>
+                        <div className="min-w-0">
+                          <Link href={`/tokens/${token.id}`} className="truncate font-semibold text-foreground hover:text-primary transition-colors block">
+                            {token.name}
+                          </Link>
+                          <p className="font-mono text-xs text-muted-foreground">{token.symbol} · {token.standard || "ERC-20"}</p>
+                        </div>
                       </div>
-                    </div>
-                    <dl className="mt-3 divide-y divide-border/60 border-y border-border/60">
-                      <TermRow label="Standard">{token.standard ?? "—"}</TermRow>
-                      <TermRow label="Decimals">{token.decimals ?? "—"}</TermRow>
-                      <TermRow label="Total supply">
-                        <span className="font-mono">{token.totalSupply ?? "—"}</span>
-                      </TermRow>
-                      <TermRow label="Token network" hint={token.network !== launch.network ? `The launch record lists ${launch.network}.` : undefined}>
-                        {token.network}
-                      </TermRow>
-                      <TermRow label="Token contract">
-                        {token.contractAddress ? (
-                          <span className="flex items-center gap-1">
-                            <span className="font-mono" title={token.contractAddress}>
-                              {shorten(token.contractAddress)}
-                            </span>
-                            <CopyButton value={token.contractAddress} label="token contract address" />
-                            {explorerBase && (
+                      <dl className="mt-3 divide-y divide-border/60 border-y border-border/60 text-xs">
+                        <div className="flex justify-between py-2">
+                          <dt className="text-muted-foreground">Decimals</dt>
+                          <dd className="font-mono text-foreground">{token.decimals ?? 18}</dd>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <dt className="text-muted-foreground">Total Supply</dt>
+                          <dd className="font-mono text-foreground">{token.totalSupply ?? "—"}</dd>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <dt className="text-muted-foreground">Contract</dt>
+                          <dd className="font-mono text-foreground flex items-center gap-1">
+                            {token.contractAddress ? (
+                              <>
+                                <span>{shorten(token.contractAddress)}</span>
+                                <CopyButton value={token.contractAddress} label="token address" />
+                                {explorerBase && (
+                                  <a
+                                    href={`${explorerBase}/address/${token.contractAddress}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                                    aria-label="Open token contract in block explorer"
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                              </>
+                            ) : (
+                              "Not deployed"
+                            )}
+                          </dd>
+                        </div>
+                      </dl>
+                      <div className="flex flex-wrap gap-3 pt-2 text-xs">
+                        <Link href={`/tokens/${token.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                          Token Overview <ArrowUpRight className="h-3 w-3" />
+                        </Link>
+                        <Link href={`/tokens/${token.id}/contract`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                          Contract <ArrowUpRight className="h-3 w-3" />
+                        </Link>
+                        <Link href={`/tokens/${token.id}/activity`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                          Activity <ArrowUpRight className="h-3 w-3" />
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground pt-2">No catalog token record linked.</p>
+                  )}
+                </div>
+
+                {/* Project Spotlight */}
+                <div className="space-y-3 rounded-2xl border border-border/40 bg-secondary/15 p-5">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+                    <Scale className="h-3.5 w-3.5" />
+                    <span>Parent Project</span>
+                  </div>
+                  {project ? (
+                    <>
+                      <div className="flex items-center gap-3 pt-1">
+                        <span
+                          className={cn(
+                            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-bold text-sm shadow-sm",
+                            toneFor(project.category).tile
+                          )}
+                        >
+                          {project.name.slice(0, 2).toUpperCase()}
+                        </span>
+                        <div className="min-w-0">
+                          <Link href={`/projects/${project.id}`} className="truncate font-semibold text-foreground hover:text-primary transition-colors block">
+                            {project.name}
+                          </Link>
+                          <p className="text-xs text-muted-foreground">{project.category || "Ecosystem Project"}</p>
+                        </div>
+                      </div>
+                      <dl className="mt-3 divide-y divide-border/60 border-y border-border/60 text-xs">
+                        <div className="flex justify-between py-2">
+                          <dt className="text-muted-foreground">Verification</dt>
+                          <dd className="font-medium text-foreground">{verificationLabel(project.verificationStatus)}</dd>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <dt className="text-muted-foreground">Website</dt>
+                          <dd className="font-mono text-foreground">
+                            {project.websiteUrl && /^https?:\/\//i.test(project.websiteUrl) ? (
                               <a
-                                href={`${explorerBase}/address/${token.contractAddress}`}
+                                href={project.websiteUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
-                                aria-label="Open token contract in block explorer"
-                                title="Open in block explorer"
+                                className="inline-flex items-center gap-1 text-primary hover:underline"
                               >
-                                <ExternalLink className="h-3.5 w-3.5" />
+                                {project.websiteUrl.replace(/^https?:\/\//, "")}
+                                <ExternalLink className="h-3 w-3" />
                               </a>
+                            ) : (
+                              "Not recorded"
                             )}
-                          </span>
-                        ) : (
-                          "Not recorded"
+                          </dd>
+                        </div>
+                        {socials.length > 0 && (
+                          <div className="flex justify-between py-2">
+                            <dt className="text-muted-foreground">Socials</dt>
+                            <dd className="flex flex-wrap gap-2 text-xs">
+                              {socials.map(([net, url]) => (
+                                <a key={net} href={url} target="_blank" rel="noopener noreferrer" className="capitalize text-primary hover:underline">
+                                  {net}
+                                </a>
+                              ))}
+                            </dd>
+                          </div>
                         )}
-                      </TermRow>
-                    </dl>
-                    <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                      <Link href={`/tokens/${token.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
-                        Token page <ArrowUpRight className="h-3.5 w-3.5" />
-                      </Link>
-                      <Link href={`/tokens/${token.id}/contract`} className="inline-flex items-center gap-1 text-primary hover:underline">
-                        Contract <ArrowUpRight className="h-3.5 w-3.5" />
-                      </Link>
-                      <Link href={`/tokens/${token.id}/activity`} className="inline-flex items-center gap-1 text-primary hover:underline">
-                        Activity <ArrowUpRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </p>
-                  </>
-                ) : (
-                  <p className="mt-3 border-l-2 border-dashed border-border pl-3 text-sm text-muted-foreground">
-                    The token <span className="font-mono text-foreground">{launch.tokenId}</span> referenced by this launch was not found in the
-                    catalog.
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Project</p>
-                {project ? (
-                  <>
-                    <div className="mt-3 flex items-center gap-3">
-                      <span
-                        className={cn(
-                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-bold",
-                          toneFor(project.category).tile
-                        )}
-                        aria-hidden="true"
-                      >
-                        {project.name.slice(0, 2).toUpperCase()}
-                      </span>
-                      <div className="min-w-0">
-                        <Link href={`/projects/${project.id}`} className="block truncate text-base font-medium text-foreground hover:text-primary">
-                          {project.name}
+                      </dl>
+                      <div className="pt-2 text-xs">
+                        <Link href={`/projects/${project.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                          Project Profile <ArrowUpRight className="h-3 w-3" />
                         </Link>
-                        {project.category && <p className="text-xs text-muted-foreground">{project.category}</p>}
                       </div>
-                    </div>
-                    {project.description && <p className="mt-3 text-sm text-muted-foreground">{project.description}</p>}
-                    <dl className="mt-3 divide-y divide-border/60 border-y border-border/60">
-                      <TermRow label="Verification" hint="Stored catalog tier; not an audit or contract check by this page.">
-                        {verificationLabel(project.verificationStatus)}
-                      </TermRow>
-                      <TermRow label="Website">
-                        {project.websiteUrl && /^https?:\/\//i.test(project.websiteUrl) ? (
-                          <a
-                            href={project.websiteUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex max-w-full items-center gap-1 break-all text-primary hover:underline"
-                          >
-                            {project.websiteUrl.replace(/^https?:\/\//, "")}
-                            <ExternalLink className="h-3 w-3 shrink-0" />
-                          </a>
-                        ) : (
-                          "Not recorded"
-                        )}
-                      </TermRow>
-                      {socials.length > 0 && (
-                        <TermRow label="Social">
-                          <span className="flex flex-wrap gap-x-3 gap-y-1">
-                            {socials.map(([name, url]) => (
-                              <a key={name} href={url} target="_blank" rel="noopener noreferrer" className="capitalize text-primary hover:underline">
-                                {name}
-                              </a>
-                            ))}
-                          </span>
-                        </TermRow>
-                      )}
-                    </dl>
-                    <p className="mt-3 text-sm">
-                      <Link href={`/projects/${project.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
-                        Project profile <ArrowUpRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </p>
-                  </>
-                ) : (
-                  <p className="mt-3 border-l-2 border-dashed border-border pl-3 text-sm text-muted-foreground">
-                    {launch.projectId ? "The linked project was not found in the catalog." : "No project is linked to this launch."}
-                  </p>
-                )}
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground pt-2">No linked project in catalog.</p>
+                  )}
+                </div>
               </div>
+            </section>
+
+            {/* Same Token Sibling Launches */}
+            {hasRelated && (
+              <section aria-labelledby="related-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+                <SectionHead id="related-title" eyebrow="Ecosystem" title="Other Launches for this Token" />
+                <ul className="mt-4 divide-y divide-border/60 border-y border-border/60">
+                  {siblingLaunches.map((f) => (
+                    <li key={f.id}>
+                      <Link href={`/launchpad/launches/${f.id}`} className="group flex items-center justify-between gap-4 py-3">
+                        <span className="min-w-0">
+                          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Fair Launch</span>
+                          <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{f.title}</span>
+                        </span>
+                        <StatusBadge status={f.status} />
+                      </Link>
+                    </li>
+                  ))}
+                  {presales.map((p) => (
+                    <li key={p.id}>
+                      <Link href={`/launchpad/presales/${p.id}`} className="group flex items-center justify-between gap-4 py-3">
+                        <span className="min-w-0">
+                          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Presale</span>
+                          <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{p.title}</span>
+                        </span>
+                        <StatusBadge status={p.status} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            <p className="border-l-2 border-border pl-3 text-xs text-muted-foreground">
+              Demonstration data. Every figure and date on this page comes from a sample catalog record or local session storage;
+              none of it is read from a live contract or block explorer. Under D-04 only Ethereum Sepolia (11155111) is an active network.
+            </p>
+          </div>
+
+          {/* Right Rail: Participation Panel */}
+          <aside className="lg:col-start-2">
+            <div className="lg:sticky lg:top-24">
+              <ParticipationPanel launch={launch} />
             </div>
+          </aside>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 2: ALLOCATION & TERMS                                              */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "terms" && (
+        <div className="space-y-8">
+          {/* Key Figures Grid */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
+              <span className="text-xs text-muted-foreground font-medium">Total Selling Allocation</span>
+              <p className="mt-2 font-mono text-2xl font-bold text-foreground">{launch.totalSelling ?? "Not recorded"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Fixed pool tokens for contributors</p>
+            </div>
+
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
+              <span className="text-xs text-muted-foreground font-medium">Soft Cap</span>
+              <p className="mt-2 font-mono text-2xl font-bold text-foreground">{launch.softCap ?? "Not recorded"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {commitment.available
+                  ? `${formatPct(commitment.pctOfSoft)} of soft cap committed`
+                  : "Minimum funding threshold"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
+              <span className="text-xs text-muted-foreground font-medium">Min Contribution</span>
+              <p className="mt-2 font-mono text-2xl font-bold text-foreground">{launch.minContribution ?? "—"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{launch.minContribution ? "Per participating wallet entry" : "No minimum recorded"}</p>
+            </div>
+
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
+              <span className="text-xs text-muted-foreground font-medium">Max Contribution</span>
+              <p className="mt-2 font-mono text-2xl font-bold text-foreground">{launch.maxContribution ?? "—"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{launch.maxContribution ? "Per participating wallet limit" : "No maximum recorded"}</p>
+            </div>
+          </div>
+
+          {/* Allocation Breakdown Card */}
+          <section aria-labelledby="allocation-economics" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+            <SectionHead
+              id="allocation-economics"
+              eyebrow="Economics"
+              title="Fair Launch Pool Allocation & Derived Rates"
+              aside={<span className="text-xs text-muted-foreground">Calculated strictly from recorded terms</span>}
+            />
+
+            <dl className="mt-6 divide-y divide-border/60 border-y border-border/60">
+              <TermRow label="Tokens at Soft Cap" hint="Effective rate if the raise concludes exactly at the minimum soft cap threshold.">
+                {derivedTerms.tokensPerUnitAtSoftCap ? (
+                  <span className="font-mono font-medium text-foreground">
+                    1 {derivedTerms.softCapUnit || "ETH"} = {derivedTerms.tokensPerUnitAtSoftCap.toLocaleString(undefined, { maximumFractionDigits: 4 })} {token?.symbol || derivedTerms.totalSellingUnit || "Tokens"}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Cannot derive without recorded total selling and soft cap</span>
+                )}
+              </TermRow>
+
+              <TermRow label="Current Effective Rate" hint="Dynamic rate based on current total raised; decreases as more contributions enter the pool.">
+                {derivedTerms.currentTokensPerUnit ? (
+                  <span className="font-mono font-medium text-primary">
+                    1 {derivedTerms.totalRaisedUnit || "ETH"} = {derivedTerms.currentTokensPerUnit.toLocaleString(undefined, { maximumFractionDigits: 4 })} {token?.symbol || derivedTerms.totalSellingUnit || "Tokens"}
+                  </span>
+                ) : parseAmountParts(launch.totalRaised)?.value === 0 ? (
+                  <span className="text-muted-foreground">0 raised so far; effective rate will calculate as contributions arrive</span>
+                ) : (
+                  <span className="text-muted-foreground">Cannot derive without recorded total selling and total raised</span>
+                )}
+              </TermRow>
+
+              <TermRow label="Share of Total Supply" hint="Share of token total supply allocated to this fair launch.">
+                {derivedTerms.pctOfTotalSupply ? (
+                  <span className="font-mono font-medium text-foreground">
+                    {derivedTerms.pctOfTotalSupply.toFixed(2)}% of total supply
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Cannot derive without recorded total supply</span>
+                )}
+              </TermRow>
+
+              <TermRow label="Sale Window" hint="Total planned duration of the raise pool.">
+                <span>{duration ?? "No valid window derived from stored timestamps"}</span>
+              </TermRow>
+
+              <TermRow label="Recorded Participants" hint="Total unique wallets recorded in catalog or session.">
+                <span className="font-mono">{participantsLabel(launch.participantCount)}</span>
+              </TermRow>
+            </dl>
           </section>
 
-          {hasRelated && (
-            <section aria-labelledby="related-title">
-              <SectionHead id="related-title" eyebrow="Same token" title="Other launches for this token" />
-              <ul className="mt-4 divide-y divide-border/60 border-y border-border/60">
-                {siblingLaunches.map((f) => (
-                  <li key={f.id}>
-                    <Link href={`/launchpad/launches/${f.id}`} className="group flex items-center justify-between gap-4 py-3">
-                      <span className="min-w-0">
-                        <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Fair launch</span>
-                        <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{f.title}</span>
-                      </span>
-                      <StatusBadge status={f.status} />
-                    </Link>
-                  </li>
-                ))}
-                {presales.map((p) => (
-                  <li key={p.id}>
-                    <Link href={`/launchpad/presales/${p.id}`} className="group flex items-center justify-between gap-4 py-3">
-                      <span className="min-w-0">
-                        <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Presale</span>
-                        <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{p.title}</span>
-                      </span>
-                      <StatusBadge status={p.status} />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          {/* Proportional Pool Model Card */}
+          <section aria-labelledby="pool-mechanics" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <Scale className="h-5 w-5 text-primary shrink-0" />
+              <h3 id="pool-mechanics" className="text-lg font-bold text-foreground">
+                How Fair Launch Allocation Works
+              </h3>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Unlike a fixed-price presale, a ProMiners Fair Launch has <strong className="text-foreground">no hard cap</strong> and <strong className="text-foreground">no fixed token price</strong>.
+              All participants contribute into a unified pool during the live window. Once the launch concludes, the total selling allocation is distributed proportionally based on each participant&apos;s share of the final total raised:
+            </p>
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5 font-mono text-xs sm:text-sm text-primary text-center">
+              Tokens Received = (Your Contribution ÷ Total Pool Raised) × Total Selling Allocation
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed pt-1">
+              If the final total raised does not reach the designated soft cap ({launch.softCap ?? "recorded threshold"}), the launch concludes as failed and 100% of contributed funds become eligible for simulated refunds.
+            </p>
+          </section>
 
-          <p className="border-l-2 border-border pl-3 text-xs text-muted-foreground">
-            Demonstration data. Every figure and date on this page comes from a sample catalog record; none of it is read from a contract or
-            block explorer. Under D-04 only Ethereum Sepolia (11155111) is an active network, and some records name other networks as catalog
-            origin.
-          </p>
+          {/* Transparent Disclosure of Unrecorded Terms */}
+          <section aria-labelledby="unrecorded-terms" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+            <SectionHead
+              id="unrecorded-terms"
+              eyebrow="Policy Disclosures"
+              title="Unrecorded Parameters & Disclosures"
+              aside={<span className="text-xs text-muted-foreground">Transparent disclosure under D-04</span>}
+            />
+            <p className="mt-2 text-sm text-muted-foreground">
+              ProMiners strictly preserves catalog integrity and never invents missing parameters. The following terms are not defined in the stored record:
+            </p>
+
+            <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {NOT_RECORDED_TERMS.map((term) => (
+                <li key={term.label} className="rounded-2xl border border-border/40 bg-secondary/15 p-4 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                    <p className="text-xs font-semibold text-foreground">{term.label}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground pl-3.5 leading-relaxed">{term.detail}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
-      </div>
-    </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 3: CREATOR MANAGEMENT                                              */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "management" && (
+        <div className="space-y-8">
+          {!isAuthorized ? (
+            /* ─── Unauthorized / Disconnected State ─── */
+            <div className="rounded-3xl border border-destructive/30 bg-destructive/5 p-8 text-center space-y-5">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+                <Lock className="h-7 w-7" />
+              </div>
+              <div className="max-w-md mx-auto space-y-2">
+                <h3 className="text-xl font-bold text-foreground">Creator Management Restricted</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  This console is restricted to the authorized creator address:
+                  <span className="block mt-1 font-mono text-xs font-semibold text-foreground break-all">
+                    {launch.ownerAddress}
+                  </span>
+                </p>
+                {isConnected && userAddress && (
+                  <p className="text-xs text-destructive pt-2">
+                    Your connected wallet ({shorten(userAddress)}) does not match the creator address.
+                  </p>
+                )}
+              </div>
+              {!isConnected && (
+                <Button size="lg" onClick={() => openModal("CONNECT_WALLET")} className="gap-2">
+                  <Wallet className="h-4 w-4" />
+                  Connect Creator Wallet
+                </Button>
+              )}
+            </div>
+          ) : (
+            /* ─── Authorized Creator Console ─── */
+            <div className="space-y-8">
+              {/* Authorized Header */}
+              <div className="rounded-3xl border border-primary/30 bg-primary/5 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-bold text-foreground">Authorized Creator Console</h3>
+                      <span className="rounded-md bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary uppercase">
+                        Verified Owner
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Connected wallet: <span className="font-mono text-foreground">{userAddress}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Current Status:</span>
+                  <StatusBadge status={launch.status} />
+                </div>
+              </div>
+
+              {/* Status Transition Machine */}
+              <section aria-labelledby="status-transitions" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8 space-y-5">
+                <SectionHead
+                  id="status-transitions"
+                  eyebrow="Lifecycle Machine"
+                  title="Simulated Status Transitions"
+                  aside={<span className="text-xs text-muted-foreground">Client-side state management</span>}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Update the lifecycle status of your fair launch simulation. These controls test transition flows and UI state changes without broadcasting blockchain transactions.
+                </p>
+
+                {allowedTransitions.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2">
+                    {allowedTransitions.map((rule) => (
+                      <div key={rule.target} className="rounded-2xl border border-border/60 bg-secondary/15 p-5 flex flex-col justify-between space-y-4">
+                        <div className="space-y-1.5">
+                          <p className="text-sm font-semibold text-foreground">{rule.label}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{rule.description}</p>
+                        </div>
+                        <Button
+                          variant={rule.variant ?? "default"}
+                          size="sm"
+                          onClick={() => handleStatusTransition(rule.target, rule.label)}
+                          className="w-full gap-2 font-medium text-xs"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          <span>Transition to {rule.target}</span>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-border/40 bg-secondary/20 p-5 text-center text-xs text-muted-foreground">
+                    This fair launch is in a terminal state ({launch.status}). No further transitions are available.
+                  </div>
+                )}
+              </section>
+
+              {/* Key Management Actions Grid */}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Finalize Action */}
+                <div className="rounded-3xl border border-border/60 bg-card p-6 space-y-4 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                      <h4 className="text-base font-bold text-foreground">Finalize Simulation</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Simulate fair launch pool settlement. Validates soft cap status, closes contribution intake, and calculates final proportional token allocation for all contributors.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleStatusTransition("finalized", "Finalize Fair Launch")}
+                    disabled={isConcluded(launch.status)}
+                    className="w-full gap-2"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Finalize Fair Launch (Simulated)</span>
+                  </Button>
+                </div>
+
+                {/* Cancel Action */}
+                <div className="rounded-3xl border border-border/60 bg-card p-6 space-y-4 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Ban className="h-5 w-5 text-destructive" />
+                      <h4 className="text-base font-bold text-foreground">Cancel Simulation</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Abort the fair launch simulation immediately. Closes participation and transitions the launch to simulated refund claim availability.
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleStatusTransition("cancelled", "Cancel Fair Launch")}
+                    disabled={isConcluded(launch.status)}
+                    className="w-full gap-2"
+                  >
+                    <Ban className="h-4 w-4" />
+                    <span>Cancel Fair Launch (Simulated)</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Refund Simulation Policy Disclosure */}
+              <section aria-labelledby="refund-policy" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8 space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
+                  <h4 id="refund-policy" className="text-base font-bold text-foreground">
+                    Refund Simulation Rules
+                  </h4>
+                </div>
+                <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
+                  <p>
+                    Under standard ProMiners fair launch pool contracts, if the launch concludes without reaching the soft cap threshold ({launch.softCap ?? "minimum cap"}), or if the creator cancels the simulation, all participants are entitled to claim 100% of their contributed funds without fees.
+                  </p>
+                  <p className="pt-1">
+                    <strong className="text-foreground">Current State:</strong>{" "}
+                    {commitment.available && commitment.state === "reached"
+                      ? "Soft cap reached. In real contracts, refunds would not be claimable unless explicitly cancelled by the creator."
+                      : "Soft cap not reached. If concluded in this state, participants would be eligible for refunds."}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80 pt-2 border-t border-border/40">
+                    Important: No real blockchain funds or escrow balances exist. All refund rules are educational model disclosures.
+                  </p>
+                </div>
+              </section>
+            </div>
+          )}
+        </div>
+      )}
+    </LaunchpadDetailShell>
   );
 }

@@ -29,11 +29,17 @@ export const TOP_NAV_ITEMS: NavItem[] = [
     ],
   },
   {
+    label: 'Projects',
+    href: '/explore/projects',
+    description: 'Discover ecosystem projects',
+  },
+  {
     label: 'Tokens',
     href: '/tokens',
     children: [
       { label: 'Token Directory', href: '/tokens', description: 'Browse, search and filter all tokens' },
       { label: 'My Tokens', href: '/tokens/my', description: 'Your created and managed tokens', requiresWallet: true },
+      { label: 'Create Token', href: '/tokens/create', description: 'Deploy and register a new token', requiresWallet: true },
     ],
   },
   {

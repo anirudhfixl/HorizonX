@@ -1,12 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ProvenanceBadge } from "@/components/shared/provenance-badge";
+import { EmptyState } from "@/components/shared/empty-state";
 import { MOCK_PRESALES, MOCK_FAIR_LAUNCHES } from "@/lib/mock-data";
+import { readSessionLaunchesRaw, subscribeSessionLaunches, sessionPresaleToPresale, sessionFairLaunchToFairLaunch } from "@/lib/launch-storage";
+import type { Presale, FairLaunch } from "@/types";
 import { cn } from "@/lib/utils";
-import { ArrowRight, Plus, Rocket, Scale, Info } from "lucide-react";
+import {
+  ArrowRight,
+  Plus,
+  Rocket,
+  Scale,
+  Info,
+  Search,
+  X,
+  SearchX,
+  RotateCcw,
+  Sparkles,
+} from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Data shaping (pure; every figure comes from a stored presale / fair launch
@@ -24,6 +40,8 @@ export interface LaunchEntry {
   kind: LaunchKind;
   id: string;
   title: string;
+  description?: string;
+  category?: string;
   tokenId: string;
   network: string;
   status: string;
@@ -46,11 +64,16 @@ export function parseAmount(raw?: string): Amount | null {
   return { value, unit: m[2] || "" };
 }
 
-export function buildLaunchEntries(): LaunchEntry[] {
-  const presales: LaunchEntry[] = MOCK_PRESALES.map((p) => ({
+export function buildLaunchEntries(
+  presalesList: Presale[] = MOCK_PRESALES,
+  fairList: FairLaunch[] = MOCK_FAIR_LAUNCHES
+): LaunchEntry[] {
+  const presales: LaunchEntry[] = presalesList.map((p) => ({
     kind: "presale",
     id: p.id,
     title: p.title,
+    description: p.description,
+    category: p.category,
     tokenId: p.tokenId,
     network: p.network,
     status: p.status,
@@ -62,10 +85,12 @@ export function buildLaunchEntries(): LaunchEntry[] {
     participants: p.participantCount,
     href: `/launchpad/presales/${p.id}`,
   }));
-  const fair: LaunchEntry[] = MOCK_FAIR_LAUNCHES.map((f) => ({
+  const fair: LaunchEntry[] = fairList.map((f) => ({
     kind: "fair",
     id: f.id,
     title: f.title,
+    description: f.description,
+    category: f.category,
     tokenId: f.tokenId,
     network: f.network,
     status: f.status,
@@ -105,6 +130,11 @@ export function progressFor(e: LaunchEntry): { fill: number; marker: number | nu
 export function softCapMet(e: LaunchEntry): boolean | null {
   if (!e.raised || !e.softCap || e.raised.unit !== e.softCap.unit) return null;
   return e.raised.value >= e.softCap.value;
+}
+
+export function isSepoliaNetwork(network: string): boolean {
+  const n = network.toLowerCase();
+  return n.includes("sepolia") || n === "ethereum";
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -158,6 +188,21 @@ function KindTag({ kind }: { kind: LaunchKind }) {
   );
 }
 
+function NetworkChip({ network }: { network: string }) {
+  const ok = isSepoliaNetwork(network);
+  return (
+    <span
+      className={cn(
+        "rounded px-1.5 py-0.5 font-mono text-[10px]",
+        ok ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
+      )}
+      title={ok ? "D-04 approved network (11155111)" : "Catalog origin — not an active network per D-04"}
+    >
+      {network}
+    </span>
+  );
+}
+
 function ProgressBar({ entry }: { entry: LaunchEntry }) {
   const p = progressFor(entry);
   if (!p) return <p className="text-xs text-muted-foreground">Raise figures not recorded.</p>;
@@ -200,11 +245,14 @@ function LiveRow({ e }: { e: LaunchEntry }) {
           <div className="flex flex-wrap items-center gap-2">
             <KindTag kind={e.kind} />
             <StatusBadge status={e.status} />
+            <ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} />
+            <NetworkChip network={e.network} />
           </div>
           <h3 className="truncate text-base font-semibold text-foreground group-hover:text-primary">{e.title}</h3>
           <p className="font-mono text-xs text-muted-foreground">
-            {e.tokenId.toUpperCase()} · {e.network}
+            {e.tokenId.toUpperCase()}
             {e.allocation ? ` · ${e.allocation}` : ""}
+            {e.category ? ` · ${e.category}` : ""}
           </p>
         </div>
         <div className="space-y-2">
@@ -238,10 +286,13 @@ function ScheduleRow({ e, draft }: { e: LaunchEntry; draft?: boolean }) {
           <div className="flex flex-wrap items-center gap-2">
             <KindTag kind={e.kind} />
             {draft && <StatusBadge status="draft" />}
+            <ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} />
+            <NetworkChip network={e.network} />
           </div>
           <div className="mt-1 truncate text-sm font-semibold text-foreground group-hover:text-primary">{e.title}</div>
           <div className="font-mono text-xs text-muted-foreground">
-            {e.tokenId.toUpperCase()} · {e.network} · closes {formatUtc(e.endTime, false)}
+            {e.tokenId.toUpperCase()} · closes {formatUtc(e.endTime, false)}
+            {e.category ? ` · ${e.category}` : ""}
           </div>
         </div>
         <div className="col-start-2 font-mono text-xs text-muted-foreground sm:col-start-auto sm:text-right">
@@ -267,13 +318,16 @@ function ConcludedRow({ e }: { e: LaunchEntry }) {
         className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 py-3 transition-colors hover:bg-foreground/[0.03] sm:grid-cols-[minmax(0,1.4fr)_120px_minmax(0,1fr)_110px] sm:px-3 sm:-mx-3 rounded-lg"
       >
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <KindTag kind={e.kind} />
+            <StatusBadge status={e.status} />
+            <ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} />
+            <NetworkChip network={e.network} />
             <span className="truncate text-sm font-medium text-foreground group-hover:text-primary">{e.title}</span>
           </div>
         </div>
-        <div className="justify-self-end sm:justify-self-auto">
-          <StatusBadge status={e.status} />
+        <div className="justify-self-end sm:justify-self-auto font-mono text-xs text-muted-foreground">
+          {e.tokenId.toUpperCase()}
         </div>
         <div className="col-span-2 font-mono text-xs text-muted-foreground sm:col-span-1">
           {e.raised ? `${e.raised.value.toLocaleString("en-US")} ${e.raised.unit}`.trim() : "—"} raised
@@ -303,10 +357,70 @@ type Filter = "all" | LaunchKind;
 
 export function LaunchpadHub() {
   const [filter, setFilter] = useState<Filter>("all");
-  const all = buildLaunchEntries();
-  const visible = filter === "all" ? all : all.filter((e) => e.kind === filter);
-  const g = groupLaunches(visible);
-  const count = (k: LaunchKind, pred: (e: LaunchEntry) => boolean) => all.filter((e) => e.kind === k && pred(e)).length;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [networkFilter, setNetworkFilter] = useState("all");
+  const [liveOnly, setLiveOnly] = useState(false);
+  const [sepoliaOnly, setSepoliaOnly] = useState(false);
+
+  const sessionRaw = useSyncExternalStore(subscribeSessionLaunches, readSessionLaunchesRaw, () => "");
+  const all = useMemo(() => {
+    let extraPresales: Presale[] = [];
+    let extraFair: FairLaunch[] = [];
+    if (sessionRaw) {
+      try {
+        const parsed = JSON.parse(sessionRaw);
+        if (Array.isArray(parsed)) {
+          extraPresales = parsed.filter((l: { kind: string }) => l.kind === "presale").map(sessionPresaleToPresale);
+          extraFair = parsed.filter((l: { kind: string }) => l.kind === "fair").map(sessionFairLaunchToFairLaunch);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return buildLaunchEntries([...extraPresales, ...MOCK_PRESALES], [...extraFair, ...MOCK_FAIR_LAUNCHES]);
+  }, [sessionRaw]);
+
+  // Filter pipeline
+  const visible = useMemo(() => {
+    return all.filter((e) => {
+      // 1. Kind filter
+      if (filter !== "all" && e.kind !== filter) return false;
+
+      // 2. Preset: Live only
+      if (liveOnly && e.status !== "live") return false;
+
+      // 3. Preset: Sepolia only
+      if (sepoliaOnly && !isSepoliaNetwork(e.network)) return false;
+
+      // 4. Network dropdown
+      if (networkFilter === "sepolia") {
+        if (!isSepoliaNetwork(e.network)) return false;
+      } else if (networkFilter !== "all") {
+        if (e.network.toLowerCase() !== networkFilter.toLowerCase()) return false;
+      }
+
+      // 5. Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchTitle = e.title.toLowerCase().includes(q);
+        const matchToken = e.tokenId.toLowerCase().includes(q);
+        const matchDesc = e.description?.toLowerCase().includes(q) ?? false;
+        const matchCat = e.category?.toLowerCase().includes(q) ?? false;
+        const matchNet = e.network.toLowerCase().includes(q);
+        if (!matchTitle && !matchToken && !matchDesc && !matchCat && !matchNet) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [all, filter, liveOnly, sepoliaOnly, networkFilter, searchQuery]);
+
+  const g = useMemo(() => groupLaunches(visible), [visible]);
+
+  const count = (k: LaunchKind, pred: (e: LaunchEntry) => boolean) =>
+    all.filter((e) => e.kind === k && pred(e)).length;
+
   const live = (e: LaunchEntry) => e.status === "live";
   const sched = (e: LaunchEntry) => e.status === "scheduled";
 
@@ -315,6 +429,21 @@ export function LaunchpadHub() {
     { key: "presale", label: "Presales", n: all.filter((e) => e.kind === "presale").length },
     { key: "fair", label: "Fair launches", n: all.filter((e) => e.kind === "fair").length },
   ];
+
+  const hasActiveFilters =
+    filter !== "all" ||
+    searchQuery.trim().length > 0 ||
+    networkFilter !== "all" ||
+    liveOnly ||
+    sepoliaOnly;
+
+  const handleResetFilters = () => {
+    setFilter("all");
+    setSearchQuery("");
+    setNetworkFilter("all");
+    setLiveOnly(false);
+    setSepoliaOnly(false);
+  };
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
@@ -331,6 +460,9 @@ export function LaunchpadHub() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2.5">
+          <Button asChild variant="ghost" size="lg" className="h-10 border border-border/80 px-4 text-sm font-medium hover:bg-secondary">
+            <Link href="/launchpad/my">My Launches</Link>
+          </Button>
           <Button asChild variant="outline" size="lg" className="h-10 px-4 text-sm">
             <Link href="/launchpad/launches/create">Create Fair Launch</Link>
           </Button>
@@ -355,7 +487,7 @@ export function LaunchpadHub() {
         <span className="text-muted-foreground/70">· sample catalog records</span>
       </p>
 
-      {/* Two paths */}
+      {/* Two paths: Presales vs Fair Launches */}
       <section aria-labelledby="paths-title" className="mt-14">
         <h2 id="paths-title" className="sr-only">
           Choose a launch type
@@ -414,8 +546,13 @@ export function LaunchpadHub() {
 
       {/* Launch board */}
       <section aria-label="Launch board" className="mt-20">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">Launch board</h2>
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">Launch board</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Showing {visible.length} of {all.length} launches
+            </p>
+          </div>
           <div role="group" aria-label="Filter by launch type" className="inline-flex rounded-lg bg-secondary/60 p-1">
             {filters.map((f) => (
               <button
@@ -434,57 +571,161 @@ export function LaunchpadHub() {
           </div>
         </div>
 
-        <div className="space-y-14">
-          <div>
-            <SectionHead id="board-live" title="Live now" count={g.live.length} note="Soonest closing first. Dates are the stored UTC close times." />
-            {g.live.length ? (
-              <ul className="divide-y divide-border/50">
-                {g.live.map((e) => (
-                  <LiveRow key={e.id} e={e} />
-                ))}
-              </ul>
-            ) : (
-              <p className="py-6 text-sm text-muted-foreground">No live launches of this type in the catalog.</p>
-            )}
-          </div>
-
-          <div>
-            <SectionHead id="board-upcoming" title="Scheduled" count={g.upcoming.length} note="By opening date." />
-            {g.upcoming.length ? (
-              <ul className="divide-y divide-border/50">
-                {g.upcoming.map((e) => (
-                  <ScheduleRow key={e.id} e={e} />
-                ))}
-              </ul>
-            ) : (
-              <p className="py-6 text-sm text-muted-foreground">Nothing scheduled for this type.</p>
-            )}
-          </div>
-
-          {g.drafts.length > 0 && (
-            <div>
-              <SectionHead id="board-drafts" title="Drafts" count={g.drafts.length} note="Not open. Start dates are planned, not committed." />
-              <ul className="divide-y divide-border/50">
-                {g.drafts.map((e) => (
-                  <ScheduleRow key={e.id} e={e} draft />
-                ))}
-              </ul>
+        {/* Discovery Filter Controls */}
+        <div className="mb-10 space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:p-5">
+          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+            {/* Instant Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search launches by title, token, description, or network…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-10 pl-9 pr-9 text-xs sm:text-sm bg-secondary/30"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
-          )}
 
-          <div>
-            <SectionHead id="board-concluded" title="Concluded" count={g.concluded.length} note="Most recently closed first." />
-            {g.concluded.length ? (
-              <ul className="divide-y divide-border/50">
-                {g.concluded.map((e) => (
-                  <ConcludedRow key={e.id} e={e} />
-                ))}
-              </ul>
-            ) : (
-              <p className="py-6 text-sm text-muted-foreground">No concluded launches of this type.</p>
+            {/* Network Filter */}
+            <div className="flex items-center gap-2">
+              <select
+                aria-label="Filter by network"
+                value={networkFilter}
+                onChange={(e) => setNetworkFilter(e.target.value)}
+                className="h-10 rounded-lg border border-border bg-secondary/40 px-3 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25"
+              >
+                <option value="all">All Networks</option>
+                <option value="sepolia">Ethereum Sepolia (Active — D-04)</option>
+                <option value="Base">Base</option>
+                <option value="Polygon">Polygon</option>
+                <option value="Arbitrum One">Arbitrum One</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Quick Filter Presets & Reset */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border/40">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-medium text-muted-foreground">Quick presets:</span>
+              <button
+                type="button"
+                onClick={() => setLiveOnly((prev) => !prev)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all",
+                  liveOnly
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm"
+                    : "bg-secondary/40 text-muted-foreground hover:text-foreground border border-transparent"
+                )}
+              >
+                <span className={cn("h-1.5 w-1.5 rounded-full", liveOnly ? "bg-emerald-400 animate-pulse" : "bg-muted-foreground")} />
+                Live Only
+              </button>
+              <button
+                type="button"
+                onClick={() => setSepoliaOnly((prev) => !prev)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-all",
+                  sepoliaOnly
+                    ? "bg-primary/20 text-primary border border-primary/40 shadow-sm"
+                    : "bg-secondary/40 text-muted-foreground hover:text-foreground border border-transparent"
+                )}
+              >
+                <Sparkles className="h-3 w-3" />
+                Sepolia Only (D-04)
+              </button>
+            </div>
+
+            {hasActiveFilters && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset filters
+              </Button>
             )}
           </div>
         </div>
+
+        {/* Results or Empty State */}
+        {visible.length === 0 ? (
+          <EmptyState
+            icon={<SearchX className="h-7 w-7 text-primary/70" />}
+            title="No launches found"
+            description="No presales or fair launches match your active search terms and filter criteria."
+            action={
+              <Button onClick={handleResetFilters} variant="outline" size="sm" className="gap-1.5">
+                <RotateCcw className="h-3.5 w-3.5" />
+                Clear all filters
+              </Button>
+            }
+          />
+        ) : (
+          <div className="space-y-14">
+            <div>
+              <SectionHead id="board-live" title="Live now" count={g.live.length} note="Soonest closing first. Dates are stored UTC close times." />
+              {g.live.length ? (
+                <ul className="divide-y divide-border/50">
+                  {g.live.map((e) => (
+                    <LiveRow key={e.id} e={e} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="py-6 text-sm text-muted-foreground">No live launches match the selected criteria.</p>
+              )}
+            </div>
+
+            <div>
+              <SectionHead id="board-upcoming" title="Scheduled" count={g.upcoming.length} note="By opening date." />
+              {g.upcoming.length ? (
+                <ul className="divide-y divide-border/50">
+                  {g.upcoming.map((e) => (
+                    <ScheduleRow key={e.id} e={e} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="py-6 text-sm text-muted-foreground">No scheduled launches match the selected criteria.</p>
+              )}
+            </div>
+
+            {g.drafts.length > 0 && (
+              <div>
+                <SectionHead id="board-drafts" title="Drafts" count={g.drafts.length} note="Not open. Start dates are planned, not committed." />
+                <ul className="divide-y divide-border/50">
+                  {g.drafts.map((e) => (
+                    <ScheduleRow key={e.id} e={e} draft />
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div>
+              <SectionHead id="board-concluded" title="Concluded" count={g.concluded.length} note="Most recently closed first." />
+              {g.concluded.length ? (
+                <ul className="divide-y divide-border/50">
+                  {g.concluded.map((e) => (
+                    <ConcludedRow key={e.id} e={e} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="py-6 text-sm text-muted-foreground">No concluded launches match the selected criteria.</p>
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Disclosure */}

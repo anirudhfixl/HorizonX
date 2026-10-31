@@ -1,7 +1,8 @@
 "use client";
 
 import React, { Suspense } from "react";
-import { TokenExplorer, TokenWithMarket, formatCurrency } from "@/components/tokens/token-explorer";
+import { TokenWithMarket, formatCurrency } from "@/components/tokens/token-explorer";
+import { NexoraTokenDirectory } from "@/components/tokens/nexora-token-pages";
 import { SESSION_TOKENS_STORAGE_KEY } from "@/lib/data-provenance";
 
 export type { TokenWithMarket };
@@ -140,16 +141,5 @@ export function getFeaturedTokens(tokens: TokenWithMarket[]): TokenWithMarket[] 
  * - Consolidated from legacy dashboard with removal of duplicate ownership and chart widgets.
  */
 export default function TokensDirectoryPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="mx-auto flex w-full max-w-[1700px] flex-col items-center justify-center px-4 py-24 text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="mt-4 font-mono text-xs text-muted-foreground">Loading Token Directory...</p>
-        </div>
-      }
-    >
-      <TokenExplorer mode="canonical" />
-    </Suspense>
-  );
+  return <NexoraTokenDirectory />;
 }

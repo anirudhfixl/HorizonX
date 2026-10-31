@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "../components/tokens/nexora-token-pages.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -11,7 +12,7 @@
    ────────────────────────────────────────────────────────────────────────────── */
 
 @theme inline {
-  /* Color tokens mapped to Tailwind utilities */
+  /* NEXORA "observatory" palette mapped to Tailwind utilities */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -53,9 +54,10 @@
   --color-chart-5: var(--chart-5);
 
   /* Typography */
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-inter);
+  --font-sans: var(--font-outfit);
+  --font-mono: var(--font-ibm-plex-mono);
+  --font-heading: var(--font-fraunces);
+  --font-display: var(--font-fraunces);
 
   /* Border radius scale */
   --radius-xs: 2px;
@@ -78,63 +80,63 @@
 
 :root {
   /* ProMiners core palette — neutral orbital black */
-  --background: #050505;
-  --foreground: #EAEAEA;
+  --background: #070912;
+  --foreground: #EEF1FC;
 
   /* Card surfaces */
-  --card: #0C0C0C;
-  --card-foreground: #EAEAEA;
+  --card: #0C101E;
+  --card-foreground: #EEF1FC;
 
   /* Dropdowns and popovers */
-  --popover: #0C0C0C;
-  --popover-foreground: #EAEAEA;
+  --popover: #0C101E;
+  --popover-foreground: #EEF1FC;
 
   /* Primary — ProMiners signature orange */
-  --primary: #E9762B;
-  --primary-foreground: #050505;
+  --primary: #A99AFF;
+  --primary-foreground: #070912;
 
   /* Secondary surfaces */
-  --secondary: #141414;
-  --secondary-foreground: #EAEAEA;
+  --secondary: #121829;
+  --secondary-foreground: #EEF1FC;
 
   /* Muted backgrounds and text */
-  --muted: #111111;
-  --muted-foreground: #999999;
+  --muted: #121829;
+  --muted-foreground: #8F9BB8;
 
   /* Accent — hover highlights */
-  --accent: #1A1A1A;
-  --accent-foreground: #EAEAEA;
+  --accent: #171D30;
+  --accent-foreground: #EEF1FC;
 
   /* Destructive */
   --destructive: #EF4444;
   --destructive-foreground: #050505;
 
   /* Borders and inputs */
-  --border: #222222;
-  --input: #1A1A1A;
-  --ring: #E9762B;
+  --border: #232A40;
+  --input: #1A2135;
+  --ring: #A99AFF;
 
   /* Base radius */
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 
   /* Brand gradient endpoints */
-  --brand-from: #E9762B;
-  --brand-to: #F59E0B;
+  --brand-from: #A99AFF;
+  --brand-to: #6FDBE9;
 
   /* Semantic status colors */
-  --status-active: #22C55E;
+  --status-active: #70D8B1;
   --status-pending: #F59E0B;
-  --status-draft: #999999;
+  --status-draft: #8F9BB8;
   --status-ended: #71717A;
-  --status-failed: #EF4444;
-  --status-unverified: #E9762B;
+  --status-failed: #FB7185;
+  --status-unverified: #A99AFF;
   --status-unknown: #71717A;
 
   /* Chart colors */
-  --chart-1: #E9762B;
-  --chart-2: #22C55E;
+  --chart-1: #A99AFF;
+  --chart-2: #70D8B1;
   --chart-3: #F59E0B;
-  --chart-4: #EA580C;
+  --chart-4: #6FDBE9;
   --chart-5: #EF4444;
 }
 
@@ -142,33 +144,33 @@
 /* ─── Light theme (future — kept consistent with shadcn contract) ─────────── */
 
 .light {
-  --background: #FDFCFB;
-  --foreground: #0C0C0B;
-  --card: #FFFFFF;
-  --card-foreground: #0C0C0B;
-  --popover: #FFFFFF;
-  --popover-foreground: #0C0C0B;
-  --primary: #E9762B;
+  --background: #EEF1F9;
+  --foreground: #191D30;
+  --card: #FBFCFF;
+  --card-foreground: #191D30;
+  --popover: #FBFCFF;
+  --popover-foreground: #191D30;
+  --primary: #7054D9;
   --primary-foreground: #FFFFFF;
-  --secondary: #F5F2EB;
-  --secondary-foreground: #0C0C0B;
-  --muted: #F3EFE7;
-  --muted-foreground: #6E6A61;
-  --accent: #FAEDE2;
-  --accent-foreground: #E9762B;
+  --secondary: #E6EAF5;
+  --secondary-foreground: #191D30;
+  --muted: #E6EAF5;
+  --muted-foreground: #5F6B87;
+  --accent: #E8E5FA;
+  --accent-foreground: #7054D9;
   --destructive: #DC2626;
   --destructive-foreground: #FFFFFF;
-  --border: #E6E0D4;
-  --input: #E6E0D4;
-  --ring: #E9762B;
-  --brand-from: #E9762B;
-  --brand-to: #F59E0B;
-  --status-active: #16A34A;
+  --border: #D7DEED;
+  --input: #D7DEED;
+  --ring: #7054D9;
+  --brand-from: #7054D9;
+  --brand-to: #087F9B;
+  --status-active: #138765;
   --status-pending: #D97706;
   --status-draft: #6E6A61;
   --status-ended: #71717A;
   --status-failed: #DC2626;
-  --status-unverified: #E9762B;
+  --status-unverified: #7054D9;
   --status-unknown: #71717A;
 }
 
@@ -348,7 +350,7 @@
   --nav-border: rgba(15, 15, 15, .09);
   --nav-shadow: 0 18px 55px rgba(0, 0, 0, .13);
   --nav-control-bg: rgba(20, 20, 18, .055);
-  --nav-control-hover: rgba(233, 118, 43, .13);
+  --nav-control-hover: rgba(169, 154, 255, .13);
 }
 
 .navbar-shell.theme-dark {
@@ -356,11 +358,11 @@
   --nav-text: #e9e4da;
   --nav-muted: #b6b0a6;
   --nav-panel: rgba(18, 18, 16, .98);
-  --nav-panel-hover: rgba(233, 118, 43, .13);
+  --nav-panel-hover: rgba(169, 154, 255, .13);
   --nav-border: rgba(233, 228, 218, .14);
   --nav-shadow: 0 18px 55px rgba(0, 0, 0, .38);
   --nav-control-bg: rgba(233, 228, 218, .09);
-  --nav-control-hover: rgba(233, 118, 43, .18);
+  --nav-control-hover: rgba(169, 154, 255, .18);
 }
 
 .navbar-shell.theme-dark .brand img {
@@ -441,7 +443,7 @@
   padding: 10px 0;
   background: transparent;
   color: var(--nav-muted);
-  font-family: var(--font-dm-sans, "DM Sans", Inter, system-ui, sans-serif);
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   font-size: 17px;
   font-weight: 400;
   letter-spacing: -.035em;
@@ -455,7 +457,7 @@
 
 .navbar-shell .nav-link:hover,
 .navbar-shell .nav-link.active {
-  color: #e9762b;
+  color: #a99aff;
 }
 
 .navbar-shell .chevron {
@@ -511,18 +513,18 @@
 
 .navbar-shell .dropdown-panel a:hover {
   background: var(--nav-panel-hover);
-  color: #e9762b;
+  color: #a99aff;
 }
 
 .navbar-shell .dropdown-label {
-  font-family: var(--font-dm-sans, "DM Sans", Inter, system-ui, sans-serif);
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: var(--nav-text);
 }
 
 .navbar-shell .dropdown-panel a:hover .dropdown-label {
-  color: #e9762b;
+  color: #a99aff;
 }
 
 .navbar-shell .dropdown-detail {
@@ -539,7 +541,7 @@
 }
 
 .navbar-shell .dashboard-link {
-  font-family: var(--font-dm-sans, "DM Sans", Inter, system-ui, sans-serif);
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   font-size: 17px;
   letter-spacing: -.035em;
   color: var(--nav-text);
@@ -549,7 +551,7 @@
 }
 
 .navbar-shell .dashboard-link:hover {
-  color: #e9762b;
+  color: #a99aff;
 }
 
 /* Theme Toggle Button (36px circular) */
@@ -568,7 +570,7 @@
 }
 
 .navbar-shell .theme-toggle:hover {
-  color: #e9762b;
+  color: #a99aff;
   background: var(--nav-control-hover);
   transform: rotate(-8deg);
 }
@@ -591,7 +593,7 @@
   gap: 8px;
   padding: 0 18px;
   border-radius: 999px;
-  font-family: var(--font-dm-sans, "DM Sans", Inter, system-ui, sans-serif);
+  font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   font-size: 14.5px;
   font-weight: 600;
   letter-spacing: -.02em;
@@ -603,15 +605,15 @@
 }
 
 .navbar-shell .wallet-btn-connect {
-  background: #e9762b;
+  background: #a99aff;
   color: #0c0c0b;
-  box-shadow: 0 4px 14px rgba(233, 118, 43, .25);
+  box-shadow: 0 4px 14px rgba(169, 154, 255, .25);
 }
 
 .navbar-shell .wallet-btn-connect:hover {
   background: #f28a45;
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(233, 118, 43, .35);
+  box-shadow: 0 6px 18px rgba(169, 154, 255, .35);
 }
 
 .navbar-shell.theme-light .wallet-btn-connect {
@@ -621,17 +623,17 @@
 }
 
 .navbar-shell.theme-light .wallet-btn-connect:hover {
-  background: #e9762b;
+  background: #a99aff;
   color: #0c0c0b;
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(233, 118, 43, .3);
+  box-shadow: 0 6px 18px rgba(169, 154, 255, .3);
 }
 
 .navbar-shell .wallet-btn-connected {
   border: 1px solid var(--nav-border);
   background: var(--nav-control-bg);
   color: var(--nav-text);
-  font-family: var(--font-geist-mono, monospace);
+  font-family: var(--font-ibm-plex-mono), monospace;
   font-size: 13px;
   font-weight: 500;
   padding: 0 15px;
@@ -639,7 +641,7 @@
 
 .navbar-shell .wallet-btn-connected:hover {
   background: var(--nav-control-hover);
-  border-color: rgba(233, 118, 43, .35);
+  border-color: rgba(169, 154, 255, .35);
   transform: translateY(-1px);
 }
 
@@ -884,4 +886,44 @@
   .navbar-shell .wallet-balance {
     display: none;
   }
+}
+
+/* NEXORA global surface language: cool graphite, subtle violet ambient light. */
+:root {
+  color-scheme: dark;
+  --nx-border: rgba(150,165,205,.14);
+  --nx-border-strong: rgba(169,154,255,.34);
+  --nx-control-bg: rgba(18,24,41,.70);
+}
+html {
+  background-color: var(--background);
+}
+body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(ellipse 64rem 30rem at 84% -14%, rgba(104,82,230,.075), transparent 66%),
+    radial-gradient(ellipse 44rem 24rem at -12% 92%, rgba(40,150,175,.035), transparent 66%);
+}
+::selection { background: rgba(169,154,255,.28); color: var(--foreground); }
+:focus-visible { outline-color: color-mix(in srgb, var(--primary) 78%, white); }
+.light body {
+  background-color: #eef1f9;
+  background-image:
+    radial-gradient(ellipse 60rem 34rem at 88% 0%, rgba(132,113,226,.09), transparent 68%),
+    radial-gradient(ellipse 42rem 28rem at 0% 55%, rgba(36,158,183,.045), transparent 70%);
+}
+
+.navbar-shell.theme-light .nav-link:hover,
+.navbar-shell.theme-light .nav-link.active,
+.navbar-shell.theme-light .dropdown-panel a:hover,
+.navbar-shell.theme-light .dropdown-panel a:hover .dropdown-label,
+.navbar-shell.theme-light .dashboard-link:hover,
+.navbar-shell.theme-light .theme-toggle:hover {
+  color: #7054d9;
+}
+.navbar-shell.theme-light .wallet-btn-connect,
+.navbar-shell.theme-light .wallet-btn-connect:hover {
+  background: #7054d9;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(112,84,217,.22);
 }

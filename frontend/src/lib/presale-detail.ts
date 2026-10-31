@@ -100,17 +100,42 @@ export function computeRaise(ps: Pick<Presale, "totalRaised" | "hardCap" | "soft
   };
 }
 
+// ─── Status Normalization ───────────────────────────────────────────────────
+
+export type CanonicalPresaleStatus =
+  | "draft"
+  | "scheduled"
+  | "live"
+  | "ended"
+  | "finalized"
+  | "cancelled"
+  | "failed";
+
+/**
+ * Normalizes presale status string, resolving the 'canceled' vs 'cancelled' inconsistency.
+ * Uses 'cancelled' (double-l) as the canonical internal representation while transparently
+ * accepting 'canceled' (single-l) without breaking catalog records or tests.
+ */
+export function normalizePresaleStatus(status?: string): PresaleStatus {
+  if (!status) return "draft";
+  const s = status.toLowerCase().trim();
+  if (s === "canceled") return "cancelled";
+  return s as PresaleStatus;
+}
+
 export const CONCLUDED_STATUSES: PresaleStatus[] = ["ended", "finalized", "failed", "cancelled"];
 
-export function isConcluded(status: PresaleStatus): boolean {
-  return CONCLUDED_STATUSES.includes(status);
+export function isConcluded(status: string): boolean {
+  const norm = normalizePresaleStatus(status);
+  return CONCLUDED_STATUSES.includes(norm);
 }
 
 /** Wording for the soft-cap comparison; tense follows the stored lifecycle status. */
-export function softCapLabel(status: PresaleStatus, state: SoftCapState): string | null {
+export function softCapLabel(status: string, state: SoftCapState): string | null {
   if (state === "unknown") return null;
-  if (isConcluded(status)) return state === "reached" ? "Soft cap met" : "Soft cap not met";
-  if (status === "draft" || status === "scheduled") return "Soft cap not reached yet";
+  const norm = normalizePresaleStatus(status);
+  if (isConcluded(norm)) return state === "reached" ? "Soft cap met" : "Soft cap not met";
+  if (norm === "draft" || norm === "scheduled") return "Soft cap not reached yet";
   return state === "reached" ? "Soft cap reached" : "Soft cap not reached yet";
 }
 
@@ -160,7 +185,7 @@ export interface Milestone {
   state: MilestoneState;
 }
 
-const OUTCOME_LABEL: Record<PresaleStatus, string> = {
+const OUTCOME_LABEL: Record<string, string> = {
   draft: "Outcome",
   scheduled: "Outcome",
   live: "Outcome",
@@ -168,6 +193,7 @@ const OUTCOME_LABEL: Record<PresaleStatus, string> = {
   finalized: "Finalized",
   failed: "Failed",
   cancelled: "Cancelled",
+  canceled: "Cancelled",
 };
 
 /**
@@ -175,10 +201,11 @@ const OUTCOME_LABEL: Record<PresaleStatus, string> = {
  * `status`, not from the clock, so nothing here can drift or fake a countdown.
  */
 export function buildMilestones(ps: Presale): Milestone[] {
-  const current = ps.status === "draft" ? 0 : ps.status === "scheduled" ? 1 : ps.status === "live" ? 2 : 3;
+  const normStatus = normalizePresaleStatus(ps.status);
+  const current = normStatus === "draft" ? 0 : normStatus === "scheduled" ? 1 : normStatus === "live" ? 2 : 3;
   const stateFor = (i: number): MilestoneState => (i < current ? "done" : i === current ? "current" : "upcoming");
-  const concluded = isConcluded(ps.status);
-  const draft = ps.status === "draft";
+  const concluded = isConcluded(normStatus);
+  const draft = normStatus === "draft";
 
   return [
     {
@@ -192,7 +219,7 @@ export function buildMilestones(ps: Presale): Milestone[] {
       key: "opens",
       label: draft ? "Planned opening" : "Opens",
       at: ps.startTime,
-      note: draft ? "Planned start; not confirmed." : ps.status === "scheduled" ? "Scheduled opening." : "Opening time stored on the record.",
+      note: draft ? "Planned start; not confirmed." : normStatus === "scheduled" ? "Scheduled opening." : "Opening time stored on the record.",
       state: stateFor(1),
     },
     {
@@ -204,7 +231,7 @@ export function buildMilestones(ps: Presale): Milestone[] {
     },
     {
       key: "outcome",
-      label: OUTCOME_LABEL[ps.status],
+      label: OUTCOME_LABEL[normStatus] ?? "Outcome",
       at: concluded ? ps.updatedAt : undefined,
       note: concluded
         ? "Date shown is when the catalog record was last updated, not a confirmed on-chain event."
@@ -225,7 +252,8 @@ export interface ParticipationState {
 
 /** What the stored lifecycle status allows. Participation is only offered while `live`. */
 export function participationState(ps: Presale): ParticipationState {
-  switch (ps.status) {
+  const normStatus = normalizePresaleStatus(ps.status);
+  switch (normStatus) {
     case "live":
       return {
         open: true,
@@ -255,7 +283,7 @@ export function participationState(ps: Presale): ParticipationState {
       return {
         open: false,
         tone: "closed",
-        title: ps.status === "finalized" ? "Sale finalized" : "Sale ended",
+        title: normStatus === "finalized" ? "Sale finalized" : "Sale ended",
         message: "Contributions are closed.",
       };
   }
@@ -324,3 +352,157 @@ export const NOT_RECORDED_TERMS: { label: string; detail: string }[] = [
   { label: "Refund rules", detail: "No refund or soft-cap-failure rules are stored." },
   { label: "Sale contract", detail: "No presale contract address is stored, so figures are not read on-chain." },
 ];
+
+// ─── Creator Authorization & Owner Management ───────────────────────────────
+
+/**
+ * Checks whether the connected wallet is authorized to manage the given launch record.
+ * Case-insensitive comparison against the stored ownerAddress.
+ */
+export function isAuthorizedCreator(
+  ownerAddress?: string | null,
+  walletAddress?: string | null,
+  isConnected?: boolean
+): boolean {
+  if (!isConnected || !ownerAddress || !walletAddress) return false;
+  return ownerAddress.trim().toLowerCase() === walletAddress.trim().toLowerCase();
+}
+
+export interface StatusTransitionRule {
+  target: PresaleStatus;
+  label: string;
+  description: string;
+  variant?: "default" | "destructive" | "outline" | "secondary";
+}
+
+/**
+ * Returns allowed lifecycle status transitions from the current state.
+ * Terminal states (finalized, cancelled, failed) cannot be transitioned further.
+ */
+export function getAllowedStatusTransitions(currentStatus?: string): StatusTransitionRule[] {
+  const norm = normalizePresaleStatus(currentStatus);
+  switch (norm) {
+    case "draft":
+      return [
+        {
+          target: "scheduled",
+          label: "Schedule Launch",
+          description: "Schedule this launch for its planned opening time.",
+          variant: "outline",
+        },
+        {
+          target: "live",
+          label: "Go Live Immediately",
+          description: "Open the sale for contributions right away.",
+          variant: "default",
+        },
+        {
+          target: "cancelled",
+          label: "Cancel Simulation",
+          description: "Abort this simulation draft.",
+          variant: "destructive",
+        },
+      ];
+    case "scheduled":
+      return [
+        {
+          target: "live",
+          label: "Open Sale (Go Live)",
+          description: "Transition the presale to live contribution mode.",
+          variant: "default",
+        },
+        {
+          target: "cancelled",
+          label: "Cancel Simulation",
+          description: "Cancel this scheduled launch simulation.",
+          variant: "destructive",
+        },
+      ];
+    case "live":
+      return [
+        {
+          target: "ended",
+          label: "Close Sale (End)",
+          description: "Close contributions while awaiting settlement or finalization.",
+          variant: "outline",
+        },
+        {
+          target: "finalized",
+          label: "Finalize Presale",
+          description: "Simulate soft-cap validation, lock LP, and prepare token distribution.",
+          variant: "default",
+        },
+        {
+          target: "cancelled",
+          label: "Cancel Presale",
+          description: "Cancel the sale and open simulated refund claims.",
+          variant: "destructive",
+        },
+      ];
+    case "ended":
+      return [
+        {
+          target: "finalized",
+          label: "Finalize Presale",
+          description: "Complete the presale settlement.",
+          variant: "default",
+        },
+        {
+          target: "failed",
+          label: "Mark as Failed",
+          description: "Mark the presale as failed (e.g. soft cap not met).",
+          variant: "destructive",
+        },
+      ];
+    default:
+      return [];
+  }
+}
+
+// ─── Derived Terms & Allocation Calculations ────────────────────────────────
+
+export interface DerivedTerms {
+  presaleRate?: number;
+  presaleRateUnit?: string;
+  hardCapTokensRequired?: number;
+  softCapTokensRequired?: number;
+  hasDerivedTokens: boolean;
+}
+
+/**
+ * Derives token requirements from hard/soft cap and presale rate if recorded.
+ * Does not guess or invent missing values.
+ */
+export function derivePresaleTerms(
+  hardCapStr?: string,
+  softCapStr?: string,
+  presaleRateStr?: string | number
+): DerivedTerms {
+  let rateNum: number | undefined;
+  let rateUnit: string | undefined;
+
+  if (typeof presaleRateStr === "number" && Number.isFinite(presaleRateStr) && presaleRateStr > 0) {
+    rateNum = presaleRateStr;
+  } else if (typeof presaleRateStr === "string") {
+    const parts = parseAmountParts(presaleRateStr);
+    if (parts && parts.value > 0) {
+      rateNum = parts.value;
+      rateUnit = parts.unit;
+    }
+  }
+
+  const hardParts = parseAmountParts(hardCapStr);
+  const softParts = parseAmountParts(softCapStr);
+
+  const hardTokens = rateNum && hardParts ? hardParts.value * rateNum : undefined;
+  const softTokens = rateNum && softParts ? softParts.value * rateNum : undefined;
+
+  return {
+    presaleRate: rateNum,
+    presaleRateUnit: rateUnit,
+    hardCapTokensRequired: hardTokens,
+    softCapTokensRequired: softTokens,
+    hasDerivedTokens: hardTokens !== undefined && hardTokens > 0,
+  };
+}
+

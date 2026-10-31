@@ -1,11 +1,16 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/projects/copy-button";
-import { getExplorerBaseUrl, isSepoliaNetwork, toneFor } from "@/components/tokens/token-profile";
+import {
+  LaunchpadDetailShell,
+  type LaunchpadDetailTab,
+} from "@/components/launchpad/launchpad-detail-shell";
+import { isSepoliaNetwork, toneFor } from "@/components/tokens/token-profile";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
 import { cn } from "@/lib/utils";
@@ -14,9 +19,13 @@ import {
   buildMilestones,
   computeRaise,
   contributionUnit,
+  derivePresaleTerms,
   formatAmount,
   formatUtc,
+  getAllowedStatusTransitions,
+  isAuthorizedCreator,
   isConcluded,
+  normalizePresaleStatus,
   parseAmountParts,
   participationState,
   softCapLabel,
@@ -26,8 +35,26 @@ import {
   type Milestone,
   type RaiseSummary,
 } from "@/lib/presale-detail";
-import type { FairLaunch, Presale, Project, Token } from "@/types";
-import { ArrowLeft, ArrowUpRight, Check, ExternalLink, Info, Wallet } from "lucide-react";
+import {
+  findSessionPresaleById,
+  updateSessionLaunch,
+} from "@/lib/launch-storage";
+import type { FairLaunch, Presale, PresaleStatus, Project, Token } from "@/types";
+import {
+  ArrowUpRight,
+  Check,
+  ExternalLink,
+  Info,
+  Wallet,
+  ShieldCheck,
+  Coins,
+  Scale,
+  RefreshCw,
+  Ban,
+  CheckCircle2,
+  AlertTriangle,
+  Lock,
+} from "lucide-react";
 
 export interface PresaleDetailProps {
   presale: Presale;
@@ -35,6 +62,8 @@ export interface PresaleDetailProps {
   project?: Project;
   siblingPresales: Presale[];
   fairLaunches: FairLaunch[];
+  initialTab?: string;
+  provenance?: "catalog" | "session";
 }
 
 // ─── Small pieces ─────────────────────────────────────────────────────────────
@@ -43,7 +72,17 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
   return <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">{children}</p>;
 }
 
-function SectionHead({ id, eyebrow, title, aside }: { id: string; eyebrow: string; title: string; aside?: React.ReactNode }) {
+function SectionHead({
+  id,
+  eyebrow,
+  title,
+  aside,
+}: {
+  id: string;
+  eyebrow: string;
+  title: string;
+  aside?: React.ReactNode;
+}) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
       <div>
@@ -69,21 +108,6 @@ function TermRow({ label, children, hint }: { label: string; children: React.Rea
   );
 }
 
-function NetworkChip({ network }: { network: string }) {
-  const ok = isSepoliaNetwork(network);
-  return (
-    <span
-      className={cn(
-        "rounded px-1.5 py-0.5 font-mono text-[11px]",
-        ok ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
-      )}
-      title={ok ? "D-04 approved network (11155111)" : "Catalog origin — not an active network per D-04"}
-    >
-      {network}
-    </span>
-  );
-}
-
 function shorten(addr: string): string {
   return addr.length > 14 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
 }
@@ -98,8 +122,16 @@ const RAISE_UNAVAILABLE: Record<string, string> = {
 // ─── Raise instrument ─────────────────────────────────────────────────────────
 
 function RaiseInstrument({ presale, raise }: { presale: Presale; raise: RaiseSummary }) {
-  const concluded = isConcluded(presale.status);
-  const fill = presale.status === "live" ? "bg-primary" : presale.status === "failed" || presale.status === "cancelled" ? "bg-destructive/70" : concluded ? "bg-zinc-400" : "bg-amber-400/70";
+  const normStatus = normalizePresaleStatus(presale.status);
+  const concluded = isConcluded(normStatus);
+  const fill =
+    normStatus === "live"
+      ? "bg-primary"
+      : normStatus === "failed" || normStatus === "cancelled"
+      ? "bg-destructive/70"
+      : concluded
+      ? "bg-zinc-400"
+      : "bg-amber-400/70";
 
   if (!raise.available) {
     return (
@@ -120,7 +152,7 @@ function RaiseInstrument({ presale, raise }: { presale: Presale; raise: RaiseSum
     );
   }
 
-  const softLabel = softCapLabel(presale.status, raise.softCapState);
+  const softLabel = softCapLabel(normStatus, raise.softCapState);
   const labelPos = raise.softMarkerPct !== undefined ? Math.min(Math.max(raise.softMarkerPct, 10), 90) : 0;
 
   return (
@@ -133,7 +165,9 @@ function RaiseInstrument({ presale, raise }: { presale: Presale; raise: RaiseSum
           </p>
         </div>
         <div className="text-right">
-          <p className="font-mono text-3xl font-semibold text-primary">{raise.pctOfHard.toFixed(raise.pctOfHard % 1 === 0 ? 0 : 1)}%</p>
+          <p className="font-mono text-3xl font-semibold text-primary">
+            {raise.pctOfHard.toFixed(raise.pctOfHard % 1 === 0 ? 0 : 1)}%
+          </p>
           <p className="text-xs text-muted-foreground">of {formatAmount(raise.hard ?? 0, raise.unit)} hard cap</p>
         </div>
       </div>
@@ -155,7 +189,7 @@ function RaiseInstrument({ presale, raise }: { presale: Presale; raise: RaiseSum
           aria-valuenow={Math.round(raise.pctOfHard)}
           aria-label={`${presale.title}: ${raise.pctOfHard.toFixed(0)}% of hard cap raised`}
         >
-          <div className={cn("h-full rounded-full", fill)} style={{ width: `${raise.pctOfHard}%` }} />
+          <div className={cn("h-full rounded-full transition-all duration-500", fill)} style={{ width: `${raise.pctOfHard}%` }} />
           {raise.softMarkerPct !== undefined && (
             <span
               className="absolute -top-1.5 h-[calc(100%+12px)] w-0.5 rounded bg-foreground/70"
@@ -274,7 +308,6 @@ function ParticipationPanel({ presale, raise }: { presale: Presale; raise: Raise
     setAttempted(true);
     setNotice(false);
     if (check.status === "ok") {
-      // No contribution transaction exists in this build; say so instead of implying one was sent.
       setNotice(true);
     } else {
       inputRef.current?.focus();
@@ -326,7 +359,6 @@ function ParticipationPanel({ presale, raise }: { presale: Presale; raise: Raise
 
       {canEnter && (
         <div className="mt-4 space-y-4">
-          {/* Wallet */}
           <div className="text-sm">
             {checking ? (
               <div className="space-y-2" role="status" aria-label="Checking wallet connection">
@@ -357,7 +389,6 @@ function ParticipationPanel({ presale, raise }: { presale: Presale; raise: Raise
             )}
           </div>
 
-          {/* Amount */}
           <div>
             <label htmlFor="contribution-amount" className="text-xs font-medium text-foreground">
               Contribution amount
@@ -365,7 +396,9 @@ function ParticipationPanel({ presale, raise }: { presale: Presale; raise: Raise
             <div
               className={cn(
                 "mt-1.5 flex items-center gap-2 rounded-lg border bg-secondary/30 px-3 py-2 focus-within:ring-2",
-                showError ? "border-destructive/60 focus-within:ring-destructive/25" : "border-border focus-within:border-primary focus-within:ring-primary/25"
+                showError
+                  ? "border-destructive/60 focus-within:ring-destructive/25"
+                  : "border-border focus-within:border-primary focus-within:ring-primary/25"
               )}
             >
               <input
@@ -423,7 +456,6 @@ function ParticipationPanel({ presale, raise }: { presale: Presale; raise: Raise
             </div>
           </div>
 
-          {/* Action */}
           {checking ? (
             <Button className="w-full" size="lg" disabled>
               Checking wallet…
@@ -457,7 +489,7 @@ function ParticipationPanel({ presale, raise }: { presale: Presale; raise: Raise
       <p className="mt-5 flex gap-2 border-t border-border/60 pt-4 text-xs text-muted-foreground">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
         <span>
-          Sale figures are catalog sample records, not read from a contract. The wallet shown above is the real connection, or a
+          Sale figures are simulation records, not read from a contract. The wallet shown above is the real connection, or a
           labelled demo sandbox.
         </span>
       </p>
@@ -465,323 +497,608 @@ function ParticipationPanel({ presale, raise }: { presale: Presale; raise: Raise
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 
-export function PresaleDetail({ presale, token, project, siblingPresales, fairLaunches }: PresaleDetailProps) {
+export function PresaleDetail({
+  presale: initialPresale,
+  token,
+  project,
+  siblingPresales,
+  fairLaunches,
+  initialTab,
+  provenance: initialProvenance,
+}: PresaleDetailProps) {
+  const { isConnected, address: userAddress } = useWallet();
+  const { openModal } = useModal();
+  const [, startTransition] = useTransition();
+
+  // Local state for live simulation transitions
+  const [presale, setPresale] = useState<Presale>(initialPresale);
+
+  // Tab state with direct URL parameter normalization
+  const resolveInitialTab = (): LaunchpadDetailTab => {
+    const raw = initialTab?.toLowerCase().trim();
+    if (raw === "terms" || raw === "allocation") return "terms";
+    if (raw === "management" || raw === "creator" || raw === "owner") return "management";
+    return "overview";
+  };
+
+  const [activeTab, setActiveTab] = useState<LaunchpadDetailTab>(resolveInitialTab);
+
+  const handleTabChange = (tab: LaunchpadDetailTab) => {
+    setActiveTab(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "overview") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tab);
+      }
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
+
+  const provenance =
+    initialProvenance ??
+    (presale.id.startsWith("session-") || Boolean(findSessionPresaleById(presale.id)) ? "session" : "catalog");
+
   const raise = computeRaise(presale);
   const milestones = buildMilestones(presale);
   const duration = windowDuration(presale.startTime, presale.endTime);
-  const tone = toneFor(token?.category ?? presale.category);
-  const tileText = (token?.symbol ?? presale.title).slice(0, 4).toUpperCase();
-  const explorerBase = token ? getExplorerBaseUrl(token.network) : undefined;
-  const socials = Object.entries(project?.socialLinks ?? {}).filter(([, url]) => /^https?:\/\//i.test(url));
   const hasRelated = siblingPresales.length > 0 || fairLaunches.length > 0;
 
-  return (
-    <div className="mx-auto w-full max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        href="/launchpad/presales"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        Presales
-      </Link>
+  // Derive terms and token requirement calculations
+  const sessionRecord = findSessionPresaleById(presale.id);
+  const presaleRate = sessionRecord?.presaleRate ?? undefined;
+  const derivedTerms = derivePresaleTerms(presale.hardCap, presale.softCap, presaleRate);
 
-      <div className="mt-6 grid grid-cols-1 gap-x-12 gap-y-12 lg:grid-cols-[minmax(0,1fr)_380px]">
-        {/* ── Identity + raise ─────────────────────────────────────────────── */}
-        <div className="space-y-12 lg:col-start-1 lg:row-start-1">
-          <header className="flex flex-col gap-5 sm:flex-row sm:items-start">
-            <span
-              className={cn(
-                "flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br font-mono text-lg font-bold sm:h-20 sm:w-20 sm:text-xl",
-                tone.tile
-              )}
-              aria-hidden="true"
-            >
-              {tileText}
-            </span>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <StatusBadge status={presale.status} />
-                <NetworkChip network={presale.network} />
-                {presale.category && <span className="text-xs text-muted-foreground">{presale.category}</span>}
+  // Creator authorization check
+  const isAuthorized = isAuthorizedCreator(presale.ownerAddress, userAddress, isConnected);
+  const allowedTransitions = getAllowedStatusTransitions(presale.status);
+
+  // Action Handler for Creator Status Transitions
+  const handleStatusTransition = (newStatus: PresaleStatus, _label: string) => {
+    if (!isAuthorized) {
+      toast.error("Unauthorized: Connected wallet does not match the creator address.");
+      return;
+    }
+
+    startTransition(() => {
+      if (provenance === "session") {
+        const ok = updateSessionLaunch(presale.id, { status: newStatus });
+        if (ok) {
+          setPresale((prev) => ({ ...prev, status: newStatus }));
+          toast.success(`Simulation Updated: Presale is now ${newStatus}`);
+        } else {
+          toast.error("Failed to update session simulation.");
+        }
+      } else {
+        // Catalog simulation override
+        setPresale((prev) => ({ ...prev, status: newStatus }));
+        toast.success(`Catalog Simulation: Presale status changed to ${newStatus}`, {
+          description: "Note: Catalog data changes are client-side simulations for this session.",
+        });
+      }
+    });
+  };
+
+  return (
+    <LaunchpadDetailShell
+      kind="presale"
+      id={presale.id}
+      title={presale.title}
+      description={presale.description}
+      status={presale.status}
+      network={presale.network}
+      category={presale.category}
+      ownerAddress={presale.ownerAddress}
+      provenance={provenance}
+      isSimulated={true}
+      token={token}
+      project={project}
+      contractAddress={presale.contractAddress}
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+    >
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 1: OVERVIEW                                                        */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "overview" && (
+        <div className="grid grid-cols-1 gap-x-12 gap-y-12 lg:grid-cols-[minmax(0,1fr)_380px]">
+          {/* Left Column: Raise, Timeline, Spotlights */}
+          <div className="space-y-12">
+            {/* Simulation Disclosure Banner */}
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
+              <div className="flex items-start gap-3">
+                <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="space-y-1 text-xs">
+                  <p className="font-semibold text-foreground">
+                    {provenance === "session"
+                      ? "User-Created Launch Simulation"
+                      : "Catalog Demonstration Presale"}
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {provenance === "session"
+                      ? "This presale was configured and simulated during your local browser session. Saved in client storage (pm_session_launches_v1), under Ethereum Sepolia scope (D-04)."
+                      : "This record is a pre-seeded demonstration launch from the ProMiners catalog. No real blockchain transactions or escrow deposits exist."}
+                  </p>
+                </div>
               </div>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">{presale.title}</h1>
-              {presale.description && <p className="mt-3 max-w-2xl text-base text-muted-foreground">{presale.description}</p>}
-              <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-                <span>
-                  Listed by <span className="font-mono text-foreground/90">{presale.ownerAddress}</span>
-                </span>
-                <span>Record updated {formatUtc(presale.updatedAt, false)}</span>
+            </div>
+
+            {/* Raise Progress Instrument */}
+            <section aria-labelledby="raise-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+              <SectionHead
+                id="raise-title"
+                eyebrow="Raise"
+                title="Sale progress"
+                aside={<span className="text-xs text-muted-foreground">Client simulation · not read from a contract</span>}
+              />
+              <div className="mt-6">
+                <RaiseInstrument presale={presale} raise={raise} />
+              </div>
+            </section>
+
+            {/* Timeline Milestones */}
+            <section aria-labelledby="schedule-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+              <SectionHead
+                id="schedule-title"
+                eyebrow="Schedule"
+                title="Sale timeline"
+                aside={<span className="text-xs text-muted-foreground">Times are stored UTC values</span>}
+              />
+              <div className="mt-6">
+                <ScheduleRail milestones={milestones} />
+              </div>
+            </section>
+
+            {/* Token & Project Spotlights */}
+            <section aria-labelledby="spotlight-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+              <SectionHead id="spotlight-title" eyebrow="Context" title="Token & Project Spotlight" />
+              <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">
+                {/* Token Spotlight */}
+                <div className="space-y-3 rounded-2xl border border-border/40 bg-secondary/15 p-5">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+                    <Coins className="h-3.5 w-3.5" />
+                    <span>Token Spotlight</span>
+                  </div>
+                  {token ? (
+                    <>
+                      <div className="flex items-center gap-3 pt-1">
+                        <span
+                          className={cn(
+                            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-mono text-sm font-bold shadow-sm",
+                            toneFor(token.category).tile
+                          )}
+                        >
+                          {token.symbol.slice(0, 4)}
+                        </span>
+                        <div className="min-w-0">
+                          <Link href={`/tokens/${token.id}`} className="truncate font-semibold text-foreground hover:text-primary transition-colors block">
+                            {token.name}
+                          </Link>
+                          <p className="font-mono text-xs text-muted-foreground">{token.symbol} · {token.standard || "ERC-20"}</p>
+                        </div>
+                      </div>
+                      <dl className="mt-3 divide-y divide-border/60 border-y border-border/60 text-xs">
+                        <div className="flex justify-between py-2">
+                          <dt className="text-muted-foreground">Decimals</dt>
+                          <dd className="font-mono text-foreground">{token.decimals ?? 18}</dd>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <dt className="text-muted-foreground">Total Supply</dt>
+                          <dd className="font-mono text-foreground">{token.totalSupply ?? "—"}</dd>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <dt className="text-muted-foreground">Contract</dt>
+                          <dd className="font-mono text-foreground flex items-center gap-1">
+                            {token.contractAddress ? (
+                              <>
+                                <span>{shorten(token.contractAddress)}</span>
+                                <CopyButton value={token.contractAddress} label="token address" />
+                              </>
+                            ) : (
+                              "Not deployed"
+                            )}
+                          </dd>
+                        </div>
+                      </dl>
+                      <div className="flex flex-wrap gap-3 pt-2 text-xs">
+                        <Link href={`/tokens/${token.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                          Token Overview <ArrowUpRight className="h-3 w-3" />
+                        </Link>
+                        <Link href={`/tokens/${token.id}/contract`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                          Contract <ArrowUpRight className="h-3 w-3" />
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground pt-2">No catalog token record linked.</p>
+                  )}
+                </div>
+
+                {/* Project Spotlight */}
+                <div className="space-y-3 rounded-2xl border border-border/40 bg-secondary/15 p-5">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-primary">
+                    <Scale className="h-3.5 w-3.5" />
+                    <span>Project Spotlight</span>
+                  </div>
+                  {project ? (
+                    <>
+                      <div className="flex items-center gap-3 pt-1">
+                        <span
+                          className={cn(
+                            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold shadow-sm",
+                            toneFor(project.category).tile
+                          )}
+                        >
+                          {project.name.slice(0, 2).toUpperCase()}
+                        </span>
+                        <div className="min-w-0">
+                          <Link href={`/projects/${project.id}`} className="truncate font-semibold text-foreground hover:text-primary transition-colors block">
+                            {project.name}
+                          </Link>
+                          <p className="text-xs text-muted-foreground">{project.category || "Ecosystem Project"}</p>
+                        </div>
+                      </div>
+                      <dl className="mt-3 divide-y divide-border/60 border-y border-border/60 text-xs">
+                        <div className="flex justify-between py-2">
+                          <dt className="text-muted-foreground">Verification</dt>
+                          <dd className="text-foreground">{verificationLabel(project.verificationStatus)}</dd>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <dt className="text-muted-foreground">Website</dt>
+                          <dd className="text-foreground truncate max-w-[160px]">
+                            {project.websiteUrl ? (
+                              <a href={project.websiteUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
+                                <span>{project.websiteUrl.replace(/^https?:\/\//, "")}</span>
+                                <ExternalLink className="h-2.5 w-2.5" />
+                              </a>
+                            ) : (
+                              "Not recorded"
+                            )}
+                          </dd>
+                        </div>
+                      </dl>
+                      <div className="pt-2 text-xs">
+                        <Link href={`/projects/${project.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                          Project Profile <ArrowUpRight className="h-3 w-3" />
+                        </Link>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground pt-2">No parent project linked.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            {/* Sibling Launches */}
+            {hasRelated && (
+              <section aria-labelledby="related-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+                <SectionHead id="related-title" eyebrow="Same Token" title="Other Launches for this Asset" />
+                <ul className="mt-4 divide-y divide-border/60 border-y border-border/60">
+                  {siblingPresales.map((p) => (
+                    <li key={p.id}>
+                      <Link href={`/launchpad/presales/${p.id}`} className="group flex items-center justify-between gap-4 py-3">
+                        <span className="min-w-0">
+                          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Presale</span>
+                          <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{p.title}</span>
+                        </span>
+                        <StatusBadge status={p.status} />
+                      </Link>
+                    </li>
+                  ))}
+                  {fairLaunches.map((f) => (
+                    <li key={f.id}>
+                      <Link href={`/launchpad/launches/${f.id}`} className="group flex items-center justify-between gap-4 py-3">
+                        <span className="min-w-0">
+                          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Fair Launch</span>
+                          <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{f.title}</span>
+                        </span>
+                        <StatusBadge status={f.status} />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+          </div>
+
+          {/* Right Rail: Participation Panel */}
+          <aside className="lg:col-start-2">
+            <div className="lg:sticky lg:top-24">
+              <ParticipationPanel presale={presale} raise={raise} />
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 2: ALLOCATION & TERMS                                              */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "terms" && (
+        <div className="space-y-8">
+          {/* Key Figures Grid */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
+              <span className="text-xs text-muted-foreground font-medium">Hard Cap</span>
+              <p className="mt-2 font-mono text-2xl font-bold text-foreground">{presale.hardCap ?? "—"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Maximum allowable raise ceiling</p>
+            </div>
+
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
+              <span className="text-xs text-muted-foreground font-medium">Soft Cap</span>
+              <p className="mt-2 font-mono text-2xl font-bold text-foreground">{presale.softCap ?? "—"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {raise.pctOfHard > 0
+                  ? `${((parseAmountParts(presale.softCap)?.value ?? 0) / (parseAmountParts(presale.hardCap)?.value || 1) * 100).toFixed(1)}% of Hard Cap`
+                  : "Minimum funding threshold"}
               </p>
             </div>
-          </header>
 
-          <section aria-labelledby="raise-title">
-            <SectionHead
-              id="raise-title"
-              eyebrow="Raise"
-              title="Sale progress"
-              aside={<span className="text-xs text-muted-foreground">Catalog record · not read from a contract</span>}
-            />
-            <div className="mt-6">
-              <RaiseInstrument presale={presale} raise={raise} />
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
+              <span className="text-xs text-muted-foreground font-medium">Min Contribution</span>
+              <p className="mt-2 font-mono text-2xl font-bold text-foreground">{presale.minContribution ?? "—"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Per participating wallet</p>
             </div>
-          </section>
-        </div>
 
-        {/* ── Participation rail ───────────────────────────────────────────── */}
-        <aside className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <div className="lg:sticky lg:top-24">
-            <ParticipationPanel presale={presale} raise={raise} />
+            <div className="rounded-2xl border border-border/60 bg-card p-5">
+              <span className="text-xs text-muted-foreground font-medium">Max Contribution</span>
+              <p className="mt-2 font-mono text-2xl font-bold text-foreground">{presale.maxContribution ?? "—"}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Per participating wallet limit</p>
+            </div>
           </div>
-        </aside>
 
-        {/* ── Terms, schedule, context ─────────────────────────────────────── */}
-        <div className="space-y-14 lg:col-start-1 lg:row-start-2">
-          <section aria-labelledby="terms-title">
-            <SectionHead id="terms-title" eyebrow="Terms" title="Sale terms" />
-            <dl className="mt-4 divide-y divide-border/60 border-y border-border/60">
-              <TermRow label="Soft cap">
-                <span className="font-mono">{presale.softCap ?? "—"}</span>
+          {/* Allocation Breakdown Card */}
+          <section aria-labelledby="allocation-economics" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+            <SectionHead
+              id="allocation-economics"
+              eyebrow="Economics"
+              title="Presale Allocation & Derived Rates"
+              aside={<span className="text-xs text-muted-foreground">Calculated strictly from recorded terms</span>}
+            />
+
+            <dl className="mt-6 divide-y divide-border/60 border-y border-border/60">
+              <TermRow label="Presale Rate" hint="Tokens allocated per unit of currency.">
+                {derivedTerms.presaleRate ? (
+                  <span className="font-mono font-medium">
+                    1 {contributionUnit(presale) || "ETH"} = {derivedTerms.presaleRate.toLocaleString()} {token?.symbol || "Tokens"}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Not recorded for this sale</span>
+                )}
               </TermRow>
-              <TermRow label="Hard cap">
-                <span className="font-mono">{presale.hardCap ?? "—"}</span>
+
+              <TermRow label="Listing Rate" hint="Planned decentralized exchange liquidity pool rate.">
+                <span className="text-muted-foreground">Not recorded for this sale</span>
               </TermRow>
-              <TermRow label="Min contribution" hint="Per wallet, as stored on the record.">
-                <span className="font-mono">{presale.minContribution ?? "—"}</span>
+
+              <TermRow label="Tokens at Hard Cap" hint="Derived tokens required if hard cap is fully filled.">
+                {derivedTerms.hardCapTokensRequired ? (
+                  <span className="font-mono font-medium text-primary">
+                    {derivedTerms.hardCapTokensRequired.toLocaleString()} {token?.symbol || "Tokens"}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Cannot derive without recorded presale rate</span>
+                )}
               </TermRow>
-              <TermRow label="Max contribution" hint="Per wallet, as stored on the record.">
-                <span className="font-mono">{presale.maxContribution ?? "—"}</span>
+
+              <TermRow label="Tokens at Soft Cap" hint="Derived tokens required if minimum soft cap is reached.">
+                {derivedTerms.softCapTokensRequired ? (
+                  <span className="font-mono font-medium">
+                    {derivedTerms.softCapTokensRequired.toLocaleString()} {token?.symbol || "Tokens"}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">Cannot derive without recorded presale rate</span>
+                )}
               </TermRow>
-              <TermRow label="Sale window" hint={duration ? "Derived from the stored open and close times." : undefined}>
-                {duration ?? "—"}
-              </TermRow>
-              <TermRow label="Network">
-                <NetworkChip network={presale.network} />
+
+              <TermRow label="Sale Window" hint="Total planned duration of the raise.">
+                <span>{duration ?? "No valid window derived from stored timestamps"}</span>
               </TermRow>
             </dl>
-
-            <details className="group mt-5">
-              <summary className="cursor-pointer list-none text-sm text-muted-foreground transition-colors hover:text-foreground [&::-webkit-details-marker]:hidden">
-                <span className="text-primary">Not recorded for this sale</span> · {NOT_RECORDED_TERMS.length} terms
-                <span className="ml-1 text-xs group-open:hidden">(show)</span>
-              </summary>
-              <ul className="mt-3 space-y-2 border-l border-dashed border-border pl-4">
-                {NOT_RECORDED_TERMS.map((t) => (
-                  <li key={t.label} className="text-sm">
-                    <span className="text-foreground">{t.label}</span>
-                    <span className="block text-xs text-muted-foreground">{t.detail}</span>
-                  </li>
-                ))}
-              </ul>
-            </details>
           </section>
 
-          <section aria-labelledby="schedule-title">
+          {/* Transparent Disclosure of Unrecorded Terms */}
+          <section aria-labelledby="unrecorded-terms" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
             <SectionHead
-              id="schedule-title"
-              eyebrow="Schedule"
-              title="Sale timeline"
-              aside={<span className="text-xs text-muted-foreground">Times are stored UTC values</span>}
+              id="unrecorded-terms"
+              eyebrow="Policy Disclosures"
+              title="Unrecorded Parameters & Disclosures"
+              aside={<span className="text-xs text-muted-foreground">Transparent disclosure under D-04</span>}
             />
-            <div className="mt-6">
-              <ScheduleRail milestones={milestones} />
-            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              ProMiners strictly preserves catalog integrity and never invents missing parameters. The following terms are not defined in the stored record:
+            </p>
+
+            <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {NOT_RECORDED_TERMS.map((term) => (
+                <li key={term.label} className="rounded-2xl border border-border/40 bg-secondary/15 p-4 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                    <p className="text-xs font-semibold text-foreground">{term.label}</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground pl-3.5 leading-relaxed">{term.detail}</p>
+                </li>
+              ))}
+            </ul>
           </section>
-
-          <section aria-labelledby="context-title">
-            <SectionHead id="context-title" eyebrow="Context" title="Token and project" />
-            <div className="mt-4 grid grid-cols-1 gap-x-12 gap-y-8 xl:grid-cols-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Token</p>
-                {token ? (
-                  <>
-                    <div className="mt-3 flex items-center gap-3">
-                      <span
-                        className={cn(
-                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br font-mono text-xs font-bold",
-                          toneFor(token.category).tile
-                        )}
-                        aria-hidden="true"
-                      >
-                        {token.symbol.slice(0, 4)}
-                      </span>
-                      <div className="min-w-0">
-                        <Link href={`/tokens/${token.id}`} className="block truncate text-base font-medium text-foreground hover:text-primary">
-                          {token.name}
-                        </Link>
-                        <p className="font-mono text-xs text-muted-foreground">{token.symbol}</p>
-                      </div>
-                    </div>
-                    <dl className="mt-3 divide-y divide-border/60 border-y border-border/60">
-                      <TermRow label="Standard">{token.standard ?? "—"}</TermRow>
-                      <TermRow label="Decimals">{token.decimals ?? "—"}</TermRow>
-                      <TermRow label="Total supply">
-                        <span className="font-mono">{token.totalSupply ?? "—"}</span>
-                      </TermRow>
-                      <TermRow
-                        label="Token network"
-                        hint={token.network !== presale.network ? `The sale record lists ${presale.network}.` : undefined}
-                      >
-                        {token.network}
-                      </TermRow>
-                      <TermRow label="Token contract">
-                        {token.contractAddress ? (
-                          <span className="flex items-center gap-1">
-                            <span className="font-mono" title={token.contractAddress}>
-                              {shorten(token.contractAddress)}
-                            </span>
-                            <CopyButton value={token.contractAddress} label="token contract address" />
-                            {explorerBase && (
-                              <a
-                                href={`${explorerBase}/address/${token.contractAddress}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
-                                aria-label="Open token contract in block explorer"
-                                title="Open in block explorer"
-                              >
-                                <ExternalLink className="h-3.5 w-3.5" />
-                              </a>
-                            )}
-                          </span>
-                        ) : (
-                          "Not recorded"
-                        )}
-                      </TermRow>
-                    </dl>
-                    <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                      <Link href={`/tokens/${token.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
-                        Token page <ArrowUpRight className="h-3.5 w-3.5" />
-                      </Link>
-                      <Link href={`/tokens/${token.id}/contract`} className="inline-flex items-center gap-1 text-primary hover:underline">
-                        Contract <ArrowUpRight className="h-3.5 w-3.5" />
-                      </Link>
-                      <Link href={`/tokens/${token.id}/activity`} className="inline-flex items-center gap-1 text-primary hover:underline">
-                        Activity <ArrowUpRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </p>
-                  </>
-                ) : (
-                  <p className="mt-3 border-l-2 border-dashed border-border pl-3 text-sm text-muted-foreground">
-                    The token <span className="font-mono text-foreground">{presale.tokenId}</span> referenced by this sale was not found in the
-                    catalog.
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Project</p>
-                {project ? (
-                  <>
-                    <div className="mt-3 flex items-center gap-3">
-                      <span
-                        className={cn(
-                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-bold",
-                          toneFor(project.category).tile
-                        )}
-                        aria-hidden="true"
-                      >
-                        {project.name.slice(0, 2).toUpperCase()}
-                      </span>
-                      <div className="min-w-0">
-                        <Link href={`/projects/${project.id}`} className="block truncate text-base font-medium text-foreground hover:text-primary">
-                          {project.name}
-                        </Link>
-                        {project.category && <p className="text-xs text-muted-foreground">{project.category}</p>}
-                      </div>
-                    </div>
-                    {project.description && <p className="mt-3 text-sm text-muted-foreground">{project.description}</p>}
-                    <dl className="mt-3 divide-y divide-border/60 border-y border-border/60">
-                      <TermRow label="Verification" hint="Stored catalog tier; not an audit or contract check by this page.">
-                        {verificationLabel(project.verificationStatus)}
-                      </TermRow>
-                      <TermRow label="Website">
-                        {project.websiteUrl ? (
-                          <a
-                            href={project.websiteUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex max-w-full items-center gap-1 break-all text-primary hover:underline"
-                          >
-                            {project.websiteUrl.replace(/^https?:\/\//, "")}
-                            <ExternalLink className="h-3 w-3 shrink-0" />
-                          </a>
-                        ) : (
-                          "Not recorded"
-                        )}
-                      </TermRow>
-                      {socials.length > 0 && (
-                        <TermRow label="Social">
-                          <span className="flex flex-wrap gap-x-3 gap-y-1">
-                            {socials.map(([name, url]) => (
-                              <a
-                                key={name}
-                                href={url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="capitalize text-primary hover:underline"
-                              >
-                                {name}
-                              </a>
-                            ))}
-                          </span>
-                        </TermRow>
-                      )}
-                    </dl>
-                    <p className="mt-3 text-sm">
-                      <Link href={`/projects/${project.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
-                        Project profile <ArrowUpRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </p>
-                  </>
-                ) : (
-                  <p className="mt-3 border-l-2 border-dashed border-border pl-3 text-sm text-muted-foreground">
-                    {presale.projectId ? "The linked project was not found in the catalog." : "No project is linked to this sale."}
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
-
-          {hasRelated && (
-            <section aria-labelledby="related-title">
-              <SectionHead id="related-title" eyebrow="Same token" title="Other launches for this token" />
-              <ul className="mt-4 divide-y divide-border/60 border-y border-border/60">
-                {siblingPresales.map((p) => (
-                  <li key={p.id}>
-                    <Link href={`/launchpad/presales/${p.id}`} className="group flex items-center justify-between gap-4 py-3">
-                      <span className="min-w-0">
-                        <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Presale</span>
-                        <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{p.title}</span>
-                      </span>
-                      <StatusBadge status={p.status} />
-                    </Link>
-                  </li>
-                ))}
-                {fairLaunches.map((f) => (
-                  <li key={f.id}>
-                    <Link href={`/launchpad/launches/${f.id}`} className="group flex items-center justify-between gap-4 py-3">
-                      <span className="min-w-0">
-                        <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Fair launch</span>
-                        <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{f.title}</span>
-                      </span>
-                      <StatusBadge status={f.status} />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          <p className="border-l-2 border-border pl-3 text-xs text-muted-foreground">
-            Demonstration data. Every figure and date on this page comes from a sample catalog record; none of it is read from a contract
-            or block explorer. Under D-04 only Ethereum Sepolia (11155111) is an active network, and some records name other networks as
-            catalog origin.
-          </p>
         </div>
-      </div>
-    </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 3: CREATOR MANAGEMENT                                              */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "management" && (
+        <div className="space-y-8">
+          {!isAuthorized ? (
+            /* ─── Unauthorized / Disconnected State ─── */
+            <div className="rounded-3xl border border-destructive/30 bg-destructive/5 p-8 text-center space-y-5">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+                <Lock className="h-7 w-7" />
+              </div>
+              <div className="max-w-md mx-auto space-y-2">
+                <h3 className="text-xl font-bold text-foreground">Creator Management Restricted</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  This console is restricted to the authorized creator address:
+                  <span className="block mt-1 font-mono text-xs font-semibold text-foreground break-all">
+                    {presale.ownerAddress}
+                  </span>
+                </p>
+                {isConnected && userAddress && (
+                  <p className="text-xs text-destructive pt-2">
+                    Your connected wallet ({shorten(userAddress)}) does not match the creator address.
+                  </p>
+                )}
+              </div>
+              {!isConnected && (
+                <Button size="lg" onClick={() => openModal("CONNECT_WALLET")} className="gap-2">
+                  <Wallet className="h-4 w-4" />
+                  Connect Creator Wallet
+                </Button>
+              )}
+            </div>
+          ) : (
+            /* ─── Authorized Creator Console ─── */
+            <div className="space-y-8">
+              {/* Authorized Header */}
+              <div className="rounded-3xl border border-primary/30 bg-primary/5 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-bold text-foreground">Authorized Creator Console</h3>
+                      <span className="rounded-md bg-primary/20 px-2 py-0.5 text-[10px] font-bold text-primary uppercase">
+                        Verified Owner
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Connected wallet: <span className="font-mono text-foreground">{userAddress}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Current Status:</span>
+                  <StatusBadge status={presale.status} />
+                </div>
+              </div>
+
+              {/* Status Transition Machine */}
+              <section aria-labelledby="status-transitions" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8 space-y-5">
+                <SectionHead
+                  id="status-transitions"
+                  eyebrow="Lifecycle Machine"
+                  title="Simulated Status Transitions"
+                  aside={<span className="text-xs text-muted-foreground">Client-side state management</span>}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Update the lifecycle status of your presale simulation. These controls test transition flows and UI state changes without broadcasting blockchain transactions.
+                </p>
+
+                {allowedTransitions.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2">
+                    {allowedTransitions.map((rule) => (
+                      <div key={rule.target} className="rounded-2xl border border-border/60 bg-secondary/15 p-5 flex flex-col justify-between space-y-4">
+                        <div className="space-y-1.5">
+                          <p className="text-sm font-semibold text-foreground">{rule.label}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{rule.description}</p>
+                        </div>
+                        <Button
+                          variant={rule.variant ?? "default"}
+                          size="sm"
+                          onClick={() => handleStatusTransition(rule.target, rule.label)}
+                          className="w-full gap-2 font-medium text-xs"
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          <span>Transition to {rule.target}</span>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-border/40 bg-secondary/20 p-5 text-center text-xs text-muted-foreground">
+                    This presale is in a terminal state ({presale.status}). No further transitions are available.
+                  </div>
+                )}
+              </section>
+
+              {/* Key Management Actions Grid */}
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {/* Finalize Action */}
+                <div className="rounded-3xl border border-border/60 bg-card p-6 space-y-4 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                      <h4 className="text-base font-bold text-foreground">Finalize Simulation</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Simulate presale settlement. Validates soft cap status, closes contribution intake, and simulates token release readiness for contributors.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleStatusTransition("finalized", "Finalize Presale")}
+                    disabled={isConcluded(presale.status)}
+                    className="w-full gap-2"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Finalize Presale (Simulated)</span>
+                  </Button>
+                </div>
+
+                {/* Cancel Action */}
+                <div className="rounded-3xl border border-border/60 bg-card p-6 space-y-4 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Ban className="h-5 w-5 text-destructive" />
+                      <h4 className="text-base font-bold text-foreground">Cancel Simulation</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Abort the presale simulation immediately. Disables participation and transitions the launch to simulated refund claim availability.
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleStatusTransition("cancelled", "Cancel Presale")}
+                    disabled={isConcluded(presale.status)}
+                    className="w-full gap-2"
+                  >
+                    <Ban className="h-4 w-4" />
+                    <span>Cancel Presale (Simulated)</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* Refund Simulation Policy Disclosure */}
+              <section aria-labelledby="refund-policy" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8 space-y-4">
+                <div className="flex items-center gap-2.5">
+                  <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0" />
+                  <h4 id="refund-policy" className="text-base font-bold text-foreground">
+                    Refund Simulation Rules
+                  </h4>
+                </div>
+                <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
+                  <p>
+                    Under standard ProMiners smart contracts, if a presale fails to reach its designated soft cap by the closing date, or is explicitly cancelled by the creator, all participants are entitled to claim a 100% refund of their contributed ETH without platform fees.
+                  </p>
+                  <p className="pt-1">
+                    <strong className="text-foreground">Current State:</strong>{" "}
+                    {raise.softCapState === "reached"
+                      ? "Soft cap reached. In real contracts, refunds would not be claimable unless cancelled."
+                      : "Soft cap not reached. If concluded in this state, participants would be eligible for refunds."}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/80 pt-2 border-t border-border/40">
+                    Important: No real blockchain funds or escrow balances exist. All refund rules are educational model disclosures.
+                  </p>
+                </div>
+              </section>
+            </div>
+          )}
+        </div>
+      )}
+    </LaunchpadDetailShell>
   );
 }

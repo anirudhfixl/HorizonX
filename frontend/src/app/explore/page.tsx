@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import "./explore-page.css";
+
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ExploreOrbitalHero } from "@/components/explore/orbital-explore-hero";
 import Link from "next/link";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -269,7 +271,7 @@ export default function ExploreHubPage() {
     note: string;
   }[] = [
     {
-      href: "/tokens",
+      href: "/explore/tokens",
       accent: "primary",
       icon: <Coins className="h-5 w-5" />,
       title: "Token Explorer",
@@ -354,284 +356,61 @@ export default function ExploreHubPage() {
   const otherPresales = MOCK_PRESALES.filter((p) => p.id !== featuredPresale?.id);
 
   return (
-    <>
+    <div className="explore-page">
       <ExploreOrbitalHero />
-      <div
+      <main
         id="explore-discovery-content"
-        className="mx-auto w-full max-w-[1800px] space-y-14 px-4 py-10 sm:px-6 lg:px-8"
+        className="mx-auto w-full max-w-[1800px] space-y-14 px-4 pt-8 pb-16 sm:px-6 sm:pt-10 lg:px-8"
       >
-        {/* 1. Masthead: one title line, one notice line, one pulse line */}
-        <header className="space-y-5">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Explore</p>
-              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Discovery Hub</h1>
-              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                Six ways into the ProMiners ecosystem. Search everything at once, or jump straight into a sector.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2.5">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="h-9 gap-1.5 border-border/60 text-xs hover:bg-secondary/60"
-              >
-                <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin text-primary")} />
-                <span>Refresh Index</span>
-              </Button>
-              <Button asChild size="sm" className="h-9 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground">
-                <Link href="/tokens/create">
-                  <Plus className="h-3.5 w-3.5" /> Deploy Token
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          <p
-            role="note"
-            className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"
-          >
-            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-            <span>
-              <strong className="font-semibold text-foreground">Phase 1 demonstration environment.</strong> Discovery
-              telemetry and asset metrics are simulated from centralized mock models. Live on-chain indexing and pricing
-              feeds will be integrated in subsequent phases.
-            </span>
-          </p>
-        </header>
-
-        {/* 2. Search: the primary action of the page */}
-        <section aria-label="Search and filter" className="space-y-4">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search tokens, projects, presales, airdrops, vaults (e.g., 'PMIN', 'Aurora', 'Ethereum')..."
-              aria-label="Search discovery assets"
-              className="h-14 w-full rounded-2xl bg-secondary/40 pl-12 pr-12 text-sm text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_30px_-12px_rgba(0,0,0,0.6)] ring-1 ring-border/60 transition focus:outline-none focus:ring-2 focus:ring-primary/60 placeholder:text-muted-foreground/70"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                aria-label="Clear search"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            {/* Category tabs: horizontal scroll on small screens */}
-            <div
-              className="-mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0"
-              role="group"
-              aria-label="Category filter"
-            >
-              {categoryTabs.map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => setActiveCategory(t.key)}
-                  aria-pressed={activeCategory === t.key}
-                  className={cn(
-                    "shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-medium transition-colors",
-                    activeCategory === t.key
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {t.label} <span className="font-mono opacity-60">{t.count}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Quick filters">
-              {quickFilters.map((f) => (
-                <button
-                  key={f.key}
-                  aria-pressed={quickFilter === f.key}
-                  onClick={() => setQuickFilter(f.key)}
-                  className={cn(
-                    "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs transition-colors",
-                    quickFilter === f.key
-                      ? "bg-primary/15 font-semibold text-primary ring-1 ring-primary/40"
-                      : "text-muted-foreground ring-1 ring-border/60 hover:text-foreground hover:ring-border"
-                  )}
-                >
-                  {f.icon}
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {isFilteringActive && (
-            <div
-              className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"
-              aria-live="polite"
-            >
-              <span>
-                Showing <strong className="text-foreground">{totalMatchingCount}</strong> matching assets
-                {query && <span> for &ldquo;{query}&rdquo;</span>}
-                {quickFilter !== "all" && <span> with filter [{quickFilter}]</span>}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={resetFilters}
-                className="h-7 gap-1 text-xs text-primary hover:bg-primary/10 hover:text-primary/80"
-              >
-                <X className="h-3 w-3" /> Clear All Filters
-              </Button>
-            </div>
-          )}
-        </section>
-
-        {/* 3. Results / default atlas */}
-        {totalMatchingCount === 0 ? (
-          <EmptyState
-            icon={<Search className="h-8 w-8 text-primary/70" />}
-            title="No discovery assets match your criteria"
-            description={
-              query
-                ? `We couldn't find any tokens, projects, or campaigns matching "${searchQuery}". Try loosening your search terms or resetting filters.`
-                : "Nothing matches the selected category and filter combination. Try a different filter or reset them."
-            }
-            action={
-              <Button onClick={resetFilters} size="sm" className="gap-1.5 bg-primary text-xs font-semibold text-primary-foreground">
-                <RefreshCw className="h-3.5 w-3.5" /> Reset Filters
-              </Button>
-            }
-          />
-        ) : isFilteringActive ? (
-          <div className="space-y-12">
-            {show("tokens") && filteredTokens.length > 0 && (
-              <section className="space-y-2">
-                <SectionHead accent="primary" icon={<Coins className="h-4 w-4" />} title={`Matching Tokens (${filteredTokens.length})`} href="/tokens" linkLabel="Full Token Directory" />
-                <TokenTable tokens={filteredTokens} />
-              </section>
-            )}
-            {show("projects") && filteredProjects.length > 0 && (
-              <section className="space-y-2">
-                <SectionHead accent="cyan" icon={<Briefcase className="h-4 w-4" />} title={`Matching Projects (${filteredProjects.length})`} href="/explore/projects" linkLabel="Full Project Directory" />
-                <ProjectList projects={filteredProjects} />
-              </section>
-            )}
-            {show("presales") && filteredPresales.length > 0 && (
-              <section className="space-y-2">
-                <SectionHead accent="amber" icon={<Rocket className="h-4 w-4" />} title={`Matching Presales (${filteredPresales.length})`} href="/explore/presales" linkLabel="All Presales" />
-                <ul className="divide-y divide-border/40">
-                  {filteredPresales.map((ps) => (
-                    <PresaleRow key={ps.id} ps={ps} />
-                  ))}
-                </ul>
-              </section>
-            )}
-            {show("launches") && filteredLaunches.length > 0 && (
-              <section className="space-y-2">
-                <SectionHead accent="emerald" icon={<Sparkles className="h-4 w-4" />} title={`Matching Fair Launches (${filteredLaunches.length})`} href="/explore/launches" linkLabel="All Launches" />
-                <ul className="divide-y divide-border/40">
-                  {filteredLaunches.map((fl) => (
-                    <LaunchRow key={fl.id} fl={fl} />
-                  ))}
-                </ul>
-              </section>
-            )}
-            {show("airdrops") && filteredAirdrops.length > 0 && (
-              <section className="space-y-2">
-                <SectionHead accent="rose" icon={<Gift className="h-4 w-4" />} title={`Matching Airdrops (${filteredAirdrops.length})`} href="/explore/airdrops" linkLabel="All Airdrops" />
-                <ul className="divide-y divide-border/40">
-                  {filteredAirdrops.map((air) => (
-                    <AirdropRow key={air.id} air={air} />
-                  ))}
-                </ul>
-              </section>
-            )}
-            {show("staking") && filteredStaking.length > 0 && (
-              <section className="space-y-2">
-                <SectionHead accent="violet" icon={<Layers className="h-4 w-4" />} title={`Matching Staking Pools (${filteredStaking.length})`} href="/explore/staking" linkLabel="All Staking Pools" />
-                <ul className="divide-y divide-border/40">
-                  {filteredStaking.map((pool) => (
-                    <StakingRow key={pool.id} pool={pool} />
-                  ))}
-                </ul>
-              </section>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-20">
-            {/* A. The atlas: six sectors as an editorial index, not six cards */}
-            <section aria-labelledby="explore-atlas" className="space-y-2">
-              <h2 id="explore-atlas" className="sr-only">
-                Discovery sectors
-              </h2>
-              <ol className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-14">
-                {atlas.map((s, i) => {
-                  const a = ACCENTS[s.accent];
-                  return (
-                    <li key={s.href} className="border-t border-border/50 last:border-b lg:[&:nth-last-child(2)]:border-b">
-                      <Link href={s.href} className="group relative flex items-start gap-4 py-6 sm:gap-5">
-                        <span className="w-6 pt-1 font-mono text-xs text-muted-foreground/60">{String(i + 1).padStart(2, "0")}</span>
-                        <span className={cn("mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", a.iconBox)}>
-                          {s.icon}
-                        </span>
-                        <span className="min-w-0 flex-1 space-y-1">
-                          <span className={cn("block text-lg font-semibold text-foreground transition-colors", a.hoverText)}>
-                            {s.title}
-                          </span>
-                          <span className="block text-sm leading-relaxed text-muted-foreground">{s.description}</span>
-                          <span className={cn("block pt-1 font-mono text-[11px]", a.text)}>{s.note}</span>
-                        </span>
-                        <span className="flex shrink-0 flex-col items-end gap-1 text-right">
-                          <span className="font-mono text-2xl font-semibold leading-none text-foreground">{s.count}</span>
-                          <span className="text-[11px] text-muted-foreground">{s.noun}</span>
-                          <ArrowRight className={cn("mt-2 h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-1", a.hoverText)} />
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ol>
-            </section>
-
-            {/* B. Markets & builders: a market table beside a project list */}
-            <section className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] xl:gap-16">
-              <div className="space-y-2">
-                <SectionHead accent="primary" icon={<Coins className="h-4 w-4" />} title="Featured Tokens" href="/tokens" linkLabel={`All ${categoryCounts.tokens} tokens`} large />
-                <TokenTable tokens={MOCK_TOKENS} />
+            {/* B. NEXORA-inspired discovery showcase: token rails framing the project spotlight. */}
+            <section className="hx-discover-showcase" aria-label="Featured tokens and projects">
+              <TokenMarketRail tokens={MOCK_TOKENS} direction="right" railLabel="Featured token prices" />
+              <div className="hx-project-spotlight">
+                <ProjectSpotlightWaves />
+                <div className="hx-project-spotlight__fade-x" />
+                <div className="hx-project-spotlight__fade-y" />
+                <div className="hx-project-spotlight__inner">
+                  <div className="hx-project-spotlight__projects">
+                    <ProjectList projects={MOCK_PROJECTS.slice(0, 6)} showTokens />
+                  </div>
+                  <div className="hx-project-spotlight__intro">
+                    <p className="hx-project-spotlight__eyebrow">The network builders</p>
+                    <h2>Projects &amp; <span>Protocols</span></h2>
+                    <p className="hx-project-spotlight__description">
+                      Discover the teams building the infrastructure, applications and protocols
+                      that connect the ProMiners ecosystem.
+                    </p>
+                    <div className="hx-project-spotlight__facts">
+                      <div><span>Projects</span><strong>{categoryCounts.projects}</strong></div>
+                      <div><span>Audits available</span><strong>{MOCK_PROJECTS.filter((project) => project.verificationStatus === "audit_available").length}</strong></div>
+                      <div><span>Ecosystems</span><strong>{new Set(MOCK_PROJECTS.map((project) => project.ecosystem).filter(Boolean)).size}</strong></div>
+                    </div>
+                    <Link href="/explore/projects" className="hx-project-spotlight__all">
+                      Explore all projects <ArrowUpRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-2">
-                <SectionHead accent="cyan" icon={<Briefcase className="h-4 w-4" />} title="Projects & Protocols" href="/explore/projects" linkLabel={`All ${categoryCounts.projects} projects`} large />
-                <ProjectList projects={MOCK_PROJECTS.slice(0, 6)} showTokens />
-              </div>
+              <TokenMarketRail tokens={MOCK_TOKENS} direction="left" railLabel="Live token prices" />
             </section>
 
             {/* C. Launchpad: one featured raise with progress, the rest as compact rows */}
-            <section className="space-y-6">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="space-y-1">
-                  <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
-                    <Rocket className="h-4 w-4 text-amber-400" /> Launchpad Opportunities
-                  </h2>
-                  <p className="text-xs text-muted-foreground">Capital raises, from capped presales to fair launches.</p>
+            <section className="hx-launchpad-opportunities" aria-labelledby="hx-launchpad-title">
+              <div className="hx-launchpad-opportunities__header">
+                <div className="hx-launchpad-opportunities__heading">
+                  <span className="hx-launchpad-opportunities__kicker">Launchpad / Discover</span>
+                  <h2 id="hx-launchpad-title"><Rocket aria-hidden="true" /> Launchpad Opportunities</h2>
+                  <p>Capital raises, from capped presales to fair launches.</p>
                 </div>
-                <div className="flex items-center gap-5 text-xs font-medium">
-                  <Link href="/explore/presales" className="text-amber-400 hover:underline">
-                    All Presales →
-                  </Link>
-                  <Link href="/explore/launches" className="text-emerald-400 hover:underline">
-                    All Launches →
-                  </Link>
+                <div className="hx-launchpad-opportunities__links">
+                  <Link href="/explore/presales">All Presales <ArrowUpRight aria-hidden="true" /></Link>
+                  <Link href="/explore/launches">All Launches <ArrowUpRight aria-hidden="true" /></Link>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-12">
+              <div className="hx-launchpad-opportunities__grid">
                 {featuredPresale && <FeaturedRaise ps={featuredPresale} />}
-                <ul className="divide-y divide-border/40 self-start">
+                <ul className="hx-launchpad-opportunities__list">
                   {otherPresales.slice(0, 3).map((ps) => (
                     <PresaleRow key={ps.id} ps={ps} />
                   ))}
@@ -642,23 +421,15 @@ export default function ExploreHubPage() {
               </div>
             </section>
 
-            {/* D. Rewards & yield */}
-            <section className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
-              <div className="space-y-2">
+            {/* D. Rewards & yield — NEXORA-inspired artwork mosaics. */}
+            <section className="grid grid-cols-1 gap-12">
+              <div className="hx-nx-discovery space-y-3">
                 <SectionHead accent="rose" icon={<Gift className="h-4 w-4" />} title="Airdrop Discovery" href="/explore/airdrops" linkLabel={`All ${categoryCounts.airdrops} campaigns`} large />
-                <ul className="divide-y divide-border/40">
-                  {MOCK_AIRDROPS.slice(0, 5).map((air) => (
-                    <AirdropRow key={air.id} air={air} />
-                  ))}
-                </ul>
+                <AirdropMosaic campaigns={MOCK_AIRDROPS.slice(0, 5)} />
               </div>
-              <div className="space-y-2">
+              <div className="hx-nx-discovery space-y-3">
                 <SectionHead accent="violet" icon={<Layers className="h-4 w-4" />} title="Staking Vaults" href="/explore/staking" linkLabel={`All ${categoryCounts.staking} vaults`} large />
-                <ul className="divide-y divide-border/40">
-                  {MOCK_STAKING_POOLS.slice(0, 5).map((pool) => (
-                    <StakingRow key={pool.id} pool={pool} />
-                  ))}
-                </ul>
+                <StakingMosaic pools={MOCK_STAKING_POOLS.slice(0, 6)} />
               </div>
             </section>
 
@@ -688,10 +459,8 @@ export default function ExploreHubPage() {
                 )}
               </div>
             </section>
-          </div>
-        )}
-      </div>
-    </>
+      </main>
+    </div>
   );
 }
 
@@ -793,82 +562,174 @@ function Monogram({ label, accent }: { label: string; accent: Accent }) {
   );
 }
 
-function TokenTable({ tokens }: { tokens: (typeof MOCK_TOKENS)[number][] }) {
+function TokenMarketRail({
+  tokens,
+  direction,
+  railLabel,
+}: {
+  tokens: (typeof MOCK_TOKENS)[number][];
+  direction: "left" | "right";
+  railLabel: string;
+}) {
+  const formatCompact = (value?: number) => {
+    if (value === undefined || value === null) return "—";
+    if (value >= 1_000_000_000) return `$${(value / 1_000_000_000).toFixed(2)}B`;
+    if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
+    if (value >= 1_000) return `$${(value / 1_000).toFixed(2)}K`;
+    return `$${value.toFixed(2)}`;
+  };
+
+  const renderToken = (token: (typeof MOCK_TOKENS)[number], duplicate = false) => {
+    const change = token.market.priceChange24h ?? 0;
+    const positive = change >= 0;
+    const points = positive
+      ? "1,20 6,16 11,18 16,10 21,13 26,7 31,11 36,5 41,9 47,3"
+      : "1,4 6,8 11,6 16,14 21,11 26,19 31,16 36,22 41,18 47,26";
+
+    return (
+      <li key={`${duplicate ? "duplicate-" : ""}${token.id}`} className="hx-token-rail__item">
+        <Link
+          href={`/tokens/${token.id}`}
+          tabIndex={duplicate ? -1 : undefined}
+          aria-hidden={duplicate || undefined}
+          aria-label={duplicate ? undefined : `${token.name} (${token.symbol}), market cap ${formatCompact(token.market.marketCap)}, ${positive ? "up" : "down"} ${Math.abs(change).toFixed(2)} percent in 24 hours`}
+          className="hx-token-rail__card group"
+        >
+          <span className="hx-token-rail__glyph" aria-hidden="true">{token.symbol.slice(0, 1)}</span>
+          <span className="hx-token-rail__copy">
+            <span className="hx-token-rail__name-line">
+              <span className="hx-token-rail__name">{token.name}</span>
+              <span className="hx-token-rail__symbol">{token.symbol}</span>
+            </span>
+            <span className="hx-token-rail__metrics">
+              <span className="hx-token-rail__cap">{formatCompact(token.market.marketCap)}</span>
+              <span className={positive ? "is-positive" : "is-negative"}>
+                {positive ? "+" : ""}{change.toFixed(2)}%
+              </span>
+            </span>
+          </span>
+          <svg className="hx-token-rail__spark" viewBox="0 0 50 30" aria-hidden="true">
+            <polyline points={points} fill="none" stroke={positive ? "#70d8b1" : "#fb7185"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <ArrowUpRight className="hx-token-rail__arrow" aria-hidden="true" />
+        </Link>
+      </li>
+    );
+  };
+
   return (
-    <div>
-      <div className="hidden grid-cols-[minmax(0,2fr)_1.2fr_1fr_0.9fr] gap-4 border-b border-border/50 px-3 pb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground md:grid">
-        <span>Token</span>
-        <span>Network</span>
-        <span className="text-right">Price</span>
-        <span className="text-right">24h</span>
+    <section className={`hx-token-rail hx-token-rail--${direction}`} aria-label={railLabel}>
+      <div className="hx-token-rail__label">
+        <span className="hx-token-rail__live-dot" />
+        <strong>{railLabel}</strong>
+        <span>· Market snapshot · Demo data</span>
+        <Link href="/explore/tokens">All {tokens.length} tokens <ArrowUpRight className="h-3 w-3" /></Link>
       </div>
-      <ul className="divide-y divide-border/40">
-        {tokens.map((token) => {
-          const change = token.market.priceChange24h || 0;
-          return (
-            <li key={token.id}>
-              <Link
-                href={`/tokens/${token.id}`}
-                className="group grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4 rounded-lg px-3 py-3.5 transition-colors hover:bg-secondary/40 md:grid-cols-[minmax(0,2fr)_1.2fr_1fr_0.9fr]"
-              >
-                <span className="flex min-w-0 items-center gap-3">
-                  <Monogram label={token.symbol} accent="primary" />
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
-                      {token.name}
-                    </span>
-                    <span className="block truncate font-mono text-[11px] text-muted-foreground">
-                      {token.symbol} · <span className="capitalize">{token.standard}</span>
-                    </span>
-                  </span>
-                </span>
-                <span className="hidden truncate text-xs text-muted-foreground md:block">{token.network}</span>
-                <span className="text-right font-mono text-sm font-semibold text-foreground">${token.market.price}</span>
-                <span className={cn("text-right font-mono text-xs", change >= 0 ? "text-emerald-400" : "text-rose-400")}>
-                  {change >= 0 ? "+" : ""}
-                  {token.market.priceChange24h}%
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+      <div className="hx-token-rail__viewport" role="region" aria-label={`Automatically scrolling ${railLabel}`}>
+        <div className="hx-token-rail__track">
+          <ul className="hx-token-rail__group">{tokens.map((token) => renderToken(token))}</ul>
+          <ul className="hx-token-rail__group" aria-hidden="true">{tokens.map((token) => renderToken(token, true))}</ul>
+        </div>
+      </div>
+    </section>
   );
+}
+
+/** Local canvas port of NEXORA's Aceternity-style WavyBackground. */
+function ProjectSpotlightWaves() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const host = canvas?.parentElement;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !host || !context) return;
+
+    const colors = ["#38bdf8", "#818cf8", "#c084fc", "#e879f9", "#22d3ee"];
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let width = 1;
+    let height = 1;
+    let time = 0;
+    let frame = 0;
+
+    const resize = () => {
+      const rect = host.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      width = Math.max(1, Math.floor(rect.width));
+      height = Math.max(1, Math.floor(rect.height));
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    const draw = () => {
+      context.clearRect(0, 0, width, height);
+      context.save();
+      context.filter = "blur(10px)";
+      context.globalAlpha = 0.5;
+      colors.forEach((color, index) => {
+        context.beginPath();
+        context.lineWidth = 50;
+        context.strokeStyle = color;
+        for (let x = 0; x <= width + 5; x += 5) {
+          const nx = x / Math.max(width, 1);
+          const y = height * 0.5
+            + Math.sin(nx * 5.8 + time + index * 0.72) * (height * 0.105)
+            + Math.sin(nx * 11.5 - time * 0.62 + index * 0.45) * (height * 0.035);
+          if (x === 0) context.moveTo(x, y);
+          else context.lineTo(x, y);
+        }
+        context.stroke();
+      });
+      context.restore();
+    };
+
+    const render = () => {
+      time += 0.002;
+      draw();
+      if (!reducedMotion) frame = window.requestAnimationFrame(render);
+    };
+
+    resize();
+    render();
+    const observer = new ResizeObserver(resize);
+    observer.observe(host);
+    window.addEventListener("resize", resize);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="hx-project-spotlight__canvas" aria-hidden="true" />;
 }
 
 function ProjectList({ projects, showTokens }: { projects: (typeof MOCK_PROJECTS)[number][]; showTokens?: boolean }) {
   return (
-    <ul className="divide-y divide-border/40">
-      {projects.map((proj) => (
+    <ul className="hx-project-list">
+      {projects.map((proj, index) => (
         <li key={proj.id}>
-          <Link
-            href={`/projects/${proj.id}`}
-            className="group flex items-start gap-3 rounded-lg px-3 py-3.5 transition-colors hover:bg-secondary/40"
-          >
+          <Link href={`/projects/${proj.id}`} className="hx-project-row group">
+            <span className="hx-project-row__index">{String(index + 1).padStart(2, "0")}</span>
             <Monogram label={proj.name} accent="cyan" />
-            <span className="min-w-0 flex-1 space-y-1">
-              <span className="flex items-center justify-between gap-3">
-                <span className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-cyan-400">
-                  {proj.name}
-                </span>
+            <span className="hx-project-row__copy">
+              <span className="hx-project-row__title-line">
+                <span className="hx-project-row__title">{proj.name}</span>
                 {proj.verificationStatus === "audit_available" && (
-                  <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-400">
-                    <ShieldCheck className="h-3.5 w-3.5" /> Audit available
-                  </span>
+                  <span className="hx-project-row__audit"><ShieldCheck className="h-3.5 w-3.5" /> Audit available</span>
                 )}
               </span>
-              <span className="line-clamp-2 block text-xs leading-relaxed text-muted-foreground">{proj.description}</span>
+              <span className="hx-project-row__description">{proj.description}</span>
               {showTokens && proj.tokenIds.length > 0 && (
-                <span className="flex flex-wrap gap-1.5 pt-0.5">
-                  {proj.tokenIds.map((t) => (
-                    <span key={t} className="rounded bg-secondary/80 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-                      ${t.toUpperCase()}
-                    </span>
-                  ))}
+                <span className="hx-project-row__tokens">
+                  {proj.tokenIds.map((tokenId) => <span key={tokenId}>${tokenId.toUpperCase()}</span>)}
                 </span>
               )}
             </span>
+            <ArrowUpRight className="hx-project-row__arrow" aria-hidden="true" />
           </Link>
         </li>
       ))}
@@ -884,61 +745,61 @@ function FeaturedRaise({ ps }: { ps: (typeof MOCK_PRESALES)[number] }) {
   const softPos = ratio(soft, hard);
   const ends = shortDate(ps.endTime);
   return (
-    <Link
-      href={`/launchpad/presales/${ps.id}`}
-      className="group relative flex flex-col justify-between gap-8 overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500/[0.10] via-card/60 to-transparent p-6 shadow-[0_20px_60px_-30px_rgba(245,158,11,0.35)] ring-1 ring-amber-500/20 transition hover:ring-amber-500/50 sm:p-8"
-    >
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-400">Featured presale</span>
-          <StatusBadge status={ps.status} />
-        </div>
-        <h3 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{ps.title}</h3>
-        {ps.description && <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">{ps.description}</p>}
+    <Link href={`/launchpad/presales/${ps.id}`} className="hx-launch-featured group">
+      <div className="hx-launch-featured__ambient" aria-hidden="true" />
+      <div className="hx-launch-featured__top">
+        <span className="hx-launch-featured__eyebrow">Featured presale</span>
+        <StatusBadge status={ps.status} />
       </div>
 
-      <div className="space-y-5">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="hx-launch-featured__identity">
+        <span className="hx-launch-featured__token-mark" aria-hidden="true">{ps.tokenId.slice(0, 1).toUpperCase()}</span>
+        <div>
+          <h3>{ps.title}</h3>
+          <p>{ps.description}</p>
+        </div>
+      </div>
+
+      <div className="hx-launch-featured__bottom">
+        <div className="hx-launch-featured__metrics">
           <div>
-            <div className="text-[11px] text-muted-foreground">Total raised</div>
-            <div className="font-mono text-3xl font-bold text-foreground">{ps.totalRaised ?? "—"}</div>
+            <span className="hx-launch-featured__metric-label">Total raised</span>
+            <strong>{ps.totalRaised ?? "—"}</strong>
           </div>
-          <div className="text-right">
-            <div className="text-[11px] text-muted-foreground">Hard cap</div>
-            <div className="font-mono text-lg font-semibold text-muted-foreground">{ps.hardCap ?? "—"}</div>
+          <div className="hx-launch-featured__hardcap">
+            <span className="hx-launch-featured__metric-label">Hard cap</span>
+            <strong>{ps.hardCap ?? "—"}</strong>
           </div>
         </div>
 
         {pct !== null ? (
-          <div className="space-y-1.5">
-            <div className="relative">
-              <Progress value={pct} accent="amber" label={`${ps.title} raised toward hard cap`} />
+          <div className="hx-launch-featured__progress">
+            <div className="hx-launch-featured__progress-track">
+              <Progress value={pct} accent="violet" label={`${ps.title} raised toward hard cap`} />
               {softPos !== null && (
                 <span
-                  aria-hidden
-                  className="absolute -top-1 h-3.5 w-px bg-foreground/60"
+                  aria-hidden="true"
+                  className="hx-launch-featured__soft-marker"
                   style={{ left: `${Math.round(softPos * 100)}%` }}
                 />
               )}
             </div>
-            <div className="flex justify-between font-mono text-[11px] text-muted-foreground">
+            <div className="hx-launch-featured__progress-meta">
               <span>{Math.round(pct * 100)}% of hard cap</span>
               {ps.softCap && <span>Soft cap {ps.softCap}</span>}
             </div>
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground">Progress is unavailable: cap data is missing for this round.</p>
+          <p className="hx-launch-featured__missing">Progress is unavailable: cap data is missing for this round.</p>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-4 text-xs text-muted-foreground">
-          <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <div className="hx-launch-featured__footer">
+          <div>
             <span>{ps.network}</span>
-            {typeof ps.participantCount === "number" && <span>{ps.participantCount} participants</span>}
+            {typeof ps.participantCount === "number" && <span>{ps.participantCount.toLocaleString("en-US")} participants</span>}
             {ends && <span>Ends {ends}</span>}
-          </span>
-          <span className="inline-flex items-center gap-1 font-semibold text-amber-400">
-            View presale room <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
-          </span>
+          </div>
+          <span className="hx-launch-featured__action">View presale room <ArrowRight aria-hidden="true" /></span>
         </div>
       </div>
     </Link>
@@ -953,6 +814,7 @@ function RowShell({
   title,
   children,
   right,
+  rowClassName,
 }: {
   href: string;
   eyebrow: string;
@@ -961,13 +823,14 @@ function RowShell({
   title: string;
   children?: React.ReactNode;
   right?: React.ReactNode;
+  rowClassName?: string;
 }) {
   const a = ACCENTS[eyebrowAccent];
   return (
     <li>
       <Link
         href={href}
-        className="group flex items-start justify-between gap-4 rounded-lg px-3 py-4 transition-colors hover:bg-secondary/40"
+        className={cn("group flex items-start justify-between gap-4 rounded-lg px-3 py-4 transition-colors hover:bg-secondary/40", rowClassName)}
       >
         <span className="min-w-0 flex-1 space-y-2">
           <span className="flex items-center gap-2.5">
@@ -992,19 +855,20 @@ function PresaleRow({ ps }: { ps: (typeof MOCK_PRESALES)[number] }) {
     <RowShell
       href={`/launchpad/presales/${ps.id}`}
       eyebrow="Presale"
-      eyebrowAccent="amber"
+      eyebrowAccent="violet"
       status={ps.status}
       title={ps.title}
+      rowClassName="hx-launch-row hx-launch-row--presale"
       right={
         <span className="block space-y-0.5">
-          <span className="block font-mono text-sm font-semibold text-amber-400">{ps.totalRaised ?? "—"}</span>
+          <span className="block font-mono text-sm font-semibold text-violet-300">{ps.totalRaised ?? "—"}</span>
           <span className="block font-mono text-[11px] text-muted-foreground">of {ps.hardCap ?? "—"}</span>
         </span>
       }
     >
       {pct !== null ? (
         <span className="block pr-2">
-          <Progress value={pct} accent="amber" label={`${ps.title} raised toward hard cap`} />
+          <Progress value={pct} accent="violet" label={`${ps.title} raised toward hard cap`} />
         </span>
       ) : (
         start && <span className="block text-[11px] text-muted-foreground">Starts {start}</span>
@@ -1019,12 +883,13 @@ function LaunchRow({ fl }: { fl: (typeof MOCK_FAIR_LAUNCHES)[number] }) {
     <RowShell
       href={`/launchpad/launches/${fl.id}`}
       eyebrow="Fair launch"
-      eyebrowAccent="emerald"
+      eyebrowAccent="cyan"
       status={fl.status}
       title={fl.title}
+      rowClassName="hx-launch-row hx-launch-row--fair"
       right={
         <span className="block space-y-0.5">
-          <span className="block font-mono text-sm font-semibold text-emerald-400">{fl.tokenId.toUpperCase()}</span>
+          <span className="block font-mono text-sm font-semibold text-cyan-300">{fl.tokenId.toUpperCase()}</span>
           <span className="block text-[11px] text-muted-foreground">token</span>
         </span>
       }
@@ -1034,6 +899,84 @@ function LaunchRow({ fl }: { fl: (typeof MOCK_FAIR_LAUNCHES)[number] }) {
         {typeof fl.participantCount === "number" && ` · ${fl.participantCount} participants`}
       </span>
     </RowShell>
+  );
+}
+
+function CampaignStatus({ status }: { status: string }) {
+  const label = status === "active" ? "Active" : status === "pending" ? "Pending" : status === "ended" ? "Ended" : status === "draft" ? "Draft" : status;
+  return (
+    <span className={`hx-nx-status hx-nx-status--${status}`}>
+      <i aria-hidden="true" />
+      {label}
+    </span>
+  );
+}
+
+function AirdropMosaic({ campaigns }: { campaigns: (typeof MOCK_AIRDROPS)[number][] }) {
+  return (
+    <ul className="hx-nx-airdrop-grid" aria-label="Featured airdrop campaigns">
+      {campaigns.map((air, index) => {
+        const claimed = ratio(air.claimedCount, air.recipientCount);
+        return (
+          <li key={air.id} className={`hx-nx-art-tile hx-nx-airdrop-tile hx-nx-airdrop-tile--${index}`}>
+            <Link href={`/airdrops/campaigns/${air.id}`} className="hx-nx-art-link">
+              <span className="hx-nx-artwork" aria-hidden="true" />
+              <span className="hx-nx-art-scrim" aria-hidden="true" />
+              <ArrowUpRight className="hx-nx-art-arrow" aria-hidden="true" />
+              <span className="hx-nx-art-copy">
+                <span className="hx-nx-art-meta">
+                  <span className="hx-nx-art-kicker">{air.type.replace(/-/g, " ")} distribution</span>
+                  <CampaignStatus status={air.status} />
+                </span>
+                <span className="hx-nx-art-title">{air.title}</span>
+                {index === 0 && air.description ? <span className="hx-nx-art-description">{air.description}</span> : null}
+                <span className="hx-nx-art-bottom">
+                  <span className="hx-nx-art-value">{air.totalReward ?? "Reward details unavailable"}</span>
+                  <span className="hx-nx-art-network">{air.network}</span>
+                </span>
+                {claimed !== null ? (
+                  <span className="hx-nx-art-progress">
+                    <span className="hx-nx-art-progress-track"><span style={{ width: `${Math.round(claimed * 100)}%` }} /></span>
+                    <span className="hx-nx-art-progress-label">{(air.claimedCount ?? 0).toLocaleString()} of {(air.recipientCount ?? 0).toLocaleString()} claimed</span>
+                  </span>
+                ) : null}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function StakingMosaic({ pools }: { pools: (typeof MOCK_STAKING_POOLS)[number][] }) {
+  return (
+    <ul className="hx-nx-staking-grid" aria-label="Featured staking vaults">
+      {pools.map((pool, index) => {
+        const lock = (pool.lockPeriodDays ?? 0) > 0 ? `${pool.lockPeriodDays} day lock` : "Flexible unlock";
+        return (
+          <li key={pool.id} className={`hx-nx-art-tile hx-nx-staking-tile hx-nx-staking-tile--${index}`}>
+            <Link href={`/staking/pools/${pool.id}`} className="hx-nx-art-link">
+              <span className="hx-nx-artwork" aria-hidden="true" />
+              <span className="hx-nx-art-scrim" aria-hidden="true" />
+              <ArrowUpRight className="hx-nx-art-arrow" aria-hidden="true" />
+              <span className="hx-nx-art-copy">
+                <span className="hx-nx-art-meta">
+                  <span className="hx-nx-art-kicker">{pool.category ?? "Staking pool"}</span>
+                  <CampaignStatus status={pool.status} />
+                </span>
+                <span className="hx-nx-art-title">{pool.name}</span>
+                <span className="hx-nx-staking-apy">{pool.apy ?? "—"}<small>APY</small></span>
+                <span className="hx-nx-art-bottom">
+                  <span className="hx-nx-art-value">{pool.totalStaked ?? "Staked amount unavailable"}</span>
+                  <span className="hx-nx-art-network">{lock}</span>
+                </span>
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

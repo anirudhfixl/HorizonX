@@ -1,6 +1,6 @@
-import { notFound } from "next/navigation";
 import { PresaleDetail } from "@/components/launchpad/presale-detail";
 import { MOCK_FAIR_LAUNCHES, MOCK_PRESALES, MOCK_PROJECTS, MOCK_TOKENS } from "@/lib/mock-data";
+import { SessionPresaleDetailClientWrapper } from "@/components/launchpad/session-detail-resolver";
 
 export function generateStaticParams() {
   return MOCK_PRESALES.map((ps) => ({ id: ps.id }));
@@ -8,13 +8,18 @@ export function generateStaticParams() {
 
 export default async function PresaleDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const initialTab = resolvedSearchParams?.tab;
+
   const presale = MOCK_PRESALES.find((p) => p.id === id);
   if (!presale) {
-    notFound();
+    return <SessionPresaleDetailClientWrapper id={id} initialTab={initialTab} />;
   }
 
   const token = MOCK_TOKENS.find((t) => t.id === presale.tokenId);
@@ -29,6 +34,8 @@ export default async function PresaleDetailPage({
       project={project}
       siblingPresales={siblingPresales}
       fairLaunches={fairLaunches}
+      initialTab={initialTab}
+      provenance="catalog"
     />
   );
 }

@@ -14,6 +14,16 @@ export interface PresaleDraft {
   hardCap: string;
   minContribution: string;
   maxContribution: string;
+  title?: string;
+  description?: string;
+  category?: string;
+  projectId?: string;
+  startTime?: string;
+  endTime?: string;
+  tokenId?: string;
+  tokenName?: string;
+  tokenSymbol?: string;
+  tokenDecimals?: number;
 }
 
 /** Same defaults the form always started with. */
@@ -81,6 +91,14 @@ export function validateDraft(d: PresaleDraft): DraftErrors {
   else if (max <= 0) e.maxContribution = "The maximum must be greater than zero."; // (new)
   else if (min !== null && min > max) e.maxContribution = "The maximum must be at least the minimum."; // (new)
   else if (hard !== null && hard > 0 && max > hard) e.maxContribution = "The maximum per wallet cannot exceed the hard cap."; // (new)
+
+  if (d.startTime && d.endTime) {
+    const start = new Date(d.startTime).getTime();
+    const end = new Date(d.endTime).getTime();
+    if (!Number.isNaN(start) && !Number.isNaN(end) && end <= start) {
+      e.endTime = "The end date/time must be after the start date/time.";
+    }
+  }
 
   return e;
 }

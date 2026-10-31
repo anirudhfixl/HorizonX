@@ -1,27 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/projects/copy-button";
-import { useWallet } from "@/contexts/wallet-context";
-import { useModal } from "@/contexts/modal-context";
-import { getExplorerBaseUrl, isSepoliaNetwork, toneFor } from "@/components/tokens/token-profile";
+import { TokenDetailShell } from "./token-detail-shell";
+import { getExplorerBaseUrl, isSepoliaNetwork } from "@/components/tokens/token-profile";
 import { cn } from "@/lib/utils";
 import type { Token, TokenMarketData, Project, VerificationStatus } from "@/types";
 import {
-  Activity,
   ArrowUpRight,
-  BookOpen,
   Check,
-  ChevronRight,
   Copy,
   ExternalLink,
-  FileCode2,
-  Share2,
-  Wallet,
 } from "lucide-react";
 
 type ContractToken = Token & { market?: TokenMarketData };
@@ -95,6 +87,7 @@ const VERIF_LABEL: Partial<Record<VerificationStatus, string>> = {
   contract_source_verified: "Source verified",
   audit_available: "Audit available",
 };
+
 const VERIF_DETAIL: Partial<Record<VerificationStatus, string>> = {
   not_reviewed: "No review is recorded for this token in the catalog.",
   project_reviewed: "The project behind this token has a catalog review. This is not a contract audit or source verification.",
@@ -128,41 +121,35 @@ type Row = {
 };
 
 function LedgerRow({ row }: { row: Row }) {
-  const missing = row.source === "missing";
   return (
-    <div className="grid grid-cols-1 gap-1 py-3.5 sm:grid-cols-[11rem_1fr_auto] sm:items-baseline sm:gap-6">
-      <dt className="text-xs text-muted-foreground">{row.label}</dt>
-      <dd className="min-w-0">
-        <div className={cn("text-sm", missing ? "italic text-muted-foreground" : "text-foreground", row.mono && !missing && "font-mono text-[13px]")}>
-          {row.value ?? "Not recorded"}
-        </div>
-        {row.note ? <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">{row.note}</p> : null}
+    <div className="grid grid-cols-1 gap-2 py-3.5 sm:grid-cols-[14rem_1fr_auto] sm:items-baseline sm:gap-6 text-sm">
+      <dt className="text-xs text-muted-foreground">
+        {row.label}
+        {row.note ? <span className="block text-[11px] text-muted-foreground/70 mt-0.5">{row.note}</span> : null}
+      </dt>
+      <dd className={cn("min-w-0 text-foreground", row.mono && "font-mono text-xs sm:text-sm")}>
+        {row.value ?? <span className="text-muted-foreground/60">Not recorded in catalog</span>}
       </dd>
-      <div className="sm:text-right">
+      <div className="justify-self-start sm:justify-self-end">
         <SourceTag kind={row.source} />
       </div>
     </div>
   );
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 export function TokenContract({ token, project }: TokenContractProps) {
-  const { isConnected, address: userAddress } = useWallet();
-  const { openModal } = useModal();
-
-  const [view, setView] = React.useState<"functions" | "events" | "json">("functions");
-  const [abiCopied, setAbiCopied] = React.useState(false);
-  const [shared, setShared] = React.useState(false);
+  const [view, setView] = useState<"functions" | "events" | "json">("functions");
+  const [abiCopied, setAbiCopied] = useState(false);
 
   const sepolia = isSepoliaNetwork(token.network);
   const explorerBase = getExplorerBaseUrl(token.network);
-  const tone = toneFor(token.category);
   const addr = token.contractAddress;
   const addrValid = isEvmAddress(addr);
+  const raw = rawSupplyUnits(token.totalSupply, token.decimals);
   const erc20 = isErc20Standard(token.standard);
   const tier: VerificationStatus = token.verificationStatus ?? "not_reviewed";
-  const raw = rawSupplyUnits(token.totalSupply, token.decimals);
 
   const copyText = async (text: string, ok: () => void, okMsg: string) => {
     try {
@@ -184,7 +171,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
       value: (
         <>
           {sepolia ? "Ethereum Sepolia" : token.network}
-          {sepolia ? <span className="ml-2 font-mono text-xs text-muted-foreground">Chain ID 11155111</span> : null}
+          {sepolia ? <span className="ml-2 font-mono text-xs text-primary font-medium">Chain ID 11155111</span> : null}
         </>
       ),
       source: "catalog",
@@ -208,325 +195,253 @@ export function TokenContract({ token, project }: TokenContractProps) {
       mono: true,
     },
     {
-      label: "Creator",
+      label: "Creator Address",
       value: token.creatorAddress ? (
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1.5">
           <code className="min-w-0 break-all">{token.creatorAddress}</code>
           <CopyButton value={token.creatorAddress} label="creator address" />
         </span>
       ) : undefined,
       source: token.creatorAddress ? "catalog" : "missing",
-      note: "The address that registered the token in the catalog. Not confirmed as the on-chain deployer or owner.",
+      note: "The address that registered the token in the catalog. Not confirmed as on-chain deployer or owner.",
       mono: true,
     },
     {
       label: "Linked project",
       value: project ? (
-        <Link href={`/projects/${project.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
-          {project.name} <ChevronRight className="h-3 w-3" />
+        <Link href={`/projects/${project.id}`} className="inline-flex items-center gap-1 text-primary hover:underline font-medium">
+          {project.name}
         </Link>
       ) : undefined,
       source: project ? "catalog" : "missing",
     },
     {
-      label: "Feature tags",
-      value:
-        token.features && token.features.length > 0 ? (
-          <span className="flex flex-wrap gap-1.5">
-            {token.features.map((f) => (
-              <span key={f} className="rounded-full bg-secondary/60 px-2.5 py-0.5 font-sans text-xs text-muted-foreground">{f}</span>
-            ))}
-          </span>
-        ) : undefined,
-      source: token.features && token.features.length > 0 ? "catalog" : "missing",
-      note: token.features?.some((f) => /illustrative/i.test(f)) ? "Tags marked Illustrative are catalog labels, not confirmed contract capabilities." : undefined,
+      label: "Verification tier",
+      value: VERIF_LABEL[tier],
+      source: "catalog",
+      note: "Stored on the record. Does not represent a bytecode match check by ProMiners.",
     },
-    { label: "Catalog record", value: `${token.id} · created ${token.createdAt} · updated ${token.updatedAt}`, source: "catalog", mono: true },
+    {
+      label: "Declared features",
+      value: token.features && token.features.length > 0 ? token.features.join(", ") : undefined,
+      source: token.features && token.features.length > 0 ? "catalog" : "missing",
+      note: "Extensions claimed in the catalog (e.g. burnable, pausable, permit).",
+    },
   ];
 
-  const unavailable: { label: string; note: string }[] = [
-    { label: "Contract source code", note: "ProMiners does not store source files." },
-    { label: "Compiler version", note: "Not stored." },
-    { label: "Optimizer settings", note: "Not stored." },
-    { label: "EVM version", note: "Not stored." },
-    { label: "License", note: "Not stored." },
-    { label: "Constructor arguments", note: "Not stored." },
-    { label: "Deployment transaction and block", note: "No indexer is connected." },
-    { label: "Live reads (owner, paused, balances)", note: "No RPC connection is configured for this page." },
-  ];
-
-  const nav = [
-    { href: `/tokens/${token.id}`, label: "Overview", icon: BookOpen, current: false },
-    { href: `/tokens/${token.id}/contract`, label: "Contract & source", icon: FileCode2, current: true },
-    { href: `/tokens/${token.id}/activity`, label: "Activity", icon: Activity, current: false },
-  ];
-
-  const anchors = [
-    { id: "address", label: "Address" },
-    { id: "ledger", label: "Spec sheet" },
-    { id: "verification", label: "Verification" },
-    { id: "interface", label: "Interface" },
-    { id: "unavailable", label: "Not available" },
+  const unavailable = [
+    { label: "Solidity compiler version", note: "Look up on block explorer code tab" },
+    { label: "EVM target version", note: "Look up on block explorer code tab" },
+    { label: "Compiler optimization runs", note: "Look up on block explorer code tab" },
+    { label: "Constructor arguments", note: "Read from creation transaction input on explorer" },
+    { label: "Contract bytecode hash", note: "Requires direct RPC eth_getCode lookup" },
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-        <Link href="/tokens" className="hover:text-foreground">Tokens</Link>
-        <ChevronRight className="h-3 w-3" />
-        <Link href={`/tokens/${token.id}`} className="hover:text-foreground">{token.symbol}</Link>
-        <ChevronRight className="h-3 w-3" />
-        <span className="text-foreground">Contract</span>
-      </nav>
+    <TokenDetailShell token={token} project={project} activeTab="contract">
+      <div className="space-y-12">
+        {/* ─── 1. Contract Address & Explorer Bar ─────────────────────────── */}
+        <section aria-labelledby="address-heading" className="rounded-2xl border border-border/40 bg-card/30 p-6 space-y-4">
+          <Eyebrow>Contract Deployment Address</Eyebrow>
+          <h2 id="address-heading" className="sr-only">Contract Address</h2>
 
-      <header className="mt-6 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="flex min-w-0 items-center gap-4">
-          <span aria-hidden className={cn("flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br font-mono text-sm font-bold", tone.tile)}>
-            {token.symbol.slice(0, 4)}
-          </span>
-          <div className="min-w-0">
-            <Eyebrow>Contract inspector</Eyebrow>
-            <h1 className="truncate text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-              {token.name} <span className="text-muted-foreground">({token.symbol})</span>
-            </h1>
-          </div>
-        </div>
-        <nav aria-label="Token record views" className="flex items-center gap-1 overflow-x-auto text-sm">
-          {nav.map((n) =>
-            n.current ? (
-              <span key={n.href} aria-current="page" className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-primary/15 px-4 py-1.5 font-medium text-primary">
-                <n.icon className="h-3.5 w-3.5" /> {n.label}
-              </span>
-            ) : (
-              <Link key={n.href} href={n.href} className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-1.5 text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground">
-                <n.icon className="h-3.5 w-3.5" /> {n.label}
-              </Link>
-            )
+          {addr ? (
+            <div className="space-y-4">
+              <div className="flex flex-col gap-3 rounded-xl border border-border/50 bg-secondary/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <code className="min-w-0 break-all font-mono text-sm font-semibold text-foreground sm:text-base" data-testid="contract-address">
+                  {addr}
+                </code>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyText(addr, () => {}, "Address copied")}
+                    className="h-8 gap-1.5 border-border/60 text-xs"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    <span>Copy</span>
+                  </Button>
+                  <Button asChild size="sm" className="h-8 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90">
+                    <a href={`${explorerBase}/token/${addr}`} target="_blank" rel="noopener noreferrer">
+                      <span>Token Explorer</span>
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
+                <a
+                  href={`${explorerBase}/address/${addr}#code`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                >
+                  Inspect source code on explorer <ArrowUpRight className="h-3 w-3" />
+                </a>
+                <span className="text-muted-foreground">
+                  {addrValid ? "Format: valid 20-byte EVM hex address." : "Format: not a valid 20-byte hex address."}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-border/40 bg-secondary/20 p-5 text-sm text-muted-foreground">
+              No contract address recorded for this token in the platform catalog.
+            </div>
           )}
-        </nav>
-      </header>
+        </section>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <StatusBadge status={token.status} />
-        <Button asChild size="sm" className="h-8 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90">
-          <Link href={`/exchange/tokens/${token.id}`}>Trade {token.symbol}</Link>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-8 border-border/60 text-xs text-muted-foreground hover:text-foreground"
-          onClick={() => copyText(window.location.href, () => { setShared(true); setTimeout(() => setShared(false), 1800); }, "Link copied")}
-        >
-          {shared ? <Check className="mr-1 h-3.5 w-3.5 text-emerald-400" /> : <Share2 className="mr-1 h-3.5 w-3.5" />}
-          {shared ? "Copied" : "Share"}
-        </Button>
-        {isConnected ? (
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-primary/10 px-3 font-mono text-xs text-primary">
-            <Wallet className="h-3.5 w-3.5" />
-            {userAddress ? `${userAddress.slice(0, 6)}…${userAddress.slice(-4)}` : "Connected"}
-          </span>
-        ) : (
-          <Button variant="outline" size="sm" className="h-8 border-border/60 text-xs text-muted-foreground hover:text-foreground" onClick={() => openModal("CONNECT_WALLET")}>
-            <Wallet className="mr-1 h-3.5 w-3.5 text-primary" /> Connect
-          </Button>
-        )}
-      </div>
-
-      <div className="mt-10 grid gap-10 lg:grid-cols-[13rem_1fr] lg:gap-14">
-        {/* Section index */}
-        <aside className="hidden lg:block">
-          <nav aria-label="Sections" className="sticky top-24 space-y-1 border-l border-border/50 text-sm">
-            {anchors.map((a) => (
-              <a key={a.id} href={`#${a.id}`} className="-ml-px block border-l border-transparent py-1 pl-4 text-muted-foreground transition-colors hover:border-primary hover:text-foreground">
-                {a.label}
-              </a>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="min-w-0 space-y-14">
-          {/* Address */}
-          <section id="address" aria-labelledby="address-heading" className="scroll-mt-24">
-            <Eyebrow>Contract address</Eyebrow>
-            <h2 id="address-heading" className="sr-only">Contract address</h2>
-            {addr ? (
-              <>
-                <div className="mt-3 flex flex-col gap-3 rounded-2xl bg-black/50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                  <code className="min-w-0 break-all font-mono text-sm text-foreground sm:text-base" data-testid="contract-address">{addr}</code>
-                  <span className="flex shrink-0 items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => copyText(addr, () => {}, "Address copied")}
-                      className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-secondary/60 px-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <Copy className="h-3.5 w-3.5" /> Copy
-                    </button>
-                  </span>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-                  <a href={`${explorerBase}/token/${addr}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
-                    Token page on {sepolia ? "Sepolia Etherscan" : "block explorer"} <ExternalLink className="h-3 w-3" />
-                  </a>
-                  <a href={`${explorerBase}/address/${addr}#code`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">
-                    Contract code on explorer <ArrowUpRight className="h-3 w-3" />
-                  </a>
-                  <span className="text-muted-foreground">
-                    {addrValid ? "Format: valid 20-byte hex address." : "Format: this value is not a valid 20-byte hex address. Check the catalog record."}
-                  </span>
-                </div>
-                <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
-                  The address is the value stored in the ProMiners catalog. ProMiners does not confirm here that code exists at this address.
-                </p>
-              </>
-            ) : (
-              <div className="mt-3 rounded-2xl bg-secondary/30 px-5 py-6">
-                <p className="text-sm font-medium text-foreground">No contract address recorded</p>
-                <p className="mt-1 text-xs text-muted-foreground">This token has no deployed contract address in the catalog, so there is nothing to inspect on an explorer.</p>
-              </div>
-            )}
-            {!sepolia ? (
-              <p className="mt-3 text-xs text-muted-foreground">
-                Cataloged on {token.network} for discovery. Under D-04, wallet connectivity is supported only on Ethereum Sepolia.
-              </p>
-            ) : null}
-          </section>
-
-          {/* Ledger */}
-          <section id="ledger" aria-labelledby="ledger-heading" className="scroll-mt-24">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <Eyebrow>Spec sheet</Eyebrow>
-                <h2 id="ledger-heading" className="mt-2 text-2xl font-semibold tracking-tight text-foreground">What is recorded, and where it comes from</h2>
-              </div>
-              <ul className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground" aria-label="Source legend">
-                {(["catalog", "standard", "derived", "missing"] as SourceKind[]).map((k) => (
-                  <li key={k}><SourceTag kind={k} /></li>
-                ))}
-              </ul>
-            </div>
-            <dl className="mt-4 divide-y divide-border/40 border-y border-border/40">
-              {identityRows.map((r) => <LedgerRow key={r.label} row={r} />)}
-            </dl>
-            <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-              <strong className="font-semibold text-foreground">Catalog</strong> values come from the ProMiners record and have not been read from the chain.
-              Market figures are on the Overview page and are simulated.
-            </p>
-          </section>
-
-          {/* Verification */}
-          <section id="verification" aria-labelledby="verif-heading" className="scroll-mt-24 grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:gap-12">
+        {/* ─── 2. Spec Sheet Ledger ───────────────────────────────────────── */}
+        <section aria-labelledby="ledger-heading" className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border/40 pb-4">
             <div>
-              <Eyebrow>Verification</Eyebrow>
-              <h2 id="verif-heading" className="mt-2 text-2xl font-semibold tracking-tight text-foreground">{VERIF_LABEL[tier] ?? tier.replace(/_/g, " ")}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Stored tier on the catalog record</p>
+              <Eyebrow>Contract Ledger</Eyebrow>
+              <h2 id="ledger-heading" className="text-xl font-bold tracking-tight text-foreground sm:text-2xl mt-1">
+                Technical Specifications &amp; Data Provenance
+              </h2>
             </div>
-            <div>
-              <p className="text-sm leading-relaxed text-muted-foreground">{VERIF_DETAIL[tier] ?? "This tier is stored on the catalog record. ProMiners does not describe it further on this page."}</p>
-              <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
-                ProMiners does not run a bytecode comparison or read the explorer&apos;s verification flag on this page, so this tier is
-                a catalog claim and not proof. To confirm source verification, open the contract code on the explorer.
-              </p>
-            </div>
-          </section>
-
-          {/* Interface */}
-          <section id="interface" aria-labelledby="iface-heading" className="scroll-mt-24">
-            <Eyebrow>Interface</Eyebrow>
-            <h2 id="iface-heading" className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-              {erc20 ? "EIP-20 reference interface" : "Interface not available"}
-            </h2>
-            {erc20 ? (
-              <>
-                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-                  The standard ERC-20 functions and events. This is the public specification, <strong className="font-semibold text-foreground">not the verified ABI of this contract</strong>.
-                  The deployed contract can include more functions, such as burn, permit, owner or pause.
-                </p>
-                <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-                  <div role="group" aria-label="Interface view" className="flex items-center gap-1 text-sm">
-                    {([["functions", `Functions ${functions.length}`], ["events", `Events ${events.length}`], ["json", "JSON"]] as const).map(([k, label]) => (
-                      <button
-                        key={k}
-                        type="button"
-                        aria-pressed={view === k}
-                        onClick={() => setView(k)}
-                        className={cn("rounded-full px-4 py-1.5 transition-colors", view === k ? "bg-primary/15 font-medium text-primary" : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground")}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                  {view === "json" ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 border-border/60 text-xs text-muted-foreground hover:text-foreground"
-                      onClick={() => copyText(abiJson, () => { setAbiCopied(true); setTimeout(() => setAbiCopied(false), 2000); }, "Standard interface JSON copied")}
-                    >
-                      {abiCopied ? <Check className="mr-1 h-3.5 w-3.5 text-emerald-400" /> : <Copy className="mr-1 h-3.5 w-3.5" />}
-                      {abiCopied ? "Copied" : "Copy standard ABI JSON"}
-                    </Button>
-                  ) : null}
-                </div>
-
-                {view === "json" ? (
-                  <pre className="mt-4 max-h-[28rem] overflow-auto rounded-2xl bg-black/60 p-4 font-mono text-xs leading-relaxed text-zinc-300">
-                    <code>{abiJson}</code>
-                  </pre>
-                ) : (
-                  <ul className="mt-4 divide-y divide-border/40 border-y border-border/40">
-                    {(view === "functions" ? functions : events).map((it) => (
-                      <li key={it.name} className="grid gap-1 py-3 sm:grid-cols-[1fr_auto] sm:items-baseline sm:gap-6">
-                        <code className="min-w-0 break-words font-mono text-[13px] text-foreground">{abiSignature(it)}</code>
-                        <span className="flex items-center gap-3 text-[11px] text-muted-foreground">
-                          {it.outputs && it.outputs.length > 0 ? <span className="font-mono">returns {it.outputs.map((o) => o.type).join(", ")}</span> : null}
-                          {it.stateMutability ? (
-                            <span className={cn("rounded-full px-2 py-0.5 font-medium", it.stateMutability === "view" ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400")}>
-                              {it.stateMutability === "view" ? "read" : "write"}
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-secondary/60 px-2 py-0.5 font-medium">event</span>
-                          )}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            ) : (
-              <p className="mt-2 text-sm text-muted-foreground">
-                The catalog lists this token as {token.standard || "an unspecified standard"}, and ProMiners has no interface definition for it.
-              </p>
-            )}
-          </section>
-
-          {/* Unavailable */}
-          <section id="unavailable" aria-labelledby="na-heading" className="scroll-mt-24">
-            <Eyebrow>Not available here</Eyebrow>
-            <h2 id="na-heading" className="mt-2 text-2xl font-semibold tracking-tight text-foreground">Details ProMiners cannot show</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              These are not stored by ProMiners and no explorer or RPC source is connected to this page. Earlier versions showed generated values here; they were removed because they were not real.
-            </p>
-            <ul className="mt-4 grid gap-x-10 border-y border-border/40 sm:grid-cols-2">
-              {unavailable.map((u) => (
-                <li key={u.label} className="flex items-baseline justify-between gap-4 border-b border-dashed border-border/40 py-3 last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0">
-                  <span className="text-sm text-muted-foreground">{u.label}</span>
-                  <span className="text-right text-[11px] text-muted-foreground/80">{u.note}</span>
-                </li>
+            <ul className="flex flex-wrap items-center gap-2 text-xs" aria-label="Source legend">
+              {(["catalog", "standard", "derived", "missing"] as SourceKind[]).map((k) => (
+                <li key={k}><SourceTag kind={k} /></li>
               ))}
             </ul>
-            {addr ? (
-              <a href={`${explorerBase}/address/${addr}#code`} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                Look these up on the explorer <ArrowUpRight className="h-3 w-3" />
-              </a>
-            ) : null}
-          </section>
+          </div>
 
-          <p className="border-l-2 border-primary/40 pl-4 text-xs leading-relaxed text-muted-foreground">
-            <span className="font-semibold text-foreground">D-04: </span>
-            Ethereum Sepolia (Chain ID 11155111) is the only network with wallet connectivity in this milestone. Nothing on this page sends a transaction.
+          <dl className="divide-y divide-border/40 border-b border-border/40">
+            {identityRows.map((r) => <LedgerRow key={r.label} row={r} />)}
+          </dl>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            <strong className="font-semibold text-foreground">Data Provenance: </strong>
+            Catalog values originate from stored ProMiners platform records. Raw units are mathematically derived from declared supply and decimals. Neither represents an active on-chain RPC state query.
           </p>
-        </div>
+        </section>
+
+        {/* ─── 3. Verification Transparency Notice ────────────────────────── */}
+        <section aria-labelledby="verif-heading" className="rounded-2xl border border-border/40 bg-card/30 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <Eyebrow>Verification Status</Eyebrow>
+            <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
+              {VERIF_LABEL[tier] ?? tier}
+            </span>
+          </div>
+          <h2 id="verif-heading" className="sr-only">Verification Status</h2>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {VERIF_DETAIL[tier] ?? "This tier is stored on the catalog record."}
+          </p>
+          <div className="rounded-xl border border-border/30 bg-secondary/20 p-3.5 text-xs leading-relaxed text-muted-foreground">
+            <strong className="font-semibold text-foreground">Verification Boundary: </strong>
+            ProMiners does not independently compile or re-verify smart contract bytecode on this page. To review compiler output and audit reports, visit the contract code tab on the block explorer.
+          </div>
+        </section>
+
+        {/* ─── 4. EIP-20 Reference Interface & ABI ────────────────────────── */}
+        <section aria-labelledby="iface-heading" className="space-y-4 border-t border-border/40 pt-8">
+          <div>
+            <Eyebrow>Interface Specification</Eyebrow>
+            <h2 id="iface-heading" className="text-xl font-bold tracking-tight text-foreground sm:text-2xl mt-1">
+              {erc20 ? "EIP-20 Reference Interface" : "Custom Interface"}
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Standard ERC-20 functions and event signatures for this token standard. Deployed contracts may implement additional custom functions (burn, mint, permit, pause).
+            </p>
+          </div>
+
+          {erc20 ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div role="group" aria-label="Interface view" className="flex items-center gap-1 rounded-xl border border-border/50 bg-secondary/30 p-1 text-xs">
+                  {(["functions", "events", "json"] as const).map((k) => (
+                    <button
+                      key={k}
+                      type="button"
+                      aria-pressed={view === k}
+                      onClick={() => setView(k)}
+                      className={cn(
+                        "rounded-lg px-3 py-1.5 font-medium transition-colors",
+                        view === k
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+                      )}
+                    >
+                      {k === "functions" ? `Functions (${functions.length})` : k === "events" ? `Events (${events.length})` : "Raw ABI JSON"}
+                    </button>
+                  ))}
+                </div>
+
+                {view === "json" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5 border-border/60 text-xs"
+                    onClick={() => copyText(abiJson, () => { setAbiCopied(true); setTimeout(() => setAbiCopied(false), 2000); }, "ABI JSON Copied")}
+                  >
+                    {abiCopied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                    <span>{abiCopied ? "Copied" : "Copy ABI JSON"}</span>
+                  </Button>
+                )}
+              </div>
+
+              {view === "json" ? (
+                <pre className="max-h-[28rem] overflow-auto rounded-2xl border border-border/50 bg-black/60 p-4 font-mono text-xs leading-relaxed text-zinc-300">
+                  <code>{abiJson}</code>
+                </pre>
+              ) : (
+                <ul className="divide-y divide-border/40 border-y border-border/40">
+                  {(view === "functions" ? functions : events).map((it) => (
+                    <li key={it.name} className="grid gap-1 py-3 sm:grid-cols-[1fr_auto] sm:items-baseline sm:gap-6">
+                      <code className="min-w-0 break-words font-mono text-[13px] text-foreground font-medium">
+                        {abiSignature(it)}
+                      </code>
+                      <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                        {it.outputs && it.outputs.length > 0 ? (
+                          <span className="font-mono text-xs text-muted-foreground">returns {it.outputs.map((o) => o.type).join(", ")}</span>
+                        ) : null}
+                        {it.stateMutability ? (
+                          <span className={cn("rounded-full px-2 py-0.5 font-medium", it.stateMutability === "view" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20")}>
+                            {it.stateMutability === "view" ? "read" : "write"}
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-secondary/60 px-2 py-0.5 font-medium border border-border/40">event</span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              This token uses a custom standard ({token.standard || "Unspecified"}).
+            </p>
+          )}
+        </section>
+
+        {/* ─── 5. Unavailable Details Notice ──────────────────────────────── */}
+        <section aria-labelledby="na-heading" className="space-y-4 border-t border-border/40 pt-8">
+          <Eyebrow>Compiler Transparency</Eyebrow>
+          <h2 id="na-heading" className="text-xl font-bold tracking-tight text-foreground sm:text-2xl mt-1">
+            Build Artifacts Not Cached
+          </h2>
+          <p className="text-xs leading-relaxed text-muted-foreground max-w-2xl">
+            ProMiners does not store raw compiler ASTs, bytecodes, or constructor proofs in platform databases. To inspect these exact build outputs, use the official Sepolia Etherscan explorer.
+          </p>
+
+          <ul className="grid gap-x-10 border-y border-border/40 sm:grid-cols-2 text-xs">
+            {unavailable.map((u) => (
+              <li key={u.label} className="flex items-baseline justify-between gap-4 border-b border-dashed border-border/40 py-2.5 last:border-b-0 sm:[&:nth-last-child(2)]:border-b-0">
+                <span className="text-muted-foreground">{u.label}</span>
+                <span className="text-right text-[11px] text-muted-foreground/80">{u.note}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* ─── 6. D-04 Notice ─────────────────────────────────────────────── */}
+        <p className="border-l-2 border-primary/40 pl-4 text-xs leading-relaxed text-muted-foreground">
+          <strong className="font-semibold text-foreground">Architecture Decision D-04: </strong>
+          Ethereum Sepolia (Chain ID 11155111) is the only network supported for Web3 wallet connectivity. No transactions or state mutations are executed on this inspector.
+        </p>
       </div>
-    </div>
+    </TokenDetailShell>
   );
 }

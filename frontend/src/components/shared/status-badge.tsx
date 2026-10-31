@@ -41,7 +41,7 @@ export function StatusBadge({ status, variant, className, pulse }: StatusBadgePr
   } else if (norm === "ended" || norm === "finalized") {
     colorClasses = "border-zinc-700/60 bg-zinc-800/40 text-zinc-400";
     dotClass = "bg-zinc-500";
-  } else if (norm === "failed" || norm === "cancelled") {
+  } else if (norm === "failed" || norm === "cancelled" || norm === "canceled") {
     colorClasses = "border-destructive/30 bg-destructive/10 text-destructive";
     dotClass = "bg-destructive";
   } else if (norm === "draft") {

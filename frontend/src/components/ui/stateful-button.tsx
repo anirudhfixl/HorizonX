@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, useAnimate } from "motion/react";
+import { motion, useAnimate, type HTMLMotionProps } from "motion/react";
 import { cn } from "@/lib/utils";
 
 interface StatefulButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  extends HTMLMotionProps<"button"> {
   children: React.ReactNode;
   className?: string;
 }

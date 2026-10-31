@@ -1,6 +1,6 @@
-import { notFound } from "next/navigation";
 import { FairLaunchDetail } from "@/components/launchpad/fair-launch-detail";
 import { MOCK_FAIR_LAUNCHES, MOCK_PRESALES, MOCK_PROJECTS, MOCK_TOKENS } from "@/lib/mock-data";
+import { SessionFairLaunchDetailClientWrapper } from "@/components/launchpad/session-detail-resolver";
 
 export function generateStaticParams() {
   return MOCK_FAIR_LAUNCHES.map((l) => ({ id: l.id }));
@@ -8,13 +8,18 @@ export function generateStaticParams() {
 
 export default async function FairLaunchDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams?: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const initialTab = resolvedSearchParams?.tab;
+
   const launch = MOCK_FAIR_LAUNCHES.find((l) => l.id === id);
   if (!launch) {
-    notFound();
+    return <SessionFairLaunchDetailClientWrapper id={id} initialTab={initialTab} />;
   }
 
   const token = MOCK_TOKENS.find((t) => t.id === launch.tokenId);
@@ -29,6 +34,8 @@ export default async function FairLaunchDetailPage({
       project={project}
       siblingLaunches={siblingLaunches}
       presales={presales}
+      initialTab={initialTab}
+      provenance="catalog"
     />
   );
 }

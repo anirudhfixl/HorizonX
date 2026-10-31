@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ProvenanceBadge } from "@/components/shared/provenance-badge";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MOCK_PRESALES, MOCK_TOKENS, MOCK_PROJECTS } from "@/lib/mock-data";
+import { readSessionLaunchesRaw, subscribeSessionLaunches, sessionPresaleToPresale } from "@/lib/launch-storage";
 import { Token, Project, Presale } from "@/types";
 import { cn } from "@/lib/utils";
 import {
@@ -19,8 +22,11 @@ import {
   ChevronDown,
   Info,
   ArrowRight,
+  ArrowLeft,
   Rows3,
   Table2,
+  Filter,
+  SearchX,
 } from "lucide-react";
 
 export type PresaleSortOption =
@@ -71,6 +77,14 @@ function isSepoliaNetwork(network: string): boolean {
 }
 
 const CONCLUDED = ["ended", "finalized", "failed", "cancelled"];
+
+const STAGES: { value: string; label: string; rail: string }[] = [
+  { value: "draft", label: "Draft", rail: "bg-muted-foreground/40" },
+  { value: "scheduled", label: "Scheduled", rail: "bg-amber-400" },
+  { value: "live", label: "Live", rail: "bg-emerald-400" },
+  { value: "ended", label: "Ended", rail: "bg-zinc-500" },
+  { value: "finalized", label: "Finalized", rail: "bg-zinc-400" },
+];
 
 function scheduleText(ps: Presale): string {
   switch (ps.status) {
@@ -144,17 +158,8 @@ function SaleBar({ ps, thin }: { ps: Presale; thin?: boolean }) {
   );
 }
 
-const STATUS_TABS: { value: string; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "live", label: "Live" },
-  { value: "scheduled", label: "Scheduled" },
-  { value: "draft", label: "Draft" },
-  { value: "ended", label: "Ended" },
-  { value: "finalized", label: "Finalized" },
-];
-
 const selectCls =
-  "rounded-lg border border-border bg-secondary/40 px-2.5 py-2 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25";
+  "h-9 rounded-lg border border-border bg-secondary/40 px-2.5 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25";
 
 export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) {
   // Filter and view state
@@ -166,6 +171,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(6);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   // Maps for fast token and project metadata lookups
   const tokenMap = useMemo(() => {
@@ -180,16 +186,49 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
     return map;
   }, []);
 
+  // Read session-simulated presales if present
+  const sessionRaw = useSyncExternalStore(subscribeSessionLaunches, readSessionLaunchesRaw, () => "");
+  const sessionPresales = useMemo<Presale[]>(() => {
+    if (!sessionRaw) return [];
+    try {
+      const parsed = JSON.parse(sessionRaw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed
+        .filter((l: { kind: string }) => l.kind === "presale")
+        .map(sessionPresaleToPresale);
+    } catch {
+      return [];
+    }
+  }, [sessionRaw]);
+
+  const allPresales = useMemo(() => {
+    return [...sessionPresales, ...MOCK_PRESALES];
+  }, [sessionPresales]);
+
+  const sessionPresaleIds = useMemo(() => {
+    return new Set(sessionPresales.map((s) => s.id));
+  }, [sessionPresales]);
+
   // Unique categories derived from presales and linked tokens
   const uniqueCategories = useMemo(() => {
     const set = new Set<string>();
-    MOCK_PRESALES.forEach((ps) => {
+    allPresales.forEach((ps) => {
       if (ps.category) set.add(ps.category);
       const token = tokenMap.get(ps.tokenId);
       if (token?.category) set.add(token.category);
     });
     return Array.from(set).sort();
-  }, [tokenMap]);
+  }, [allPresales, tokenMap]);
+
+  // Stage counts for stage metric cards
+  const stageCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: allPresales.length };
+    for (const s of STAGES) counts[s.value] = 0;
+    for (const ps of allPresales) {
+      if (counts[ps.status] !== undefined) counts[ps.status]++;
+    }
+    return counts;
+  }, [allPresales]);
 
   // Filter Change Handlers with immediate page reset
   const handleSearchChange = (value: string) => {
@@ -226,7 +265,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
     setCurrentPage(1);
   };
 
-  // Single matching rule (unchanged logic). `skip` lets facet counts reuse it.
+  // Single matching rule.
   const matchesPresale = (
     ps: Presale,
     skip?: "status" | "network"
@@ -253,11 +292,10 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
       return false;
     }
 
-    // 3. Network Filter (D-04 Scope)
+    // 3. Network Filter
     if (skip !== "network") {
       if (networkFilter === "sepolia") {
-        const net = ps.network.toLowerCase();
-        if (!net.includes("sepolia") && net !== "ethereum") return false;
+        if (!isSepoliaNetwork(ps.network)) return false;
       } else if (networkFilter !== "all") {
         if (ps.network !== networkFilter) return false;
       }
@@ -265,84 +303,77 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
 
     // 4. Category Filter
     if (categoryFilter !== "all") {
-      const cat = ps.category || token?.category;
-      if (cat !== categoryFilter) return false;
+      const psCategory = ps.category || token?.category;
+      if (psCategory !== categoryFilter) {
+        return false;
+      }
     }
 
     return true;
   };
 
   // Filtered presales
-  const filteredPresales = useMemo(() => {
-    return MOCK_PRESALES.filter((ps) => matchesPresale(ps));
+  const filteredPresales = useMemo(
+    () => allPresales.filter((ps) => matchesPresale(ps)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, statusFilter, networkFilter, categoryFilter, tokenMap, projectMap]);
+    [allPresales, searchQuery, statusFilter, networkFilter, categoryFilter, tokenMap, projectMap]
+  );
 
-  // Live facet counts (same rule, ignoring the facet being counted)
-  const statusCounts = useMemo(() => {
-    const base = MOCK_PRESALES.filter((ps) => matchesPresale(ps, "status"));
-    const counts: Record<string, number> = { all: base.length };
-    base.forEach((ps) => {
-      counts[ps.status] = (counts[ps.status] || 0) + 1;
-    });
-    return counts;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, networkFilter, categoryFilter, tokenMap, projectMap]);
-
+  // Live facet counts
   const networkCounts = useMemo(() => {
-    const base = MOCK_PRESALES.filter((ps) => matchesPresale(ps, "network"));
-    return { all: base.length, sepolia: base.filter((ps) => isSepoliaNetwork(ps.network)).length };
+    const sepolia = allPresales.filter((ps) => matchesPresale(ps, "network") && isSepoliaNetwork(ps.network)).length;
+    const all = allPresales.filter((ps) => matchesPresale(ps, "network")).length;
+    return { all, sepolia };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, statusFilter, categoryFilter, tokenMap, projectMap]);
+  }, [allPresales, searchQuery, statusFilter, categoryFilter, tokenMap, projectMap]);
 
-  // Sorted presales
+  // Sorting
   const sortedPresales = useMemo(() => {
-    return [...filteredPresales].sort((a, b) => {
+    const list = [...filteredPresales];
+
+    list.sort((a, b) => {
       switch (sortBy) {
         case "name-asc":
           return a.title.localeCompare(b.title);
         case "name-desc":
           return b.title.localeCompare(a.title);
-        case "date-desc":
-          return (
-            new Date(b.startTime || b.createdAt).getTime() -
-            new Date(a.startTime || a.createdAt).getTime()
-          );
         case "date-asc":
-          return (
-            new Date(a.startTime || a.createdAt).getTime() -
-            new Date(b.startTime || b.createdAt).getTime()
-          );
+          return (a.startTime || a.createdAt).localeCompare(b.startTime || b.createdAt);
+        case "date-desc":
+          return (b.startTime || b.createdAt).localeCompare(a.startTime || a.createdAt);
         case "progress-desc": {
           const progA = calculateProgress(a.totalRaised, a.hardCap);
           const progB = calculateProgress(b.totalRaised, b.hardCap);
           return progB - progA;
         }
         case "raised-desc": {
-          const raisedA = parseAmount(a.totalRaised);
-          const raisedB = parseAmount(b.totalRaised);
-          return raisedB - raisedA;
+          const valA = parseAmount(a.totalRaised);
+          const valB = parseAmount(b.totalRaised);
+          return valB - valA;
         }
         default:
           return 0;
       }
     });
+
+    return list;
   }, [filteredPresales, sortBy]);
 
-  // Pagination Math
+  // Pagination
   const totalItems = sortedPresales.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
   const effectivePage = Math.min(currentPage, totalPages);
   const startIndex = (effectivePage - 1) * pageSize;
-  const paginatedPresales = sortedPresales.slice(startIndex, startIndex + pageSize);
+  const paginatedPresales = useMemo(() => {
+    return sortedPresales.slice(startIndex, startIndex + pageSize);
+  }, [sortedPresales, startIndex, pageSize]);
 
   const hasActiveFilters =
-    searchQuery.trim() !== "" ||
+    searchQuery.trim().length > 0 ||
     statusFilter !== "all" ||
     networkFilter !== "all" ||
     categoryFilter !== "all";
 
-  // Table header click sort
   const handleSortClick = (field: "name" | "date" | "progress" | "raised") => {
     if (field === "name") {
       setSortBy(sortBy === "name-asc" ? "name-desc" : "name-asc");
@@ -374,76 +405,108 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
     );
   };
 
-  const listedCount = MOCK_PRESALES.length;
-
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      {/* Header */}
-      <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto w-full max-w-[1600px] space-y-10 px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      {/* 1. Header (Aligned with Fair Launch Directory) */}
+      <header className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="space-y-3">
           <Link
             href={mode === "canonical" ? "/launchpad" : "/explore"}
-            className="inline-flex items-center gap-1 font-mono text-xs uppercase tracking-[0.16em] text-muted-foreground hover:text-primary"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            ← {mode === "canonical" ? "Launchpad" : "Explore"}
+            <ArrowLeft className="h-3.5 w-3.5" />
+            {mode === "canonical" ? "Launchpad" : "Explore"}
           </Link>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+            {mode === "canonical" ? "Launchpad · Presales" : "Explore · Presales discovery"}
+          </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             {mode === "canonical" ? "All Presales" : "Presales Discovery"}
           </h1>
           <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
             {mode === "canonical"
-              ? "Browse and discover verified initial token presales. Filter by status, network, and raised progress."
-              : "Explore live, scheduled, and past presales across the ProMiners ecosystem. Non-custodial escrow and transparent metrics."}
+              ? "Browse and discover verified initial token presales with transparent caps and non-custodial lockups on ProMiners."
+              : "Explore live, scheduled, and past presales across the ProMiners ecosystem with non-custodial escrow."}
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-3">
-          <span className="font-mono text-xs text-muted-foreground">{listedCount} campaigns listed</span>
-          <Button asChild size="lg" className="h-10 gap-1.5 bg-primary px-4 text-sm font-semibold text-primary-foreground">
-            <Link href="/launchpad/presales/create">
-              <Plus className="h-4 w-4" /> Create Presale
-            </Link>
-          </Button>
-        </div>
+        <Button
+          asChild
+          size="sm"
+          className="gap-1.5 self-start bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90 lg:self-auto"
+        >
+          <Link href="/launchpad/presales/create">
+            <Plus className="h-3.5 w-3.5" /> Create Presale
+          </Link>
+        </Button>
       </header>
 
-      {/* Demonstration / D-04 notice */}
-      <div className="mt-6 flex items-start gap-3 border-l-2 border-primary/60 py-0.5 pl-4">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          <strong className="text-foreground">Demonstration data notice:</strong> Presale metrics, allocations,
-          contribution caps, and fundraising progress are simulated for demonstration. Per Architecture Decision{" "}
-          <strong className="text-foreground">D-04</strong>, Ethereum Sepolia Testnet (Chain ID: 11155111) is the only
-          approved and supported EVM wallet network. Ecosystem metadata indicates protocol deployment origins and does
-          not imply wallet connectivity or transaction support for non-Sepolia networks.
-        </p>
-      </div>
+      {/* 2. Dual Disclosures (Aligned with Fair Launch Directory) */}
+      <section aria-label="Data notice and how to read a presale" className="grid gap-6 lg:grid-cols-2">
+        <div className="border-l-2 border-primary/60 pl-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            Demonstration data · Network scope (Architecture Decision D-04)
+          </div>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+            All presales, raised amounts, participant counts and schedules are simulated demonstration data, and
+            listing descriptions are sample text rather than verified terms. Per <strong>D-04</strong>,{" "}
+            <strong>Ethereum Sepolia (Chain ID 11155111)</strong> is the only active wallet network; Base, Arbitrum
+            One and Polygon records are catalog metadata only. No real funds are raised or required.
+          </p>
+        </div>
+        <div className="border-l-2 border-border pl-4">
+          <div className="text-xs font-semibold text-foreground">How a presale is shown here</div>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+            A presale record carries a <strong>hard cap</strong>, a <strong>soft cap</strong>, and per-wallet contribution
+            limits. The progress bar displays the amount raised strictly against the hard cap (100% max). Fair launches
+            are different: they carry no hard cap and measure uncapped interest against a soft cap.
+          </p>
+        </div>
+      </section>
 
-      {/* Discovery controls */}
-      <section aria-label="Find presales" className="mt-10 space-y-4">
-        {/* Sale state tabs (same values as the previous status filter) */}
-        <div role="tablist" aria-label="Sale status" className="-mx-1 flex gap-1 overflow-x-auto border-b border-border/60 px-1">
-          {STATUS_TABS.map((t) => {
-            const active = statusFilter === t.value;
-            return (
+      {/* 3. Discovery controls */}
+      <section aria-label="Search and filters" className="space-y-5">
+        {/* Stage Metric Cards (Aligned with Fair Launch Directory) */}
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <div role="group" aria-label="Launch stage" className="flex min-w-max items-stretch gap-1 sm:min-w-0">
+            <button
+              type="button"
+              onClick={() => handleStatusChange("all")}
+              aria-pressed={statusFilter === "all"}
+              className={cn(
+                "flex min-w-[88px] flex-col gap-1.5 rounded-md px-3 py-2.5 text-left transition-colors sm:flex-1",
+                statusFilter === "all" ? "bg-secondary/80" : "hover:bg-secondary/40"
+              )}
+            >
+              <span className="h-1 w-full rounded-full bg-gradient-to-r from-muted-foreground/40 via-amber-400 to-emerald-400" />
+              <span className="flex flex-wrap items-baseline justify-between gap-x-2">
+                <span className="text-xs font-medium text-foreground">All stages</span>
+                <span className="font-mono text-lg font-semibold text-foreground">{stageCounts.all}</span>
+              </span>
+            </button>
+            {STAGES.map((s) => (
               <button
-                key={t.value}
+                key={s.value}
                 type="button"
-                role="tab"
-                aria-selected={active}
-                onClick={() => handleStatusChange(t.value)}
+                onClick={() => handleStatusChange(s.value)}
+                aria-pressed={statusFilter === s.value}
                 className={cn(
-                  "relative shrink-0 px-3 pb-3 pt-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-                  active ? "font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"
+                  "flex min-w-[88px] flex-col gap-1.5 rounded-md px-3 py-2.5 text-left transition-colors sm:flex-1",
+                  statusFilter === s.value ? "bg-secondary/80" : "hover:bg-secondary/40",
+                  stageCounts[s.value] === 0 && statusFilter !== s.value && "opacity-50"
                 )}
               >
-                {t.label}
-                <span className="ml-1.5 font-mono text-[11px] text-muted-foreground">{statusCounts[t.value] ?? 0}</span>
-                {active && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-primary" />}
+                <span className={cn("h-1 w-full rounded-full", s.rail)} />
+                <span className="flex flex-wrap items-baseline justify-between gap-x-2">
+                  <span className="text-xs font-medium text-foreground">{s.label}</span>
+                  <span className="font-mono text-lg font-semibold text-foreground">{stageCounts[s.value] ?? 0}</span>
+                </span>
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
 
+        {/* Filter bar */}
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -487,21 +550,78 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
             ))}
           </div>
 
-          <select
-            value={categoryFilter}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className={cn(selectCls, "h-10")}
-            aria-label="Filter by category"
-          >
-            <option value="all">All Categories</option>
-            {uniqueCategories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <select
+              value={categoryFilter}
+              onChange={(e) => handleCategoryChange(e.target.value)}
+              className={cn(selectCls, "h-10")}
+              aria-label="Filter by category"
+            >
+              <option value="all">All Categories</option>
+              {uniqueCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setMobileFiltersOpen((prev) => !prev)}
+              className="h-10 md:hidden gap-1.5 px-3 text-xs"
+            >
+              <Filter className="h-3.5 w-3.5" />
+              Filters
+            </Button>
+          </div>
         </div>
 
+        {/* Collapsible Mobile Filters */}
+        {mobileFiltersOpen && (
+          <div className="rounded-xl border border-border/80 bg-card p-4 space-y-3 md:hidden">
+            <div className="flex items-center justify-between border-b border-border/40 pb-2">
+              <span className="text-xs font-semibold text-foreground">Sort & Display Options</span>
+              {hasActiveFilters && (
+                <button onClick={handleResetFilters} className="text-xs text-primary hover:underline">
+                  Reset
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <label className="space-y-1">
+                <span className="text-muted-foreground">Sort by</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as PresaleSortOption)}
+                  className="w-full h-8 rounded-md border border-border bg-secondary/50 px-2 text-xs text-foreground"
+                >
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="progress-desc">Highest Progress</option>
+                  <option value="raised-desc">Most Raised</option>
+                  <option value="name-asc">Title (A → Z)</option>
+                  <option value="name-desc">Title (Z → A)</option>
+                </select>
+              </label>
+              <label className="space-y-1">
+                <span className="text-muted-foreground">Per page</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="w-full h-8 rounded-md border border-border bg-secondary/50 px-2 text-xs text-foreground"
+                >
+                  <option value={4}>4 per page</option>
+                  <option value={6}>6 per page</option>
+                  <option value={12}>12 per page</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        )}
+
+        {/* Status bar with active filter reset */}
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-xs text-muted-foreground">
           <p>
             Showing <span className="font-semibold text-foreground">{totalItems === 0 ? 0 : startIndex + 1}</span> to{" "}
@@ -515,7 +635,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
             )}
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <label className="flex items-center gap-2">
+            <label className="hidden sm:flex items-center gap-2">
               <span>Sort by:</span>
               <select
                 value={sortBy}
@@ -531,7 +651,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                 <option value="name-desc">Title (Z → A)</option>
               </select>
             </label>
-            <div className="flex items-center gap-1.5">
+            <div className="hidden sm:flex items-center gap-1.5">
               <span>Per page:</span>
               {[4, 6, 12].map((size) => (
                 <button
@@ -577,22 +697,25 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
         </div>
       </section>
 
-      {/* Results */}
+      {/* 4. Results */}
       <section aria-label="Presale results" className="mt-6">
         {paginatedPresales.length === 0 ? (
-          <div className="border-y border-border/60 py-16 text-center">
-            <h2 className="text-base font-semibold text-foreground">No presales found</h2>
-            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-              {hasActiveFilters
+          <EmptyState
+            icon={<SearchX className="h-7 w-7 text-primary/70" />}
+            title="No presales found"
+            description={
+              hasActiveFilters
                 ? "No presale campaigns match your search and filter criteria. Try resetting your filters."
-                : "No presale opportunities are currently listed."}
-            </p>
-            {hasActiveFilters && (
-              <Button onClick={handleResetFilters} variant="outline" size="sm" className="mt-4">
-                Clear All Filters
-              </Button>
-            )}
-          </div>
+                : "No presale opportunities are currently listed."
+            }
+            action={
+              hasActiveFilters ? (
+                <Button onClick={handleResetFilters} variant="outline" size="sm">
+                  Clear All Filters
+                </Button>
+              ) : undefined
+            }
+          />
         ) : viewMode === "grid" ? (
           <ul className="divide-y divide-border/60 border-y border-border/60">
             {paginatedPresales.map((ps) => {
@@ -609,6 +732,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                     <div className="min-w-0 space-y-2.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={ps.status} />
+                        <ProvenanceBadge kind={sessionPresaleIds.has(ps.id) ? "session" : "catalog"} />
                         <NetworkChip network={ps.network} />
                         {(ps.category || token?.category) && (
                           <span className="text-[11px] text-muted-foreground">{ps.category || token?.category}</span>
@@ -696,7 +820,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                     Network
                   </th>
                   <th scope="col" className="px-4 py-3">
-                    Status
+                    Status &amp; Source
                   </th>
                   <th scope="col" aria-sort={sortBy === "progress-desc" ? "descending" : "none"} className="px-4 py-3">
                     <button type="button" onClick={() => handleSortClick("progress")} className="flex items-center gap-1 hover:text-foreground">
@@ -758,7 +882,10 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                         <NetworkChip network={ps.network} />
                       </td>
                       <td className="px-4 py-3.5">
-                        <StatusBadge status={ps.status} />
+                        <div className="flex flex-col gap-1 items-start">
+                          <StatusBadge status={ps.status} />
+                          <ProvenanceBadge kind={sessionPresaleIds.has(ps.id) ? "session" : "catalog"} />
+                        </div>
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="min-w-[140px] space-y-1.5">
@@ -788,7 +915,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
         )}
       </section>
 
-      {/* Pagination */}
+      {/* 5. Pagination */}
       {totalPages > 1 && (
         <nav aria-label="Pagination" className="mt-6 flex flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="text-xs text-muted-foreground">

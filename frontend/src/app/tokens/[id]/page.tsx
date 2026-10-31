@@ -1,6 +1,6 @@
 import React from "react";
 import { notFound } from "next/navigation";
-import { TokenProfile } from "@/components/tokens/token-profile";
+import { NexoraTokenDetail } from "@/components/tokens/nexora-token-pages";
 import {
   MOCK_TOKENS,
   MOCK_PROJECTS,
@@ -26,36 +26,5 @@ export default async function TokenDetailPage({
     notFound();
   }
 
-  // Resolve linked ecosystem project
-  const project = token.projectId
-    ? MOCK_PROJECTS.find((p) => p.id === token.projectId)
-    : undefined;
-
-  // Resolve genuine ecosystem utilities
-  const presales = MOCK_PRESALES.filter(
-    (p) => p.tokenId === token.id || (token.projectId && p.projectId === token.projectId)
-  );
-
-  const fairLaunches = MOCK_FAIR_LAUNCHES.filter(
-    (f) => f.tokenId === token.id || (token.projectId && f.projectId === token.projectId)
-  );
-
-  const airdrops = MOCK_AIRDROPS.filter(
-    (a) => a.tokenId === token.id || (token.projectId && a.projectId === token.projectId)
-  );
-
-  const stakingPools = MOCK_STAKING_POOLS.filter(
-    (s) => s.tokenId === token.id || (token.projectId && s.projectId === token.projectId)
-  );
-
-  return (
-    <TokenProfile
-      token={token}
-      project={project}
-      presales={presales}
-      fairLaunches={fairLaunches}
-      airdrops={airdrops}
-      stakingPools={stakingPools}
-    />
-  );
+  return <NexoraTokenDetail token={token} />;
 }
