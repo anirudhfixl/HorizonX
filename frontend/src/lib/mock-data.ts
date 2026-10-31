@@ -34,7 +34,7 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
       volume24h: 3420000,
       liquidity: 8900000,
       marketCap: 148000000,
-      isLive: true,
+      isLive: false,
     },
   },
   {
@@ -62,7 +62,7 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
       volume24h: 1250000,
       liquidity: 4100000,
       marketCap: 42000000,
-      isLive: true,
+      isLive: false,
     },
   },
   {
@@ -90,7 +90,7 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
       volume24h: 890000,
       liquidity: 3200000,
       marketCap: 80000000,
-      isLive: true,
+      isLive: false,
     },
   },
   {
@@ -118,7 +118,7 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
       volume24h: 410000,
       liquidity: 1800000,
       marketCap: 45000000,
-      isLive: true,
+      isLive: false,
     },
   },
   {
@@ -146,7 +146,7 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
       volume24h: 1850000,
       liquidity: 4200000,
       marketCap: 315000000,
-      isLive: true,
+      isLive: false,
     },
   },
   {
@@ -174,7 +174,7 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
       volume24h: 420000,
       liquidity: 1500000,
       marketCap: 71250000,
-      isLive: true,
+      isLive: false,
     },
   },
   {
@@ -202,7 +202,7 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
       volume24h: 980000,
       liquidity: 2900000,
       marketCap: 85000000,
-      isLive: true,
+      isLive: false,
     },
   },
   {
@@ -230,7 +230,7 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
       volume24h: 560000,
       liquidity: 1100000,
       marketCap: 25000000,
-      isLive: true,
+      isLive: false,
     },
   },
   {
@@ -258,7 +258,7 @@ export const MOCK_TOKENS: (Token & { market: TokenMarketData })[] = [
       volume24h: 120000,
       liquidity: 350000,
       marketCap: 7500000,
-      isLive: true,
+      isLive: false,
     },
   },
 ];

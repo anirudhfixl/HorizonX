@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from "react";
 import { ExploreOrbitalHero } from "@/components/explore/orbital-explore-hero";
 import Link from "next/link";
-import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,6 @@ import {
   MOCK_STAKING_POOLS,
 } from "@/lib/mock-data";
 import {
-  Compass,
   Coins,
   Briefcase,
   Rocket,
@@ -29,12 +27,11 @@ import {
   Search,
   X,
   ArrowRight,
+  ArrowUpRight,
   ShieldCheck,
-  TrendingUp,
   Plus,
   RefreshCw,
   Wallet,
-  CheckCircle2,
   AlertCircle,
 } from "lucide-react";
 
@@ -245,43 +242,102 @@ export default function ExploreHubPage() {
 
   const isFilteringActive = query.length > 0 || activeCategory !== "all" || quickFilter !== "all";
 
-  const stats: { label: string; value: string; note: string; icon: React.ReactNode; change?: string }[] = [
+  // Snapshot figures are derived from the same data sets that feed the cards below,
+  // so they can never drift from what the page actually lists.
+  const topGainer = MOCK_TOKENS.reduce((best, t) =>
+    (t.market.priceChange24h ?? -Infinity) > (best.market.priceChange24h ?? -Infinity) ? t : best
+  );
+  const topGainerChange = topGainer.market.priceChange24h ?? 0;
+  const livePresales = MOCK_PRESALES.filter((p) => p.status === "live").length;
+  const liveLaunches = MOCK_FAIR_LAUNCHES.filter((l) => l.status === "live").length;
+  const topPool = MOCK_STAKING_POOLS.filter((p) => p.status === "active").reduce<
+    (typeof MOCK_STAKING_POOLS)[number] | null
+  >((best, p) => (!best || (parseFloat(p.apy ?? "0") || 0) > (parseFloat(best.apy ?? "0") || 0) ? p : best), null);
+
+  const countActive = (items: { status: string }[], ...live: string[]) =>
+    items.filter((i) => live.includes(i.status)).length;
+
+  // Atlas entries: every figure is derived from the same data sets used below.
+  const atlas: {
+    href: string;
+    accent: Accent;
+    icon: React.ReactNode;
+    title: string;
+    count: number;
+    noun: string;
+    description: string;
+    note: string;
+  }[] = [
     {
-      label: "Indexed Ecosystem Assets",
-      value: `${categoryCounts.total} Assets`,
-      note: "Across 6 Discovery Categories",
-      icon: <Compass className="h-4 w-4 text-primary" />,
+      href: "/tokens",
+      accent: "primary",
+      icon: <Coins className="h-5 w-5" />,
+      title: "Token Explorer",
+      count: categoryCounts.tokens,
+      noun: "tokens",
+      description: "ERC-20 utility, governance, DePIN and AI compute tokens with contract details.",
+      note: `Top 24h: ${topGainer.symbol} ${topGainerChange >= 0 ? "+" : ""}${topGainerChange}%`,
     },
     {
-      label: "Top Gaining Token",
-      value: "+14.2%",
-      change: "PMIN",
-      note: "ProMiners Governance ($1.48)",
-      icon: <TrendingUp className="h-4 w-4 text-emerald-400" />,
+      href: "/explore/projects",
+      accent: "cyan",
+      icon: <Briefcase className="h-5 w-5" />,
+      title: "Project Directory",
+      count: categoryCounts.projects,
+      noun: "projects",
+      description: "Protocol teams, foundations and infrastructure builders behind the tokens.",
+      note: `${MOCK_PROJECTS.filter((p) => p.verificationStatus === "audit_available").length} with audit available`,
     },
     {
-      label: "Active Launchpad Deals",
-      value: `${categoryCounts.presales + categoryCounts.launches} Sales`,
-      note: "1 Live Presale • 1 Fair Launch",
-      icon: <Rocket className="h-4 w-4 text-amber-400" />,
+      href: "/explore/presales",
+      accent: "amber",
+      icon: <Rocket className="h-5 w-5" />,
+      title: "Presale Rounds",
+      count: categoryCounts.presales,
+      noun: "presales",
+      description: "Early-stage fundraising rounds with soft and hard caps and a clear timeline.",
+      note: `${livePresales} live now`,
     },
     {
-      label: "Max Staking APY",
-      value: "38.2%",
-      change: "AURA",
-      note: "Single-sided & LP Vaults",
-      icon: <Layers className="h-4 w-4 text-violet-400" />,
+      href: "/explore/launches",
+      accent: "emerald",
+      icon: <Sparkles className="h-5 w-5" />,
+      title: "Fair Launches",
+      count: categoryCounts.launches,
+      noun: "launches",
+      description: "Community-first liquidity distribution with no private seed allocation.",
+      note: `${liveLaunches} live now`,
+    },
+    {
+      href: "/explore/airdrops",
+      accent: "rose",
+      icon: <Gift className="h-5 w-5" />,
+      title: "Airdrop Discovery",
+      count: categoryCounts.airdrops,
+      noun: "campaigns",
+      description: "Reward campaigns, testnet incentives and merkle-tree distributions to claim.",
+      note: `${countActive(MOCK_AIRDROPS, "active")} active`,
+    },
+    {
+      href: "/explore/staking",
+      accent: "violet",
+      icon: <Layers className="h-5 w-5" />,
+      title: "Staking Vaults",
+      count: categoryCounts.staking,
+      noun: "pools",
+      description: "Single-sided and multi-token pools with their APY and lock terms.",
+      note: topPool ? `Top APY ${topPool.apy}` : "No active pools",
     },
   ];
 
   const categoryTabs: { key: CategoryFilter; label: string; count: number }[] = [
-    { key: "all", label: "All Categories", count: categoryCounts.total },
+    { key: "all", label: "All", count: categoryCounts.total },
     { key: "tokens", label: "Tokens", count: categoryCounts.tokens },
     { key: "projects", label: "Projects", count: categoryCounts.projects },
     { key: "presales", label: "Presales", count: categoryCounts.presales },
     { key: "launches", label: "Fair Launches", count: categoryCounts.launches },
     { key: "airdrops", label: "Airdrops", count: categoryCounts.airdrops },
-    { key: "staking", label: "Staking Pools", count: categoryCounts.staking },
+    { key: "staking", label: "Staking", count: categoryCounts.staking },
   ];
 
   const quickFilters: { key: QuickFilter; label: string; icon?: React.ReactNode }[] = [
@@ -291,266 +347,133 @@ export default function ExploreHubPage() {
     { key: "ethereum", label: "Ethereum / Sepolia" },
   ];
 
-  const categoryCards: {
-    href: string;
-    accent: Accent;
-    icon: React.ReactNode;
-    title: string;
-    count: string;
-    description: string;
-    cta: string;
-  }[] = [
-    {
-      href: "/explore/tokens",
-      accent: "primary",
-      icon: <Coins className="h-5 w-5" />,
-      title: "Token Explorer",
-      count: `${categoryCounts.tokens} Tokens`,
-      description: "Browse ERC-20 utility, governance, DePIN, and AI compute tokens with verified smart contracts.",
-      cta: "Explore Tokens",
-    },
-    {
-      href: "/explore/projects",
-      accent: "cyan",
-      icon: <Briefcase className="h-5 w-5" />,
-      title: "Project Directory",
-      count: `${categoryCounts.projects} Projects`,
-      description: "Discover verified decentralized foundations, protocol teams, and infrastructure builders.",
-      cta: "View Directory",
-    },
-    {
-      href: "/explore/presales",
-      accent: "amber",
-      icon: <Rocket className="h-5 w-5" />,
-      title: "Presale Rounds",
-      count: `${categoryCounts.presales} Presales`,
-      description:
-        "Participate in vetted early-stage fundraising rounds with transparent soft/hard caps and timeline monitoring.",
-      cta: "Discover Presales",
-    },
-    {
-      href: "/explore/launches",
-      accent: "emerald",
-      icon: <Sparkles className="h-5 w-5" />,
-      title: "Fair Launches",
-      count: `${categoryCounts.launches} Launches`,
-      description: "Community-first liquidity distribution with zero private seed allocation and anti-snipe safeguards.",
-      cta: "View Fair Launches",
-    },
-    {
-      href: "/explore/airdrops",
-      accent: "rose",
-      icon: <Gift className="h-5 w-5" />,
-      title: "Airdrop Discovery",
-      count: `${categoryCounts.airdrops} Campaigns`,
-      description:
-        "Claim verified rewards, testnet incentives, referral pools, and cryptographic merkle tree distributions.",
-      cta: "Explore Airdrops",
-    },
-    {
-      href: "/explore/staking",
-      accent: "violet",
-      icon: <Layers className="h-5 w-5" />,
-      title: "Staking Vaults",
-      count: `${categoryCounts.staking} Pools`,
-      description:
-        "Earn automated protocol yields and liquidity mining rewards across single-sided and multi-token pools.",
-      cta: "Explore Staking",
-    },
-  ];
-
   const show = (cat: CategoryFilter) => activeCategory === "all" || activeCategory === cat;
+
+  // Launchpad spotlight: prefer a live presale; the rest become compact rows.
+  const featuredPresale = MOCK_PRESALES.find((p) => p.status === "live") ?? MOCK_PRESALES[0];
+  const otherPresales = MOCK_PRESALES.filter((p) => p.id !== featuredPresale?.id);
 
   return (
     <>
       <ExploreOrbitalHero />
       <div
         id="explore-discovery-content"
-        className="mx-auto w-full max-w-[1800px] space-y-12 px-4 py-10 sm:px-6 lg:px-8"
+        className="mx-auto w-full max-w-[1800px] space-y-14 px-4 py-10 sm:px-6 lg:px-8"
       >
-        {/* 1. Header, actions & demonstration notice */}
-        <header className="space-y-4">
-          <PageHeader
-            title="Discovery Hub"
-            description="Explore verified tokens, emergent protocols, launchpad sales, airdrop campaigns, and high-yield staking vaults across the ProMiners ecosystem."
-            breadcrumbs={[{ label: "Explore" }]}
-            actions={
-              <div className="flex flex-wrap items-center gap-2.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
-                  className="h-9 gap-1.5 border-border/60 text-xs hover:bg-secondary/60"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin text-primary" : ""}`} />
-                  <span>Refresh Index</span>
-                </Button>
-                <Button asChild size="sm" className="h-9 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground">
-                  <Link href="/tokens/create">
-                    <Plus className="h-3.5 w-3.5" /> Deploy Token
-                  </Link>
-                </Button>
-              </div>
-            }
-          />
-
-          <div
-            role="note"
-            className="flex items-start gap-2.5 rounded-lg border border-primary/25 bg-primary/5 px-3.5 py-2.5 text-xs leading-relaxed text-muted-foreground"
-          >
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <span>
-              <strong className="text-foreground">Phase 1 Demonstration Environment:</strong> Discovery telemetry and
-              asset metrics are simulated from centralized mock models. Live on-chain indexing and pricing feeds will be
-              integrated in subsequent phases.
-            </span>
+        {/* 1. Masthead: one title line, one notice line, one pulse line */}
+        <header className="space-y-5">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Explore</p>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Discovery Hub</h1>
+              <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                Six ways into the ProMiners ecosystem. Search everything at once, or jump straight into a sector.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="h-9 gap-1.5 border-border/60 text-xs hover:bg-secondary/60"
+              >
+                <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin text-primary")} />
+                <span>Refresh Index</span>
+              </Button>
+              <Button asChild size="sm" className="h-9 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground">
+                <Link href="/tokens/create">
+                  <Plus className="h-3.5 w-3.5" /> Deploy Token
+                </Link>
+              </Button>
+            </div>
           </div>
+
+          <p
+            role="note"
+            className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"
+          >
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+            <span>
+              <strong className="font-semibold text-foreground">Phase 1 demonstration environment.</strong> Discovery
+              telemetry and asset metrics are simulated from centralized mock models. Live on-chain indexing and pricing
+              feeds will be integrated in subsequent phases.
+            </span>
+          </p>
         </header>
 
-        {/* 2. Ecosystem snapshot: one divided strip instead of four boxed cards */}
-        <dl className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border/60 bg-card/50 backdrop-blur-md lg:grid-cols-4">
-          {stats.map((s, i) => (
-            <div
-              key={s.label}
-              className={cn(
-                "space-y-1.5 p-4 sm:p-5",
-                i % 2 === 1 && "border-l border-border/50",
-                i >= 2 && "border-t border-border/50 lg:border-t-0",
-                i > 0 && "lg:border-l lg:border-border/50"
-              )}
-            >
-              <dt className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                {s.icon}
-                <span className="truncate">{s.label}</span>
-              </dt>
-              <dd className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <span className="font-mono text-xl font-bold tracking-tight text-foreground sm:text-2xl">{s.value}</span>
-                {s.change && (
-                  <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-400">
-                    {s.change}
-                  </span>
-                )}
-              </dd>
-              <p className="text-xs text-muted-foreground/80">{s.note}</p>
-            </div>
-          ))}
-        </dl>
+        {/* 2. Search: the primary action of the page */}
+        <section aria-label="Search and filter" className="space-y-4">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search tokens, projects, presales, airdrops, vaults (e.g., 'PMIN', 'Aurora', 'Ethereum')..."
+              aria-label="Search discovery assets"
+              className="h-14 w-full rounded-2xl bg-secondary/40 pl-12 pr-12 text-sm text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.04),0_8px_30px_-12px_rgba(0,0,0,0.6)] ring-1 ring-border/60 transition focus:outline-none focus:ring-2 focus:ring-primary/60 placeholder:text-muted-foreground/70"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-        {/* 3. Discovery categories */}
-        <section aria-labelledby="explore-categories" className="space-y-5">
-          <SectionTitle
-            id="explore-categories"
-            title="Discovery Categories"
-            description="Select a category to explore dedicated directories and launch modules."
-            aside="6 Specialized Sectors"
-          />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {categoryCards.map((c) => {
-              const a = ACCENTS[c.accent];
-              return (
-                <Link
-                  key={c.href}
-                  href={c.href}
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            {/* Category tabs: horizontal scroll on small screens */}
+            <div
+              className="-mx-4 flex gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+              role="group"
+              aria-label="Category filter"
+            >
+              {categoryTabs.map((t) => (
+                <button
+                  key={t.key}
+                  onClick={() => setActiveCategory(t.key)}
+                  aria-pressed={activeCategory === t.key}
                   className={cn(
-                    "group flex flex-col gap-4 rounded-2xl border border-border/60 bg-card/50 p-5 transition-all hover:bg-card/90 hover:shadow-lg",
-                    a.hoverBorder
+                    "shrink-0 whitespace-nowrap border-b-2 px-3 py-2 text-xs font-medium transition-colors",
+                    activeCategory === t.key
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <div className="flex items-center justify-between">
-                    <div
-                      className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-xl border transition-transform group-hover:scale-105",
-                        a.iconBox
-                      )}
-                    >
-                      {c.icon}
-                    </div>
-                    <span className="rounded-full border border-border/60 px-2.5 py-0.5 font-mono text-[11px] text-muted-foreground">
-                      {c.count}
-                    </span>
-                  </div>
-                  <div className="flex-1 space-y-1.5">
-                    <h3 className={cn("text-base font-bold text-foreground transition-colors", a.hoverText)}>{c.title}</h3>
-                    <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">{c.description}</p>
-                  </div>
-                  <div className={cn("flex items-center gap-1 text-xs font-semibold", a.text)}>
-                    <span>{c.cta}</span>
-                    <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* 4. Search & filters: a single toolbar, no nested boxes */}
-        <section aria-label="Search and filter" className="space-y-4 border-y border-border/50 py-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="relative w-full max-w-2xl flex-1">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search tokens, projects, presales, airdrops, vaults (e.g., 'PMIN', 'Aurora', 'Ethereum')..."
-                aria-label="Search discovery assets"
-                className="h-11 w-full rounded-xl border border-border/70 bg-secondary/30 pl-10 pr-10 text-sm text-foreground transition-colors placeholder:text-muted-foreground/70 focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  aria-label="Clear search"
-                >
-                  <X className="h-3.5 w-3.5" />
+                  {t.label} <span className="font-mono opacity-60">{t.count}</span>
                 </button>
-              )}
+              ))}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Quick filters">
-              <span className="mr-1 hidden text-xs font-medium text-muted-foreground xl:inline">Filter By:</span>
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Quick filters">
               {quickFilters.map((f) => (
-                <Button
+                <button
                   key={f.key}
-                  variant={quickFilter === f.key ? "default" : "outline"}
-                  size="sm"
                   aria-pressed={quickFilter === f.key}
                   onClick={() => setQuickFilter(f.key)}
-                  className="h-9 gap-1.5 border-border/60 text-xs"
+                  className={cn(
+                    "inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs transition-colors",
+                    quickFilter === f.key
+                      ? "bg-primary/15 font-semibold text-primary ring-1 ring-primary/40"
+                      : "text-muted-foreground ring-1 ring-border/60 hover:text-foreground hover:ring-border"
+                  )}
                 >
                   {f.icon}
                   {f.label}
-                </Button>
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Category tabs: horizontal scroll on small screens, wrap on desktop */}
-          <div
-            className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
-            role="group"
-            aria-label="Category filter"
-          >
-            {categoryTabs.map((t) => (
-              <button
-                key={t.key}
-                onClick={() => setActiveCategory(t.key)}
-                aria-pressed={activeCategory === t.key}
-                className={cn(
-                  "shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-                  activeCategory === t.key
-                    ? "bg-primary font-semibold text-primary-foreground shadow-sm"
-                    : "border border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
-                )}
-              >
-                {t.label} <span className="font-mono opacity-80">({t.count})</span>
-              </button>
-            ))}
-          </div>
-
           {isFilteringActive && (
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground" aria-live="polite">
+            <div
+              className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground"
+              aria-live="polite"
+            >
               <span>
                 Showing <strong className="text-foreground">{totalMatchingCount}</strong> matching assets
                 {query && <span> for &ldquo;{query}&rdquo;</span>}
@@ -568,12 +491,16 @@ export default function ExploreHubPage() {
           )}
         </section>
 
-        {/* 5. Results: empty state, filtered results, or curated showcase */}
+        {/* 3. Results / default atlas */}
         {totalMatchingCount === 0 ? (
           <EmptyState
             icon={<Search className="h-8 w-8 text-primary/70" />}
             title="No discovery assets match your criteria"
-            description={`We couldn't find any tokens, projects, or campaigns matching "${searchQuery}". Try loosening your search terms or resetting filters.`}
+            description={
+              query
+                ? `We couldn't find any tokens, projects, or campaigns matching "${searchQuery}". Try loosening your search terms or resetting filters.`
+                : "Nothing matches the selected category and filter combination. Try a different filter or reset them."
+            }
             action={
               <Button onClick={resetFilters} size="sm" className="gap-1.5 bg-primary text-xs font-semibold text-primary-foreground">
                 <RefreshCw className="h-3.5 w-3.5" /> Reset Filters
@@ -583,325 +510,182 @@ export default function ExploreHubPage() {
         ) : isFilteringActive ? (
           <div className="space-y-12">
             {show("tokens") && filteredTokens.length > 0 && (
-              <section className="space-y-4">
-                <ResultHeader
-                  accent="primary"
-                  icon={<Coins className="h-4 w-4" />}
-                  title={`Matching Tokens (${filteredTokens.length})`}
-                  href="/explore/tokens"
-                  linkLabel="View Full Token Explorer →"
-                />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  {filteredTokens.map((token) => (
-                    <TokenCard key={token.id} token={token} />
-                  ))}
-                </div>
+              <section className="space-y-2">
+                <SectionHead accent="primary" icon={<Coins className="h-4 w-4" />} title={`Matching Tokens (${filteredTokens.length})`} href="/tokens" linkLabel="Full Token Directory" />
+                <TokenTable tokens={filteredTokens} />
               </section>
             )}
-
             {show("projects") && filteredProjects.length > 0 && (
-              <section className="space-y-4">
-                <ResultHeader
-                  accent="cyan"
-                  icon={<Briefcase className="h-4 w-4" />}
-                  title={`Matching Projects (${filteredProjects.length})`}
-                  href="/explore/projects"
-                  linkLabel="View Full Project Directory →"
-                />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {filteredProjects.map((proj) => (
-                    <ProjectCard key={proj.id} proj={proj} cta="Project Overview" />
-                  ))}
-                </div>
+              <section className="space-y-2">
+                <SectionHead accent="cyan" icon={<Briefcase className="h-4 w-4" />} title={`Matching Projects (${filteredProjects.length})`} href="/explore/projects" linkLabel="Full Project Directory" />
+                <ProjectList projects={filteredProjects} />
               </section>
             )}
-
             {show("presales") && filteredPresales.length > 0 && (
-              <section className="space-y-4">
-                <ResultHeader
-                  accent="amber"
-                  icon={<Rocket className="h-4 w-4" />}
-                  title={`Matching Presales (${filteredPresales.length})`}
-                  href="/explore/presales"
-                  linkLabel="View All Presales →"
-                />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <section className="space-y-2">
+                <SectionHead accent="amber" icon={<Rocket className="h-4 w-4" />} title={`Matching Presales (${filteredPresales.length})`} href="/explore/presales" linkLabel="All Presales" />
+                <ul className="divide-y divide-border/40">
                   {filteredPresales.map((ps) => (
-                    <PresaleCard key={ps.id} ps={ps} cta="View Presale" />
+                    <PresaleRow key={ps.id} ps={ps} />
                   ))}
-                </div>
+                </ul>
               </section>
             )}
-
             {show("launches") && filteredLaunches.length > 0 && (
-              <section className="space-y-4">
-                <ResultHeader
-                  accent="emerald"
-                  icon={<Sparkles className="h-4 w-4" />}
-                  title={`Matching Fair Launches (${filteredLaunches.length})`}
-                  href="/explore/launches"
-                  linkLabel="View All Launches →"
-                />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <section className="space-y-2">
+                <SectionHead accent="emerald" icon={<Sparkles className="h-4 w-4" />} title={`Matching Fair Launches (${filteredLaunches.length})`} href="/explore/launches" linkLabel="All Launches" />
+                <ul className="divide-y divide-border/40">
                   {filteredLaunches.map((fl) => (
-                    <div
-                      key={fl.id}
-                      className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/50 p-4 transition-colors hover:border-emerald-500/50"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="text-sm font-semibold text-foreground">{fl.title}</span>
-                        <StatusBadge status={fl.status} />
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Network: {fl.network}</span>
-                        <span className="font-mono">Token: {fl.tokenId.toUpperCase()}</span>
-                      </div>
-                      <Button asChild size="sm" variant="outline" className="mt-auto h-8 w-full border-border/60 text-xs">
-                        <Link href={`/launchpad/launches/${fl.id}`}>Launch Room</Link>
-                      </Button>
-                    </div>
+                    <LaunchRow key={fl.id} fl={fl} />
                   ))}
-                </div>
+                </ul>
               </section>
             )}
-
             {show("airdrops") && filteredAirdrops.length > 0 && (
-              <section className="space-y-4">
-                <ResultHeader
-                  accent="rose"
-                  icon={<Gift className="h-4 w-4" />}
-                  title={`Matching Airdrops (${filteredAirdrops.length})`}
-                  href="/explore/airdrops"
-                  linkLabel="View All Airdrops →"
-                />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <section className="space-y-2">
+                <SectionHead accent="rose" icon={<Gift className="h-4 w-4" />} title={`Matching Airdrops (${filteredAirdrops.length})`} href="/explore/airdrops" linkLabel="All Airdrops" />
+                <ul className="divide-y divide-border/40">
                   {filteredAirdrops.map((air) => (
-                    <div
-                      key={air.id}
-                      className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/50 p-4 transition-colors hover:border-rose-500/50"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <span className="line-clamp-1 text-sm font-semibold text-foreground">{air.title}</span>
-                        <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase text-muted-foreground">
-                          {air.type}
-                        </span>
-                      </div>
-                      <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{air.description}</p>
-                      <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/40 pt-3">
-                        <span className="font-mono text-xs font-semibold text-emerald-400">{air.totalReward}</span>
-                        <Button asChild size="sm" variant="outline" className="h-8 border-border/60 text-xs">
-                          <Link href={`/airdrops/campaigns/${air.id}`}>Campaign Details</Link>
-                        </Button>
-                      </div>
-                    </div>
+                    <AirdropRow key={air.id} air={air} />
                   ))}
-                </div>
+                </ul>
               </section>
             )}
-
             {show("staking") && filteredStaking.length > 0 && (
-              <section className="space-y-4">
-                <ResultHeader
-                  accent="violet"
-                  icon={<Layers className="h-4 w-4" />}
-                  title={`Matching Staking Pools (${filteredStaking.length})`}
-                  href="/explore/staking"
-                  linkLabel="View All Staking Pools →"
-                />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <section className="space-y-2">
+                <SectionHead accent="violet" icon={<Layers className="h-4 w-4" />} title={`Matching Staking Pools (${filteredStaking.length})`} href="/explore/staking" linkLabel="All Staking Pools" />
+                <ul className="divide-y divide-border/40">
                   {filteredStaking.map((pool) => (
-                    <div
-                      key={pool.id}
-                      className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/50 p-4 transition-colors hover:border-violet-500/50"
-                    >
-                      <span className="line-clamp-1 text-sm font-semibold text-foreground">{pool.name}</span>
-                      <div className="grid grid-cols-2 gap-3">
-                        <Stat label="Estimated APY" value={pool.apy} valueClass="text-emerald-400 font-bold" />
-                        <Stat
-                          label="Lock Period"
-                          value={(pool.lockPeriodDays ?? 0) > 0 ? `${pool.lockPeriodDays} Days` : "Flexible"}
-                        />
-                      </div>
-                      <Button asChild size="sm" variant="outline" className="mt-auto h-8 w-full border-border/60 text-xs">
-                        <Link href={`/staking/pools/${pool.id}`}>Stake into Vault</Link>
-                      </Button>
-                    </div>
+                    <StakingRow key={pool.id} pool={pool} />
                   ))}
-                </div>
+                </ul>
               </section>
             )}
           </div>
         ) : (
-          <div className="space-y-14">
-            {/* A: Featured tokens */}
-            <section className="space-y-4">
-              <ResultHeader
-                accent="primary"
-                icon={<Coins className="h-4 w-4" />}
-                title="Featured Tokens"
-                href="/explore/tokens"
-                linkLabel={`View All ${categoryCounts.tokens} Tokens →`}
-                large
-              />
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {MOCK_TOKENS.map((token) => (
-                  <TokenCard key={token.id} token={token} detailed />
-                ))}
+          <div className="space-y-20">
+            {/* A. The atlas: six sectors as an editorial index, not six cards */}
+            <section aria-labelledby="explore-atlas" className="space-y-2">
+              <h2 id="explore-atlas" className="sr-only">
+                Discovery sectors
+              </h2>
+              <ol className="grid grid-cols-1 lg:grid-cols-2 lg:gap-x-14">
+                {atlas.map((s, i) => {
+                  const a = ACCENTS[s.accent];
+                  return (
+                    <li key={s.href} className="border-t border-border/50 last:border-b lg:[&:nth-last-child(2)]:border-b">
+                      <Link href={s.href} className="group relative flex items-start gap-4 py-6 sm:gap-5">
+                        <span className="w-6 pt-1 font-mono text-xs text-muted-foreground/60">{String(i + 1).padStart(2, "0")}</span>
+                        <span className={cn("mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", a.iconBox)}>
+                          {s.icon}
+                        </span>
+                        <span className="min-w-0 flex-1 space-y-1">
+                          <span className={cn("block text-lg font-semibold text-foreground transition-colors", a.hoverText)}>
+                            {s.title}
+                          </span>
+                          <span className="block text-sm leading-relaxed text-muted-foreground">{s.description}</span>
+                          <span className={cn("block pt-1 font-mono text-[11px]", a.text)}>{s.note}</span>
+                        </span>
+                        <span className="flex shrink-0 flex-col items-end gap-1 text-right">
+                          <span className="font-mono text-2xl font-semibold leading-none text-foreground">{s.count}</span>
+                          <span className="text-[11px] text-muted-foreground">{s.noun}</span>
+                          <ArrowRight className={cn("mt-2 h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-1", a.hoverText)} />
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+
+            {/* B. Markets & builders: a market table beside a project list */}
+            <section className="grid grid-cols-1 gap-12 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] xl:gap-16">
+              <div className="space-y-2">
+                <SectionHead accent="primary" icon={<Coins className="h-4 w-4" />} title="Featured Tokens" href="/tokens" linkLabel={`All ${categoryCounts.tokens} tokens`} large />
+                <TokenTable tokens={MOCK_TOKENS} />
+              </div>
+              <div className="space-y-2">
+                <SectionHead accent="cyan" icon={<Briefcase className="h-4 w-4" />} title="Projects & Protocols" href="/explore/projects" linkLabel={`All ${categoryCounts.projects} projects`} large />
+                <ProjectList projects={MOCK_PROJECTS.slice(0, 6)} showTokens />
               </div>
             </section>
 
-            {/* B: Featured projects */}
-            <section className="space-y-4">
-              <ResultHeader
-                accent="cyan"
-                icon={<Briefcase className="h-4 w-4" />}
-                title="Featured Projects & Protocols"
-                href="/explore/projects"
-                linkLabel={`View Project Directory (${categoryCounts.projects}) →`}
-                large
-              />
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {MOCK_PROJECTS.map((proj) => (
-                  <ProjectCard key={proj.id} proj={proj} cta="Explore Protocol" showTokens />
-                ))}
-              </div>
-            </section>
-
-            {/* C: Launchpad */}
-            <section className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-3">
-                <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
-                  <Rocket className="h-4 w-4 text-amber-400" /> Launchpad Opportunities
-                </h2>
-                <div className="flex items-center gap-4">
-                  <Link href="/explore/presales" className="text-xs font-medium text-amber-400 hover:underline">
+            {/* C. Launchpad: one featured raise with progress, the rest as compact rows */}
+            <section className="space-y-6">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div className="space-y-1">
+                  <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
+                    <Rocket className="h-4 w-4 text-amber-400" /> Launchpad Opportunities
+                  </h2>
+                  <p className="text-xs text-muted-foreground">Capital raises, from capped presales to fair launches.</p>
+                </div>
+                <div className="flex items-center gap-5 text-xs font-medium">
+                  <Link href="/explore/presales" className="text-amber-400 hover:underline">
                     All Presales →
                   </Link>
-                  <Link href="/explore/launches" className="text-xs font-medium text-emerald-400 hover:underline">
+                  <Link href="/explore/launches" className="text-emerald-400 hover:underline">
                     All Launches →
                   </Link>
                 </div>
               </div>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {MOCK_PRESALES.slice(0, 2).map((ps) => (
-                  <PresaleCard key={ps.id} ps={ps} cta="View Presale Room" />
-                ))}
-                {MOCK_FAIR_LAUNCHES.slice(0, 1).map((fl) => (
-                  <div
-                    key={fl.id}
-                    className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/50 p-4 transition-colors hover:border-emerald-500/50"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="line-clamp-1 text-sm font-semibold text-foreground">{fl.title}</span>
-                      <StatusBadge status={fl.status} />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Stat label="Format" value="Fair Liquidity Launch" valueClass="text-emerald-400 font-medium" mono={false} />
-                      <Stat label="Network" value={fl.network} />
-                    </div>
-                    <Button asChild size="sm" variant="outline" className="mt-auto h-8 w-full border-border/60 text-xs">
-                      <Link href={`/launchpad/launches/${fl.id}`}>Launch Dashboard</Link>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </section>
 
-            {/* D: Rewards & yield: two lists, one divider each, no card-in-card */}
-            <section className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-12">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-3">
-                  <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
-                    <Gift className="h-4 w-4 text-rose-400" /> Airdrop Discovery
-                  </h2>
-                  <Link href="/explore/airdrops" className="text-xs font-medium text-rose-400 hover:underline">
-                    All Campaigns ({categoryCounts.airdrops}) →
-                  </Link>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Participate in active community incentives, testnet reward pools, and cryptographic claims.
-                </p>
-                <ul className="divide-y divide-border/40 rounded-xl border border-border/60 bg-card/50">
-                  {MOCK_AIRDROPS.map((air) => (
-                    <li key={air.id} className="flex items-center justify-between gap-4 p-4 text-xs transition-colors hover:bg-secondary/30">
-                      <div className="min-w-0 space-y-0.5">
-                        <div className="truncate text-sm font-semibold text-foreground">{air.title}</div>
-                        <div className="font-mono text-[11px] capitalize text-muted-foreground">{air.type} distribution</div>
-                      </div>
-                      <div className="shrink-0 space-y-0.5 text-right">
-                        <div className="font-mono font-bold text-emerald-400">{air.totalReward}</div>
-                        <Link href={`/airdrops/campaigns/${air.id}`} className="text-[11px] text-primary hover:underline">
-                          Claim Portal →
-                        </Link>
-                      </div>
-                    </li>
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-12">
+                {featuredPresale && <FeaturedRaise ps={featuredPresale} />}
+                <ul className="divide-y divide-border/40 self-start">
+                  {otherPresales.slice(0, 3).map((ps) => (
+                    <PresaleRow key={ps.id} ps={ps} />
                   ))}
-                </ul>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-3">
-                  <h2 className="flex items-center gap-2 text-lg font-bold text-foreground">
-                    <Layers className="h-4 w-4 text-violet-400" /> Staking Vaults Discovery
-                  </h2>
-                  <Link href="/explore/staking" className="text-xs font-medium text-violet-400 hover:underline">
-                    All Vaults ({categoryCounts.staking}) →
-                  </Link>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Stake protocol tokens and liquidity pairs into audited vaults for yield distribution.
-                </p>
-                <ul className="divide-y divide-border/40 rounded-xl border border-border/60 bg-card/50">
-                  {MOCK_STAKING_POOLS.map((pool) => (
-                    <li key={pool.id} className="flex items-center justify-between gap-4 p-4 text-xs transition-colors hover:bg-secondary/30">
-                      <div className="min-w-0 space-y-0.5">
-                        <div className="truncate text-sm font-semibold text-foreground">{pool.name}</div>
-                        <div className="text-[11px] text-muted-foreground">
-                          {(pool.lockPeriodDays ?? 0) > 0 ? `${pool.lockPeriodDays} Days Lock` : "Flexible Unlock"}
-                        </div>
-                      </div>
-                      <div className="shrink-0 space-y-0.5 text-right">
-                        <div className="font-mono font-bold text-emerald-400">{pool.apy} APY</div>
-                        <Link href={`/staking/pools/${pool.id}`} className="text-[11px] text-primary hover:underline">
-                          Deposit Vault →
-                        </Link>
-                      </div>
-                    </li>
+                  {MOCK_FAIR_LAUNCHES.slice(0, 2).map((fl) => (
+                    <LaunchRow key={fl.id} fl={fl} />
                   ))}
                 </ul>
               </div>
             </section>
 
-            {/* E: Call to action */}
-            <section className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-card/70 to-card/90 p-6 sm:p-8">
-              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <div className="max-w-xl space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-                    <CheckCircle2 className="h-4 w-4" /> ProMiners Launch Architecture
-                  </div>
-                  <h2 className="text-lg font-bold text-foreground sm:text-xl">
-                    Ready to launch your token or list your decentralized protocol?
-                  </h2>
-                  <p className="text-xs leading-relaxed text-muted-foreground sm:text-sm">
-                    {CTA_COPY}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button asChild className="h-10 bg-primary text-xs font-semibold text-primary-foreground">
-                    <Link href="/tokens/create">
-                      <Plus className="mr-1 h-3.5 w-3.5" /> Create Token
-                    </Link>
+            {/* D. Rewards & yield */}
+            <section className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
+              <div className="space-y-2">
+                <SectionHead accent="rose" icon={<Gift className="h-4 w-4" />} title="Airdrop Discovery" href="/explore/airdrops" linkLabel={`All ${categoryCounts.airdrops} campaigns`} large />
+                <ul className="divide-y divide-border/40">
+                  {MOCK_AIRDROPS.slice(0, 5).map((air) => (
+                    <AirdropRow key={air.id} air={air} />
+                  ))}
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <SectionHead accent="violet" icon={<Layers className="h-4 w-4" />} title="Staking Vaults" href="/explore/staking" linkLabel={`All ${categoryCounts.staking} vaults`} large />
+                <ul className="divide-y divide-border/40">
+                  {MOCK_STAKING_POOLS.slice(0, 5).map((pool) => (
+                    <StakingRow key={pool.id} pool={pool} />
+                  ))}
+                </ul>
+              </div>
+            </section>
+
+            {/* E. Closing call to action: a single band, no nested boxes */}
+            <section className="flex flex-col gap-6 border-t border-border/50 pt-10 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-xl space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Build on ProMiners</p>
+                <h2 className="text-xl font-bold text-foreground sm:text-2xl">
+                  Ready to launch your token or list your protocol?
+                </h2>
+                <p className="text-sm leading-relaxed text-muted-foreground">{CTA_COPY}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button asChild className="h-10 bg-primary text-xs font-semibold text-primary-foreground">
+                  <Link href="/tokens/create">
+                    <Plus className="mr-1 h-3.5 w-3.5" /> Create Token
+                  </Link>
+                </Button>
+                {!isConnected ? (
+                  <Button variant="outline" onClick={() => openModal("CONNECT_WALLET")} className="h-10 gap-1.5 border-border/60 text-xs">
+                    <Wallet className="h-3.5 w-3.5 text-primary" /> Connect Wallet
                   </Button>
-                  {!isConnected ? (
-                    <Button variant="outline" onClick={() => openModal("CONNECT_WALLET")} className="h-10 gap-1.5 border-border/60 text-xs">
-                      <Wallet className="h-3.5 w-3.5 text-primary" /> Connect Wallet
-                    </Button>
-                  ) : (
-                    <Button asChild variant="outline" className="h-10 border-border/60 text-xs">
-                      <Link href="/launchpad/presales/create">Launch Presale</Link>
-                    </Button>
-                  )}
-                </div>
+                ) : (
+                  <Button asChild variant="outline" className="h-10 border-border/60 text-xs">
+                    <Link href="/launchpad/presales/create">Launch Presale</Link>
+                  </Button>
+                )}
               </div>
             </section>
           </div>
@@ -917,79 +701,56 @@ export default function ExploreHubPage() {
 
 type Accent = "primary" | "cyan" | "amber" | "emerald" | "rose" | "violet";
 
-const ACCENTS: Record<Accent, { text: string; hoverText: string; hoverBorder: string; iconBox: string; cardHover: string }> = {
-  primary: {
-    text: "text-primary",
-    hoverText: "group-hover:text-primary",
-    hoverBorder: "hover:border-primary/50 hover:shadow-primary/5",
-    iconBox: "border-primary/20 bg-primary/10 text-primary",
-    cardHover: "hover:border-primary/50",
-  },
-  cyan: {
-    text: "text-cyan-400",
-    hoverText: "group-hover:text-cyan-400",
-    hoverBorder: "hover:border-cyan-500/50 hover:shadow-cyan-500/5",
-    iconBox: "border-cyan-500/20 bg-cyan-500/10 text-cyan-400",
-    cardHover: "hover:border-cyan-500/50",
-  },
-  amber: {
-    text: "text-amber-400",
-    hoverText: "group-hover:text-amber-400",
-    hoverBorder: "hover:border-amber-500/50 hover:shadow-amber-500/5",
-    iconBox: "border-amber-500/20 bg-amber-500/10 text-amber-400",
-    cardHover: "hover:border-amber-500/50",
-  },
-  emerald: {
-    text: "text-emerald-400",
-    hoverText: "group-hover:text-emerald-400",
-    hoverBorder: "hover:border-emerald-500/50 hover:shadow-emerald-500/5",
-    iconBox: "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
-    cardHover: "hover:border-emerald-500/50",
-  },
-  rose: {
-    text: "text-rose-400",
-    hoverText: "group-hover:text-rose-400",
-    hoverBorder: "hover:border-rose-500/50 hover:shadow-rose-500/5",
-    iconBox: "border-rose-500/20 bg-rose-500/10 text-rose-400",
-    cardHover: "hover:border-rose-500/50",
-  },
-  violet: {
-    text: "text-violet-400",
-    hoverText: "group-hover:text-violet-400",
-    hoverBorder: "hover:border-violet-500/50 hover:shadow-violet-500/5",
-    iconBox: "border-violet-500/20 bg-violet-500/10 text-violet-400",
-    cardHover: "hover:border-violet-500/50",
-  },
+const ACCENTS: Record<Accent, { text: string; hoverText: string; iconBox: string; bar: string }> = {
+  primary: { text: "text-primary", hoverText: "group-hover:text-primary", iconBox: "bg-primary/10 text-primary", bar: "bg-primary" },
+  cyan: { text: "text-cyan-400", hoverText: "group-hover:text-cyan-400", iconBox: "bg-cyan-500/10 text-cyan-400", bar: "bg-cyan-400" },
+  amber: { text: "text-amber-400", hoverText: "group-hover:text-amber-400", iconBox: "bg-amber-500/10 text-amber-400", bar: "bg-amber-400" },
+  emerald: { text: "text-emerald-400", hoverText: "group-hover:text-emerald-400", iconBox: "bg-emerald-500/10 text-emerald-400", bar: "bg-emerald-400" },
+  rose: { text: "text-rose-400", hoverText: "group-hover:text-rose-400", iconBox: "bg-rose-500/10 text-rose-400", bar: "bg-rose-400" },
+  violet: { text: "text-violet-400", hoverText: "group-hover:text-violet-400", iconBox: "bg-violet-500/10 text-violet-400", bar: "bg-violet-400" },
 };
 
 const CTA_COPY =
   "Use our standardized creation wizards to deploy ERC-20 tokens, establish fair launches, or configure airdrop merkle distribution contracts on Ethereum Sepolia.";
 
-function SectionTitle({
-  id,
-  title,
-  description,
-  aside,
-}: {
-  id: string;
-  title: string;
-  description: string;
-  aside?: string;
-}) {
+/** Parses the leading number of strings such as "118.5 ETH"; null when absent. */
+function amount(value?: string): number | null {
+  if (!value) return null;
+  const n = parseFloat(value.replace(/,/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+
+/** 0..1 ratio only when both figures exist in the data and the divisor is positive. */
+function ratio(part?: number | null, whole?: number | null): number | null {
+  if (part == null || whole == null || whole <= 0) return null;
+  return Math.min(1, Math.max(0, part / whole));
+}
+
+/** Deterministic (UTC) short date so server and client render identically. */
+function shortDate(iso?: string): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
+}
+
+function Progress({ value, accent, label }: { value: number; accent: Accent; label: string }) {
+  const pct = Math.round(value * 100);
   return (
-    <div className="flex flex-wrap items-end justify-between gap-2">
-      <div className="space-y-1">
-        <h2 id={id} className="text-xl font-bold tracking-tight text-foreground">
-          {title}
-        </h2>
-        <p className="text-xs text-muted-foreground sm:text-sm">{description}</p>
-      </div>
-      {aside && <span className="font-mono text-xs text-muted-foreground">{aside}</span>}
+    <div
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={pct}
+      className="h-1.5 w-full overflow-hidden rounded-full bg-secondary/80"
+    >
+      <div className={cn("h-full rounded-full", ACCENTS[accent].bar)} style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
-function ResultHeader({
+function SectionHead({
   accent,
   icon,
   title,
@@ -1006,127 +767,326 @@ function ResultHeader({
 }) {
   const a = ACCENTS[accent];
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-3">
-      <h2 className={cn("flex items-center gap-2 font-bold text-foreground", large ? "text-lg" : "text-sm")}>
+    <div className="flex flex-wrap items-end justify-between gap-2 pb-2">
+      <h2 className={cn("flex items-center gap-2 font-bold text-foreground", large ? "text-lg" : "text-base")}>
         <span className={a.text}>{icon}</span>
         {title}
       </h2>
-      <Link href={href} className={cn("text-xs font-medium hover:underline", a.text)}>
-        {linkLabel}
+      <Link href={href} className={cn("inline-flex items-center gap-1 text-xs font-medium hover:underline", a.text)}>
+        {linkLabel} <ArrowUpRight className="h-3 w-3" />
       </Link>
     </div>
   );
 }
 
-function Stat({
-  label,
-  value,
-  valueClass,
-  mono = true,
-}: {
-  label: string;
-  value?: string;
-  valueClass?: string;
-  mono?: boolean;
-}) {
+function Monogram({ label, accent }: { label: string; accent: Accent }) {
   return (
-    <div className="min-w-0 space-y-0.5">
-      <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className={cn("truncate text-sm text-foreground", mono && "font-mono", valueClass)}>{value}</div>
+    <span
+      aria-hidden
+      className={cn(
+        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-bold",
+        ACCENTS[accent].iconBox
+      )}
+    >
+      {label.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
+function TokenTable({ tokens }: { tokens: (typeof MOCK_TOKENS)[number][] }) {
+  return (
+    <div>
+      <div className="hidden grid-cols-[minmax(0,2fr)_1.2fr_1fr_0.9fr] gap-4 border-b border-border/50 px-3 pb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground md:grid">
+        <span>Token</span>
+        <span>Network</span>
+        <span className="text-right">Price</span>
+        <span className="text-right">24h</span>
+      </div>
+      <ul className="divide-y divide-border/40">
+        {tokens.map((token) => {
+          const change = token.market.priceChange24h || 0;
+          return (
+            <li key={token.id}>
+              <Link
+                href={`/tokens/${token.id}`}
+                className="group grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-4 rounded-lg px-3 py-3.5 transition-colors hover:bg-secondary/40 md:grid-cols-[minmax(0,2fr)_1.2fr_1fr_0.9fr]"
+              >
+                <span className="flex min-w-0 items-center gap-3">
+                  <Monogram label={token.symbol} accent="primary" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                      {token.name}
+                    </span>
+                    <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                      {token.symbol} · <span className="capitalize">{token.standard}</span>
+                    </span>
+                  </span>
+                </span>
+                <span className="hidden truncate text-xs text-muted-foreground md:block">{token.network}</span>
+                <span className="text-right font-mono text-sm font-semibold text-foreground">${token.market.price}</span>
+                <span className={cn("text-right font-mono text-xs", change >= 0 ? "text-emerald-400" : "text-rose-400")}>
+                  {change >= 0 ? "+" : ""}
+                  {token.market.priceChange24h}%
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
 
-function TokenCard({ token, detailed }: { token: (typeof MOCK_TOKENS)[number]; detailed?: boolean }) {
-  const change = token.market.priceChange24h || 0;
+function ProjectList({ projects, showTokens }: { projects: (typeof MOCK_PROJECTS)[number][]; showTokens?: boolean }) {
   return (
-    <div className="group flex flex-col gap-4 rounded-xl border border-border/60 bg-card/50 p-4 transition-colors hover:border-primary/50">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-bold text-foreground transition-colors group-hover:text-primary">
-            {token.name}
-          </span>
-          <span className="shrink-0 rounded bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
-            {token.symbol}
-          </span>
-        </div>
-        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{token.description}</p>
-      </div>
-      <div className="mt-auto space-y-3 border-t border-border/40 pt-3">
-        <div className="flex items-center justify-between font-mono text-sm">
-          <span className="font-bold text-foreground">${token.market.price}</span>
-          <span className={cn("text-xs", change >= 0 ? "text-emerald-400" : "text-rose-400")}>
-            {change >= 0 ? "+" : ""}
-            {token.market.priceChange24h}%
-          </span>
-        </div>
-        {detailed && (
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>{token.network}</span>
-            <span className="capitalize">{token.standard}</span>
-          </div>
-        )}
-        <Button asChild size="sm" variant="outline" className="h-8 w-full border-border/60 text-xs">
-          <Link href={`/tokens/${token.id}`}>Token Details</Link>
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function ProjectCard({
-  proj,
-  cta,
-  showTokens,
-}: {
-  proj: (typeof MOCK_PROJECTS)[number];
-  cta: string;
-  showTokens?: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/50 p-5 transition-colors hover:border-cyan-500/50">
-      <div className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-base font-bold text-foreground">{proj.name}</h3>
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
-            <ShieldCheck className="h-3.5 w-3.5" /> Verified
-          </span>
-        </div>
-        <p className="text-xs leading-relaxed text-muted-foreground">{proj.description}</p>
-        {showTokens && (
-          <div className="flex flex-wrap gap-1.5">
-            {proj.tokenIds.map((t) => (
-              <span key={t} className="rounded bg-secondary/80 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
-                ${t.toUpperCase()}
+    <ul className="divide-y divide-border/40">
+      {projects.map((proj) => (
+        <li key={proj.id}>
+          <Link
+            href={`/projects/${proj.id}`}
+            className="group flex items-start gap-3 rounded-lg px-3 py-3.5 transition-colors hover:bg-secondary/40"
+          >
+            <Monogram label={proj.name} accent="cyan" />
+            <span className="min-w-0 flex-1 space-y-1">
+              <span className="flex items-center justify-between gap-3">
+                <span className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-cyan-400">
+                  {proj.name}
+                </span>
+                {proj.verificationStatus === "audit_available" && (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-emerald-400">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Audit available
+                  </span>
+                )}
               </span>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-3">
-        <span className="truncate font-mono text-[11px] text-muted-foreground">Owner: {proj.ownerAddress}</span>
-        <Button asChild size="sm" variant="outline" className="h-8 border-border/60 text-xs">
-          <Link href={`/projects/${proj.id}`}>{cta}</Link>
-        </Button>
-      </div>
-    </div>
+              <span className="line-clamp-2 block text-xs leading-relaxed text-muted-foreground">{proj.description}</span>
+              {showTokens && proj.tokenIds.length > 0 && (
+                <span className="flex flex-wrap gap-1.5 pt-0.5">
+                  {proj.tokenIds.map((t) => (
+                    <span key={t} className="rounded bg-secondary/80 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                      ${t.toUpperCase()}
+                    </span>
+                  ))}
+                </span>
+              )}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
 
-function PresaleCard({ ps, cta }: { ps: (typeof MOCK_PRESALES)[number]; cta: string }) {
+function FeaturedRaise({ ps }: { ps: (typeof MOCK_PRESALES)[number] }) {
+  const raised = amount(ps.totalRaised);
+  const hard = amount(ps.hardCap);
+  const soft = amount(ps.softCap);
+  const pct = ratio(raised, hard);
+  const softPos = ratio(soft, hard);
+  const ends = shortDate(ps.endTime);
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border/60 bg-card/50 p-4 transition-colors hover:border-amber-500/50">
-      <div className="flex items-start justify-between gap-3">
-        <span className="line-clamp-1 text-sm font-semibold text-foreground">{ps.title}</span>
-        <StatusBadge status={ps.status} />
+    <Link
+      href={`/launchpad/presales/${ps.id}`}
+      className="group relative flex flex-col justify-between gap-8 overflow-hidden rounded-3xl bg-gradient-to-br from-amber-500/[0.10] via-card/60 to-transparent p-6 shadow-[0_20px_60px_-30px_rgba(245,158,11,0.35)] ring-1 ring-amber-500/20 transition hover:ring-amber-500/50 sm:p-8"
+    >
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-400">Featured presale</span>
+          <StatusBadge status={ps.status} />
+        </div>
+        <h3 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{ps.title}</h3>
+        {ps.description && <p className="max-w-lg text-sm leading-relaxed text-muted-foreground">{ps.description}</p>}
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Stat label="Target Hardcap" value={ps.hardCap} />
-        <Stat label="Total Raised" value={ps.totalRaised} valueClass="text-primary font-semibold" />
+
+      <div className="space-y-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="text-[11px] text-muted-foreground">Total raised</div>
+            <div className="font-mono text-3xl font-bold text-foreground">{ps.totalRaised ?? "—"}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[11px] text-muted-foreground">Hard cap</div>
+            <div className="font-mono text-lg font-semibold text-muted-foreground">{ps.hardCap ?? "—"}</div>
+          </div>
+        </div>
+
+        {pct !== null ? (
+          <div className="space-y-1.5">
+            <div className="relative">
+              <Progress value={pct} accent="amber" label={`${ps.title} raised toward hard cap`} />
+              {softPos !== null && (
+                <span
+                  aria-hidden
+                  className="absolute -top-1 h-3.5 w-px bg-foreground/60"
+                  style={{ left: `${Math.round(softPos * 100)}%` }}
+                />
+              )}
+            </div>
+            <div className="flex justify-between font-mono text-[11px] text-muted-foreground">
+              <span>{Math.round(pct * 100)}% of hard cap</span>
+              {ps.softCap && <span>Soft cap {ps.softCap}</span>}
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">Progress is unavailable: cap data is missing for this round.</p>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-4 text-xs text-muted-foreground">
+          <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>{ps.network}</span>
+            {typeof ps.participantCount === "number" && <span>{ps.participantCount} participants</span>}
+            {ends && <span>Ends {ends}</span>}
+          </span>
+          <span className="inline-flex items-center gap-1 font-semibold text-amber-400">
+            View presale room <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+          </span>
+        </div>
       </div>
-      <Button asChild size="sm" variant="outline" className="mt-auto h-8 w-full border-border/60 text-xs">
-        <Link href={`/launchpad/presales/${ps.id}`}>{cta}</Link>
-      </Button>
-    </div>
+    </Link>
+  );
+}
+
+function RowShell({
+  href,
+  eyebrow,
+  eyebrowAccent,
+  status,
+  title,
+  children,
+  right,
+}: {
+  href: string;
+  eyebrow: string;
+  eyebrowAccent: Accent;
+  status: string;
+  title: string;
+  children?: React.ReactNode;
+  right?: React.ReactNode;
+}) {
+  const a = ACCENTS[eyebrowAccent];
+  return (
+    <li>
+      <Link
+        href={href}
+        className="group flex items-start justify-between gap-4 rounded-lg px-3 py-4 transition-colors hover:bg-secondary/40"
+      >
+        <span className="min-w-0 flex-1 space-y-2">
+          <span className="flex items-center gap-2.5">
+            <span className={cn("text-[10px] font-semibold uppercase tracking-wider", a.text)}>{eyebrow}</span>
+            <StatusBadge status={status} />
+          </span>
+          <span className={cn("block truncate text-sm font-semibold text-foreground transition-colors", a.hoverText)}>
+            {title}
+          </span>
+          {children}
+        </span>
+        {right && <span className="shrink-0 text-right">{right}</span>}
+      </Link>
+    </li>
+  );
+}
+
+function PresaleRow({ ps }: { ps: (typeof MOCK_PRESALES)[number] }) {
+  const pct = ratio(amount(ps.totalRaised), amount(ps.hardCap));
+  const start = shortDate(ps.startTime);
+  return (
+    <RowShell
+      href={`/launchpad/presales/${ps.id}`}
+      eyebrow="Presale"
+      eyebrowAccent="amber"
+      status={ps.status}
+      title={ps.title}
+      right={
+        <span className="block space-y-0.5">
+          <span className="block font-mono text-sm font-semibold text-amber-400">{ps.totalRaised ?? "—"}</span>
+          <span className="block font-mono text-[11px] text-muted-foreground">of {ps.hardCap ?? "—"}</span>
+        </span>
+      }
+    >
+      {pct !== null ? (
+        <span className="block pr-2">
+          <Progress value={pct} accent="amber" label={`${ps.title} raised toward hard cap`} />
+        </span>
+      ) : (
+        start && <span className="block text-[11px] text-muted-foreground">Starts {start}</span>
+      )}
+      <span className="block text-[11px] text-muted-foreground">{ps.network}</span>
+    </RowShell>
+  );
+}
+
+function LaunchRow({ fl }: { fl: (typeof MOCK_FAIR_LAUNCHES)[number] }) {
+  return (
+    <RowShell
+      href={`/launchpad/launches/${fl.id}`}
+      eyebrow="Fair launch"
+      eyebrowAccent="emerald"
+      status={fl.status}
+      title={fl.title}
+      right={
+        <span className="block space-y-0.5">
+          <span className="block font-mono text-sm font-semibold text-emerald-400">{fl.tokenId.toUpperCase()}</span>
+          <span className="block text-[11px] text-muted-foreground">token</span>
+        </span>
+      }
+    >
+      <span className="block text-[11px] text-muted-foreground">
+        {fl.network}
+        {typeof fl.participantCount === "number" && ` · ${fl.participantCount} participants`}
+      </span>
+    </RowShell>
+  );
+}
+
+function AirdropRow({ air }: { air: (typeof MOCK_AIRDROPS)[number] }) {
+  const claimed = ratio(air.claimedCount, air.recipientCount);
+  return (
+    <RowShell
+      href={`/airdrops/campaigns/${air.id}`}
+      eyebrow={`${air.type} distribution`}
+      eyebrowAccent="rose"
+      status={air.status}
+      title={air.title}
+      right={
+        <span className="block space-y-0.5">
+          <span className="block font-mono text-sm font-bold text-emerald-400">{air.totalReward ?? "—"}</span>
+          <span className="block text-[11px] text-rose-400">Claim portal →</span>
+        </span>
+      }
+    >
+      {claimed !== null ? (
+        <span className="block space-y-1 pr-2">
+          <Progress value={claimed} accent="rose" label={`${air.title} claimed`} />
+          <span className="block font-mono text-[11px] text-muted-foreground">
+            {air.claimedCount} of {air.recipientCount} claimed
+          </span>
+        </span>
+      ) : (
+        air.description && <span className="line-clamp-1 block text-[11px] text-muted-foreground">{air.description}</span>
+      )}
+    </RowShell>
+  );
+}
+
+function StakingRow({ pool }: { pool: (typeof MOCK_STAKING_POOLS)[number] }) {
+  const lock = (pool.lockPeriodDays ?? 0) > 0 ? `${pool.lockPeriodDays} days lock` : "Flexible unlock";
+  return (
+    <RowShell
+      href={`/staking/pools/${pool.id}`}
+      eyebrow="Staking pool"
+      eyebrowAccent="violet"
+      status={pool.status}
+      title={pool.name}
+      right={
+        <span className="block space-y-0.5">
+          <span className="block font-mono text-xl font-bold leading-none text-emerald-400">{pool.apy ?? "—"}</span>
+          <span className="block text-[11px] text-muted-foreground">APY</span>
+        </span>
+      }
+    >
+      <span className="block text-[11px] text-muted-foreground">
+        {lock}
+        {pool.totalStaked && ` · ${pool.totalStaked} staked`}
+      </span>
+    </RowShell>
   );
 }

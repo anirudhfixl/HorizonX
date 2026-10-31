@@ -204,8 +204,8 @@ const HWF_CSS = `
   background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px;
   background-repeat: no-repeat; background-position: 0 100%; transition: opacity .25s ease, background-size .35s cubic-bezier(.2,.7,.1,1);
 }
-.hwf-col a:hover, .hwf-up:hover { opacity: 1; background-size: 100% 1px; color: #E9762B; }
-.hwf-col a:focus-visible, .hwf-up:focus-visible { outline: 1px solid #E9762B; outline-offset: 3px; opacity: 1; }
+.hwf-col a:hover, .hwf-up:hover { opacity: 1; background-size: 100% 1px; color: var(--hwf-warm); }
+.hwf-col a:focus-visible, .hwf-up:focus-visible { outline: 1px solid var(--hwf-warm); outline-offset: 3px; opacity: 1; }
 .hwf-rule {
   position: relative; z-index: 1; display: flex; justify-content: flex-end; align-items: center; gap: 16px;
   margin: clamp(12px, 1.8vw, 22px) clamp(12px, 1.5vw, 20px) 0; padding-top: 10px;
@@ -549,6 +549,8 @@ export default function HalftoneWordmarkFooter({
           height,
           "--hwf-bg": colors.background,
           "--hwf-ink": colors.ink,
+          "--hwf-warm": colors.warm,
+          backgroundColor: "#080711",
           "--hwf-mono": monoFamily,
         } as React.CSSProperties
       }

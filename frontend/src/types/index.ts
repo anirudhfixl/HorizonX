@@ -68,6 +68,10 @@ export interface TokenMarketData {
   circulatingSupply?: number;
   source?: string;
   lastUpdated?: string;
+  /**
+   * True only when the figures come from a live market feed. The application
+   * has no live feed yet, so catalog records must set this to false.
+   */
   isLive: boolean;
 }
 

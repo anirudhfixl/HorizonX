@@ -1,6 +1,6 @@
 import React from "react";
 import { notFound } from "next/navigation";
-import { TokenDetailHub } from "@/components/tokens/token-detail-hub";
+import { TokenProfile } from "@/components/tokens/token-profile";
 import {
   MOCK_TOKENS,
   MOCK_PROJECTS,
@@ -49,14 +49,13 @@ export default async function TokenDetailPage({
   );
 
   return (
-    <TokenDetailHub
+    <TokenProfile
       token={token}
       project={project}
       presales={presales}
       fairLaunches={fairLaunches}
       airdrops={airdrops}
       stakingPools={stakingPools}
-      initialTab="overview"
     />
   );
 }

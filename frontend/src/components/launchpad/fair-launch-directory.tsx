@@ -2,33 +2,27 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { MOCK_FAIR_LAUNCHES, MOCK_TOKENS, MOCK_PROJECTS } from "@/lib/mock-data";
-import { Token, Project } from "@/types";
+import { Token, Project, FairLaunch } from "@/types";
+import { cn } from "@/lib/utils";
 import {
-  Sparkles,
   Search,
   X,
   LayoutGrid,
   List,
   Plus,
-  Coins,
   ChevronLeft,
   ChevronRight,
-  ArrowUpDown,
   ChevronUp,
   ChevronDown,
   Info,
-  Calendar,
+  ArrowRight,
+  ArrowLeft,
   Users,
-  CheckCircle2,
-  TrendingUp,
-  Flame,
+  SearchX,
 } from "lucide-react";
 
 export type FairLaunchSortOption =
@@ -58,6 +52,371 @@ export function parseAmount(val?: string): number {
   const num = parseFloat(val.replace(/[^0-9.]/g, ""));
   return isNaN(num) ? 0 : num;
 }
+
+// ---------------------------------------------------------------------------
+// Presentation helpers (display only; everything is derived from stored fields)
+// ---------------------------------------------------------------------------
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** Fixed UTC date so server and client render identically. */
+export function fmtDate(iso?: string): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+function isSepoliaNetwork(network: string): boolean {
+  const n = network.toLowerCase();
+  return n.includes("sepolia") || n === "ethereum";
+}
+
+const CONCLUDED = ["ended", "finalized", "failed", "cancelled"];
+
+const STAGES: { value: string; label: string; rail: string }[] = [
+  { value: "draft", label: "Draft", rail: "bg-muted-foreground/40" },
+  { value: "scheduled", label: "Scheduled", rail: "bg-amber-400" },
+  { value: "live", label: "Live", rail: "bg-emerald-400" },
+  { value: "ended", label: "Ended", rail: "bg-zinc-500" },
+  { value: "finalized", label: "Finalized", rail: "bg-zinc-400" },
+];
+
+function laneClass(status: string): string {
+  if (status === "live") return "bg-emerald-400";
+  if (status === "scheduled") return "bg-amber-400";
+  if (status === "draft") return "bg-muted-foreground/50";
+  if (status === "failed" || status === "cancelled") return "bg-destructive";
+  return "bg-zinc-500";
+}
+
+function parseMoney(v?: string): { value: number; unit: string } | null {
+  if (!v) return null;
+  const m = v.replace(/,/g, "").match(/^\s*(\d*\.?\d+)\s*([A-Za-z]*)/);
+  if (!m) return null;
+  const value = parseFloat(m[1]);
+  if (!Number.isFinite(value)) return null;
+  return { value, unit: m[2].toUpperCase() };
+}
+
+export type Commitment =
+  | {
+      state: "ok";
+      raised: number;
+      softCap: number;
+      unit: string;
+      pct: number;
+      /** width of the raised fill, 0-100, on a scale that always contains the soft cap */
+      fillPct: number;
+      /** position of the soft-cap tick, 0-100 */
+      tickPct: number;
+      met: boolean;
+    }
+  | { state: "unavailable"; reason: string };
+
+/**
+ * Raised against soft cap. A fair launch record has no hard cap, so the scale is
+ * max(raised, softCap): the soft-cap tick sits at the end of the bar until the raise
+ * passes it, after which the fill runs beyond the tick.
+ */
+export function getCommitment(fl: Pick<FairLaunch, "totalRaised" | "softCap">): Commitment {
+  const raised = parseMoney(fl.totalRaised);
+  const cap = parseMoney(fl.softCap);
+  if (!raised) return { state: "unavailable", reason: "Raised amount not recorded" };
+  if (!cap) return { state: "unavailable", reason: "Soft cap not recorded" };
+  if (cap.value <= 0) return { state: "unavailable", reason: "Soft cap is zero" };
+  if (raised.unit !== cap.unit) return { state: "unavailable", reason: "Raised and soft cap use different units" };
+  const scale = Math.max(raised.value, cap.value);
+  return {
+    state: "ok",
+    raised: raised.value,
+    softCap: cap.value,
+    unit: cap.unit,
+    pct: Math.round((raised.value / cap.value) * 100),
+    fillPct: (raised.value / scale) * 100,
+    tickPct: (cap.value / scale) * 100,
+    met: raised.value >= cap.value,
+  };
+}
+
+function capNote(fl: FairLaunch, c: Commitment): string {
+  if (c.state !== "ok") return c.reason;
+  if (CONCLUDED.includes(fl.status)) return c.met ? "Soft cap met" : "Soft cap not met";
+  if (fl.status === "live") return c.met ? "Soft cap reached" : "Soft cap not reached yet";
+  return "Nothing raised yet";
+}
+
+export interface LaneAxis {
+  min: number;
+  max: number;
+}
+
+/** Shared time axis for the launch windows currently listed. */
+export function laneAxis(items: Pick<FairLaunch, "startTime" | "endTime">[]): LaneAxis | null {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const it of items) {
+    const s = it.startTime ? new Date(it.startTime).getTime() : NaN;
+    const e = it.endTime ? new Date(it.endTime).getTime() : NaN;
+    if (!Number.isNaN(s)) {
+      min = Math.min(min, s);
+      max = Math.max(max, s);
+    }
+    if (!Number.isNaN(e)) {
+      min = Math.min(min, e);
+      max = Math.max(max, e);
+    }
+  }
+  return Number.isFinite(min) && Number.isFinite(max) ? { min, max } : null;
+}
+
+/** Position of one launch window on the shared axis, as percentages. */
+export function lanePosition(
+  fl: Pick<FairLaunch, "startTime" | "endTime">,
+  axis: LaneAxis | null
+): { left: number; width: number } | null {
+  if (!axis || !fl.startTime || !fl.endTime) return null;
+  const s = new Date(fl.startTime).getTime();
+  const e = new Date(fl.endTime).getTime();
+  if (Number.isNaN(s) || Number.isNaN(e) || e < s) return null;
+  const span = axis.max - axis.min;
+  if (span <= 0) return { left: 0, width: 100 };
+  const width = Math.min(100, Math.max(3, ((e - s) / span) * 100));
+  const left = Math.min(100 - width, ((s - axis.min) / span) * 100);
+  return { left, width };
+}
+
+export function windowDays(fl: Pick<FairLaunch, "startTime" | "endTime">): number | null {
+  if (!fl.startTime || !fl.endTime) return null;
+  const ms = new Date(fl.endTime).getTime() - new Date(fl.startTime).getTime();
+  if (Number.isNaN(ms) || ms < 0) return null;
+  return Math.max(1, Math.round(ms / 86_400_000));
+}
+
+function scheduleText(fl: FairLaunch): string {
+  if (!fl.startTime && !fl.endTime) return "Schedule not set";
+  switch (fl.status) {
+    case "live":
+      return `Closes ${fmtDate(fl.endTime)}`;
+    case "scheduled":
+      return `Opens ${fmtDate(fl.startTime)} · closes ${fmtDate(fl.endTime)}`;
+    case "draft":
+      return `Planned ${fmtDate(fl.startTime)} – ${fmtDate(fl.endTime)}`;
+    default:
+      return `Closed ${fmtDate(fl.endTime)}`;
+  }
+}
+
+function fmtParticipants(n?: number): string {
+  return typeof n === "number" ? n.toLocaleString("en-US") : "—";
+}
+
+function contributionRange(fl: FairLaunch): string {
+  if (fl.minContribution && fl.maxContribution) return `${fl.minContribution} – ${fl.maxContribution}`;
+  return fl.minContribution || fl.maxContribution || "—";
+}
+
+export interface FairLaunchFilters {
+  search: string;
+  status: string;
+  network: string;
+  category: string;
+}
+
+export function matchesFairLaunch(
+  fl: FairLaunch,
+  f: FairLaunchFilters,
+  tokenMap: Map<string, Token>,
+  projectMap: Map<string, Project>
+): boolean {
+  const token = tokenMap.get(fl.tokenId);
+  const project = fl.projectId ? projectMap.get(fl.projectId) : undefined;
+
+  if (f.search.trim()) {
+    const q = f.search.toLowerCase().trim();
+    const hit =
+      fl.title.toLowerCase().includes(q) ||
+      (fl.description?.toLowerCase().includes(q) ?? false) ||
+      (token?.name.toLowerCase().includes(q) ?? false) ||
+      (token?.symbol.toLowerCase().includes(q) ?? false) ||
+      (project?.name.toLowerCase().includes(q) ?? false);
+    if (!hit) return false;
+  }
+
+  if (f.status !== "all" && fl.status !== f.status) return false;
+
+  if (f.network === "sepolia") {
+    if (!isSepoliaNetwork(fl.network)) return false;
+  } else if (f.network !== "all") {
+    if (fl.network !== f.network) return false;
+  }
+
+  if (f.category !== "all") {
+    const cat = fl.category || token?.category;
+    if (cat !== f.category) return false;
+  }
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
+// Small presentational pieces
+// ---------------------------------------------------------------------------
+
+function NetworkChip({ network }: { network: string }) {
+  const ok = isSepoliaNetwork(network);
+  return (
+    <span
+      title={
+        ok
+          ? "Ethereum Sepolia (Chain ID 11155111) is the active network (D-04)"
+          : "Catalog metadata only. Ethereum Sepolia is the only active wallet network (D-04)"
+      }
+      className={cn(
+        "inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 font-mono text-[10px]",
+        ok ? "bg-primary/10 text-primary" : "bg-muted/60 text-muted-foreground"
+      )}
+    >
+      <span className={cn("h-1 w-1 rounded-full", ok ? "bg-primary" : "bg-muted-foreground/60")} />
+      {network}
+    </span>
+  );
+}
+
+function TokenTile({ symbol, title, size = "md" }: { symbol?: string; title: string; size?: "sm" | "md" }) {
+  const text = symbol ? symbol.slice(0, 3) : title.slice(0, 2).toUpperCase();
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary/25 via-primary/10 to-transparent font-mono font-bold text-primary",
+        size === "md" ? "h-11 w-11 text-sm" : "h-8 w-8 text-[11px]"
+      )}
+    >
+      {text}
+    </span>
+  );
+}
+
+/** Raised vs soft cap. No hard cap exists, so the fill may run past the tick. */
+function CommitmentBar({ fl, thin }: { fl: FairLaunch; thin?: boolean }) {
+  const c = getCommitment(fl);
+  if (c.state !== "ok") {
+    return (
+      <div
+        className={cn("w-full rounded-full border border-dashed border-border/70", thin ? "h-1.5" : "h-2")}
+        title={c.reason}
+      />
+    );
+  }
+  return (
+    <div
+      role="meter"
+      aria-label={`Raised ${fl.totalRaised} against soft cap ${fl.softCap}`}
+      aria-valuemin={0}
+      aria-valuenow={c.pct}
+      aria-valuetext={`${c.pct}% of soft cap`}
+      className="relative w-full"
+    >
+      <div className={cn("w-full overflow-hidden rounded-full bg-secondary", thin ? "h-1.5" : "h-2")}>
+        <div
+          className={cn(
+            "h-full rounded-full",
+            CONCLUDED.includes(fl.status) ? "bg-zinc-400" : c.met ? "bg-emerald-400" : "bg-primary"
+          )}
+          style={{ width: `${c.fillPct}%` }}
+        />
+      </div>
+      <span
+        aria-hidden
+        className={cn("absolute w-px bg-foreground/80", thin ? "-top-0.5 h-2.5" : "-top-1 h-4")}
+        style={{ left: `${c.tickPct}%` }}
+      />
+    </div>
+  );
+}
+
+function WindowLane({ fl, axis }: { fl: FairLaunch; axis: LaneAxis | null }) {
+  const pos = lanePosition(fl, axis);
+  const days = windowDays(fl);
+  return (
+    <div
+      className="relative h-1.5 w-full rounded-full bg-secondary/70"
+      title={`${fmtDate(fl.startTime)} – ${fmtDate(fl.endTime)} (UTC)${days ? ` · ${days}-day window` : ""}`}
+    >
+      {pos ? (
+        <span
+          className={cn("absolute top-0 h-full rounded-full", laneClass(fl.status))}
+          style={{ left: `${pos.left}%`, width: `${pos.width}%` }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function CommitmentFigures({ fl }: { fl: FairLaunch }) {
+  const c = getCommitment(fl);
+  return (
+    <div className="flex items-end justify-between gap-3">
+      <div className="min-w-0">
+        <div className="font-mono text-xl font-semibold leading-none text-foreground">
+          {fl.totalRaised || "—"}
+        </div>
+        <div className="mt-1 text-[11px] text-muted-foreground">raised (recorded)</div>
+      </div>
+      <div className="text-right">
+        <div className="font-mono text-sm font-semibold text-foreground">
+          {c.state === "ok" ? `${c.pct}%` : "—"}
+        </div>
+        <div className="mt-0.5 text-[11px] text-muted-foreground">
+          of {fl.softCap ? `${fl.softCap} soft cap` : "soft cap"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IdentityLines({
+  fl,
+  token,
+  project,
+}: {
+  fl: FairLaunch;
+  token?: Token;
+  project?: Project;
+}) {
+  return (
+    <div className="min-w-0">
+      <Link
+        href={`/launchpad/launches/${fl.id}`}
+        className="line-clamp-2 text-sm font-semibold leading-snug text-foreground transition-colors hover:text-primary"
+      >
+        {fl.title}
+      </Link>
+      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+        {token ? (
+          <Link href={`/tokens/${token.id}`} className="font-mono font-semibold text-primary hover:underline">
+            ${token.symbol}
+          </Link>
+        ) : (
+          <span className="font-mono font-semibold text-foreground">{fl.tokenId.toUpperCase()}</span>
+        )}
+        {project && (
+          <>
+            <span className="text-muted-foreground/50">·</span>
+            <Link href={`/projects/${project.id}`} className="truncate hover:text-foreground">
+              {project.name}
+            </Link>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Directory
+// ---------------------------------------------------------------------------
 
 export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryProps) {
   // Filter and view state
@@ -99,27 +458,22 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
     setSearchQuery(value);
     setCurrentPage(1);
   };
-
   const handleStatusChange = (value: string) => {
     setStatusFilter(value);
     setCurrentPage(1);
   };
-
   const handleNetworkChange = (value: string) => {
     setNetworkFilter(value);
     setCurrentPage(1);
   };
-
   const handleCategoryChange = (value: string) => {
     setCategoryFilter(value);
     setCurrentPage(1);
   };
-
   const handlePageSizeChange = (size: number) => {
     setPageSize(size);
     setCurrentPage(1);
   };
-
   const handleResetFilters = () => {
     setSearchQuery("");
     setStatusFilter("all");
@@ -130,53 +484,43 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
   };
 
   // Filtered fair launches
-  const filteredLaunches = useMemo(() => {
-    return MOCK_FAIR_LAUNCHES.filter((fl) => {
-      const token = tokenMap.get(fl.tokenId);
-      const project = fl.projectId ? projectMap.get(fl.projectId) : undefined;
+  const filteredLaunches = useMemo(
+    () =>
+      MOCK_FAIR_LAUNCHES.filter((fl) =>
+        matchesFairLaunch(
+          fl,
+          { search: searchQuery, status: statusFilter, network: networkFilter, category: categoryFilter },
+          tokenMap,
+          projectMap
+        )
+      ),
+    [searchQuery, statusFilter, networkFilter, categoryFilter, tokenMap, projectMap]
+  );
 
-      // 1. Search Query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchesTitle = fl.title.toLowerCase().includes(q);
-        const matchesDesc = fl.description?.toLowerCase().includes(q) ?? false;
-        const matchesTokenName = token?.name.toLowerCase().includes(q) ?? false;
-        const matchesTokenSymbol = token?.symbol.toLowerCase().includes(q) ?? false;
-        const matchesProject = project?.name.toLowerCase().includes(q) ?? false;
+  // Live facet counts: each control counts launches under the *other* active filters
+  const stageCounts = useMemo(() => {
+    const base: FairLaunchFilters = {
+      search: searchQuery,
+      status: "all",
+      network: networkFilter,
+      category: categoryFilter,
+    };
+    const rows = MOCK_FAIR_LAUNCHES.filter((fl) => matchesFairLaunch(fl, base, tokenMap, projectMap));
+    const counts: Record<string, number> = { all: rows.length };
+    STAGES.forEach((s) => (counts[s.value] = rows.filter((fl) => fl.status === s.value).length));
+    return counts;
+  }, [searchQuery, networkFilter, categoryFilter, tokenMap, projectMap]);
 
-        if (
-          !matchesTitle &&
-          !matchesDesc &&
-          !matchesTokenName &&
-          !matchesTokenSymbol &&
-          !matchesProject
-        ) {
-          return false;
-        }
-      }
-
-      // 2. Status Filter
-      if (statusFilter !== "all" && fl.status !== statusFilter) {
-        return false;
-      }
-
-      // 3. Network Filter (D-04 Scope)
-      if (networkFilter === "sepolia") {
-        const net = fl.network.toLowerCase();
-        if (!net.includes("sepolia") && net !== "ethereum") return false;
-      } else if (networkFilter !== "all") {
-        if (fl.network !== networkFilter) return false;
-      }
-
-      // 4. Category Filter
-      if (categoryFilter !== "all") {
-        const cat = fl.category || token?.category;
-        if (cat !== categoryFilter) return false;
-      }
-
-      return true;
-    });
-  }, [searchQuery, statusFilter, networkFilter, categoryFilter, tokenMap, projectMap]);
+  const networkCounts = useMemo(() => {
+    const base: FairLaunchFilters = {
+      search: searchQuery,
+      status: statusFilter,
+      network: "all",
+      category: categoryFilter,
+    };
+    const rows = MOCK_FAIR_LAUNCHES.filter((fl) => matchesFairLaunch(fl, base, tokenMap, projectMap));
+    return { all: rows.length, sepolia: rows.filter((fl) => isSepoliaNetwork(fl.network)).length };
+  }, [searchQuery, statusFilter, categoryFilter, tokenMap, projectMap]);
 
   // Sorted fair launches
   const sortedLaunches = useMemo(() => {
@@ -196,21 +540,20 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
             new Date(a.startTime || a.createdAt).getTime() -
             new Date(b.startTime || b.createdAt).getTime()
           );
-        case "progress-desc": {
-          const progA = calculateProgress(a.totalRaised, a.softCap);
-          const progB = calculateProgress(b.totalRaised, b.softCap);
-          return progB - progA;
-        }
-        case "raised-desc": {
-          const raisedA = parseAmount(a.totalRaised);
-          const raisedB = parseAmount(b.totalRaised);
-          return raisedB - raisedA;
-        }
+        case "progress-desc":
+          return (
+            calculateProgress(b.totalRaised, b.softCap) - calculateProgress(a.totalRaised, a.softCap)
+          );
+        case "raised-desc":
+          return parseAmount(b.totalRaised) - parseAmount(a.totalRaised);
         default:
           return 0;
       }
     });
   }, [filteredLaunches, sortBy]);
+
+  // Shared schedule axis across everything the filters currently match
+  const axis = useMemo(() => laneAxis(sortedLaunches), [sortedLaunches]);
 
   // Pagination Math
   const totalItems = sortedLaunches.length;
@@ -238,133 +581,129 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
     }
   };
 
-  // Helper for initial avatar generator
-  const getInitials = (name: string) => {
-    const parts = name.split(" ").filter(Boolean);
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.slice(0, 2).toUpperCase();
-  };
+  const ariaSort = (asc: FairLaunchSortOption[], desc: FairLaunchSortOption[]) =>
+    asc.includes(sortBy) ? "ascending" : desc.includes(sortBy) ? "descending" : "none";
+
+  const selectClass =
+    "h-8 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:border-primary focus:outline-none";
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* 1. Page Header */}
-      <PageHeader
-        title={mode === "canonical" ? "All Fair Launches" : "Fair Launches Discovery"}
-        description={
-          mode === "canonical"
-            ? "Public token offerings with 100% fair distribution, locked founder allocations, and automated DEX liquidity pool setup."
-            : "Equal-opportunity decentralized launches without private allocations, seed rounds, or team pre-mines."
-        }
-        breadcrumbs={
-          mode === "canonical"
-            ? [
-                { label: "Launchpad", href: "/launchpad" },
-                { label: "Fair Launches" },
-              ]
-            : [
-                { label: "Explore", href: "/explore" },
-                { label: "Fair Launches" },
-              ]
-        }
-        actions={
-          <Button
-            asChild
-            size="sm"
-            className="bg-primary text-primary-foreground text-xs gap-1.5 font-semibold hover:bg-primary/90"
+    <div className="mx-auto w-full max-w-[1600px] space-y-10 px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      {/* 1. Masthead */}
+      <header className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+        <div className="space-y-3">
+          <Link
+            href={mode === "canonical" ? "/launchpad" : "/explore"}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Link href="/launchpad/launches/create">
-              <Plus className="h-3.5 w-3.5" /> Create Fair Launch
-            </Link>
-          </Button>
-        }
-      />
-
-      {/* 2. Demonstration Data & D-04 Architecture Notice */}
-      <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 backdrop-blur-sm space-y-2">
-        <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-          <Info className="h-4 w-4 shrink-0" />
-          <span>Demonstration Data & Network Scope Notice (Architecture Decision D-04)</span>
+            <ArrowLeft className="h-3.5 w-3.5" />
+            {mode === "canonical" ? "Launchpad" : "Explore"}
+          </Link>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+            {mode === "canonical" ? "Launchpad · Fair launches" : "Explore · Fair launch discovery"}
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            {mode === "canonical" ? "All Fair Launches" : "Fair Launches Discovery"}
+          </h1>
+          <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            {mode === "canonical"
+              ? "Every fair launch in the catalog, with the raise measured against its soft cap, recorded participants and the launch window."
+              : "Compare fair launches across networks by stage, commitment and schedule, then open one for its full record."}
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          All fair launch offerings, contribution goals, participant metrics, and progress percentages
-          displayed are simulated demonstration data. Per <strong>Architecture Decision D-04</strong>,
-          <strong> Ethereum Sepolia (Chain ID: 11155111)</strong> is the only active EVM wallet network.
-          Non-Sepolia listings (e.g. Base, Arbitrum One, Polygon) reflect future catalog metadata and do not imply
-          active wallet or transaction support on those chains. No real funds are raised or required.
-        </p>
-      </div>
+        <Button
+          asChild
+          size="sm"
+          className="gap-1.5 self-start bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90 lg:self-auto"
+        >
+          <Link href="/launchpad/launches/create">
+            <Plus className="h-3.5 w-3.5" /> Create Fair Launch
+          </Link>
+        </Button>
+      </header>
 
-      {/* 3. Summary Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Total Offerings</span>
-            <Sparkles className="h-4 w-4 text-primary" />
+      {/* 2. Disclosure + how to read a fair launch */}
+      <section aria-label="Data notice and how to read a fair launch" className="grid gap-6 lg:grid-cols-2">
+        <div className="border-l-2 border-primary/60 pl-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+            <Info className="h-3.5 w-3.5 shrink-0" />
+            Demonstration data · Network scope (Architecture Decision D-04)
           </div>
-          <div className="text-2xl font-bold font-mono text-foreground">
-            {MOCK_FAIR_LAUNCHES.length}
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+            All launches, raised amounts, participant counts and schedules are simulated demonstration data, and
+            listing descriptions are sample text rather than verified terms. Per <strong>D-04</strong>,{" "}
+            <strong>Ethereum Sepolia (Chain ID 11155111)</strong> is the only active wallet network; Base, Arbitrum
+            One and Polygon records are catalog metadata only. No real funds are raised or required.
+          </p>
+        </div>
+        <div className="border-l-2 border-border pl-4">
+          <div className="text-xs font-semibold text-foreground">How a fair launch is shown here</div>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+            A fair launch record stores a <strong>soft cap</strong>, the <strong>total tokens for sale</strong> and a
+            launch window. It does not store a hard cap, token price or per-wallet allocation, so the bar compares the
+            raise with the soft cap (the tick) and can run past it. Presales are different: they carry a hard cap.
+          </p>
+        </div>
+      </section>
+
+      {/* 3. Discovery controls */}
+      <section aria-label="Search and filters" className="space-y-5">
+        {/* Stage track */}
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <div role="group" aria-label="Launch stage" className="flex min-w-max items-stretch gap-1 sm:min-w-0">
+            <button
+              type="button"
+              onClick={() => handleStatusChange("all")}
+              aria-pressed={statusFilter === "all"}
+              className={cn(
+                "flex min-w-[88px] flex-col gap-1.5 rounded-md px-3 py-2.5 text-left transition-colors sm:flex-1",
+                statusFilter === "all" ? "bg-secondary/80" : "hover:bg-secondary/40"
+              )}
+            >
+              <span className="h-1 w-full rounded-full bg-gradient-to-r from-muted-foreground/40 via-amber-400 to-emerald-400" />
+              <span className="flex flex-wrap items-baseline justify-between gap-x-2">
+                <span className="text-xs font-medium text-foreground">All stages</span>
+                <span className="font-mono text-lg font-semibold text-foreground">{stageCounts.all}</span>
+              </span>
+            </button>
+            {STAGES.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => handleStatusChange(s.value)}
+                aria-pressed={statusFilter === s.value}
+                className={cn(
+                  "flex min-w-[88px] flex-col gap-1.5 rounded-md px-3 py-2.5 text-left transition-colors sm:flex-1",
+                  statusFilter === s.value ? "bg-secondary/80" : "hover:bg-secondary/40",
+                  stageCounts[s.value] === 0 && statusFilter !== s.value && "opacity-50"
+                )}
+              >
+                <span className={cn("h-1 w-full rounded-full", s.rail)} />
+                <span className="flex flex-wrap items-baseline justify-between gap-x-2">
+                  <span className="text-xs font-medium text-foreground">{s.label}</span>
+                  <span className="font-mono text-lg font-semibold text-foreground">{stageCounts[s.value]}</span>
+                </span>
+              </button>
+            ))}
           </div>
-          <p className="text-[11px] text-muted-foreground">Decentralized fair launches</p>
         </div>
 
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Live Now</span>
-            <Flame className="h-4 w-4 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-emerald-400">
-            {MOCK_FAIR_LAUNCHES.filter((fl) => fl.status === "live").length}
-          </div>
-          <p className="text-[11px] text-muted-foreground">Accepting contributions</p>
-        </div>
-
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Sepolia Active (D-04)</span>
-            <CheckCircle2 className="h-4 w-4 text-primary" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-primary">
-            {
-              MOCK_FAIR_LAUNCHES.filter(
-                (fl) =>
-                  fl.network.toLowerCase().includes("sepolia") ||
-                  fl.network === "Ethereum"
-              ).length
-            }
-          </div>
-          <p className="text-[11px] text-muted-foreground">Chain ID 11155111</p>
-        </div>
-
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Total Raised (Simulated)</span>
-            <TrendingUp className="h-4 w-4 text-amber-400" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-amber-400">
-            {MOCK_FAIR_LAUNCHES.reduce((acc, fl) => acc + parseAmount(fl.totalRaised), 0).toFixed(1)}{" "}
-            ETH
-          </div>
-          <p className="text-[11px] text-muted-foreground">Demonstration pools</p>
-        </div>
-      </div>
-
-      {/* 4. Controls Toolbar */}
-      <div className="rounded-2xl border border-border/60 bg-card/60 p-4 sm:p-5 backdrop-blur-md space-y-4">
-        {/* Top bar: Search + View Mode */}
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        {/* Search + network + category */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative flex-1 md:max-w-xl">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
               placeholder="Search by launch title, token, symbol or description..."
+              aria-label="Search fair launches"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-9 pr-8 text-xs bg-secondary/30 border-border/60 h-9"
+              className="h-10 border-border/60 bg-secondary/30 pl-9 pr-8 text-sm"
             />
             {searchQuery && (
               <button
                 onClick={() => handleSearchChange("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground"
                 aria-label="Clear search"
               >
                 <X className="h-3.5 w-3.5" />
@@ -372,131 +711,88 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
             )}
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            {/* View Mode Toggle */}
-            <div className="flex items-center rounded-lg border border-border/60 bg-secondary/30 p-0.5">
+          <div
+            role="group"
+            aria-label="Network"
+            className="inline-flex self-start rounded-lg bg-secondary/40 p-0.5 md:self-auto"
+          >
+            {[
+              { value: "all", label: "All networks", count: networkCounts.all, title: undefined },
+              {
+                value: "sepolia",
+                label: "Sepolia",
+                count: networkCounts.sepolia,
+                title: "Ethereum Sepolia (11155111), the active network (D-04)",
+              },
+            ].map((n) => (
               <button
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded text-xs transition-colors ${
-                  viewMode === "grid"
-                    ? "bg-primary text-primary-foreground font-semibold"
+                key={n.value}
+                type="button"
+                title={n.title}
+                onClick={() => handleNetworkChange(n.value)}
+                aria-pressed={networkFilter === n.value}
+                className={cn(
+                  "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                  networkFilter === n.value
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Grid View"
-                aria-label="Grid View"
+                )}
               >
-                <LayoutGrid className="h-4 w-4" />
+                {n.label} <span className="font-mono opacity-70">{n.count}</span>
               </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`p-1.5 rounded text-xs transition-colors ${
-                  viewMode === "table"
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Table View"
-                aria-label="Table View"
-              >
-                <List className="h-4 w-4" />
-              </button>
-            </div>
-
-            {/* Page Size Select */}
-            <select
-              value={pageSize}
-              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              className="h-9 rounded-lg border border-border/60 bg-secondary/30 px-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
-              aria-label="Page Size"
-            >
-              <option value={4} className="bg-card text-foreground">
-                4 per page
-              </option>
-              <option value={6} className="bg-card text-foreground">
-                6 per page
-              </option>
-              <option value={12} className="bg-card text-foreground">
-                12 per page
-              </option>
-            </select>
+            ))}
           </div>
+
+          <select
+            value={categoryFilter}
+            onChange={(e) => handleCategoryChange(e.target.value)}
+            className={cn(selectClass, "h-10 self-start md:self-auto")}
+            aria-label="Category"
+          >
+            <option value="all" className="bg-card text-foreground">
+              All Categories
+            </option>
+            {uniqueCategories.map((cat) => (
+              <option key={cat} value={cat} className="bg-card text-foreground">
+                {cat}
+              </option>
+            ))}
+          </select>
         </div>
+      </section>
 
-        {/* Filters row */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
-          {/* Status Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-muted-foreground">Status:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              className="h-7 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-            >
-              <option value="all" className="bg-card text-foreground">
-                All Statuses
-              </option>
-              <option value="live" className="bg-card text-foreground">
-                Live
-              </option>
-              <option value="scheduled" className="bg-card text-foreground">
-                Scheduled
-              </option>
-              <option value="ended" className="bg-card text-foreground">
-                Ended
-              </option>
-              <option value="finalized" className="bg-card text-foreground">
-                Finalized
-              </option>
-              <option value="draft" className="bg-card text-foreground">
-                Draft
-              </option>
-            </select>
+      {/* 4. Results */}
+      <section aria-label="Fair launch results" className="space-y-5">
+        <div className="flex flex-col gap-3 border-b border-border/50 pb-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-3 text-sm">
+              <span className="text-foreground">
+                <strong className="font-mono">{totalItems}</strong> fair launch{totalItems === 1 ? "" : "es"}
+              </span>
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  <X className="h-3 w-3" /> Reset
+                </button>
+              )}
+            </div>
+            {axis && (
+              <p className="text-[11px] text-muted-foreground">
+                Schedule bars share one axis: {fmtDate(new Date(axis.min).toISOString())} –{" "}
+                {fmtDate(new Date(axis.max).toISOString())} (UTC)
+              </p>
+            )}
           </div>
 
-          {/* D-04 Network Scope Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-muted-foreground">Network:</span>
-            <select
-              value={networkFilter}
-              onChange={(e) => handleNetworkChange(e.target.value)}
-              className="h-7 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-            >
-              <option value="all" className="bg-card text-foreground">
-                All Networks
-              </option>
-              <option value="sepolia" className="bg-card text-foreground">
-                Ethereum Sepolia (11155111 — Active)
-              </option>
-            </select>
-          </div>
-
-          {/* Category Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-muted-foreground">Category:</span>
-            <select
-              value={categoryFilter}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="h-7 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-            >
-              <option value="all" className="bg-card text-foreground">
-                All Categories
-              </option>
-              {uniqueCategories.map((cat) => (
-                <option key={cat} value={cat} className="bg-card text-foreground">
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Sort By */}
-          <div className="flex items-center gap-1.5 ml-auto">
-            <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-              <ArrowUpDown className="h-3 w-3" /> Sort:
-            </span>
+          <div className="flex flex-wrap items-center gap-2">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as FairLaunchSortOption)}
-              className="h-7 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:outline-none focus:border-primary"
+              className={selectClass}
+              aria-label="Sort by"
             >
               <option value="date-desc" className="bg-card text-foreground">
                 Newest First
@@ -517,406 +813,339 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                 Total Raised
               </option>
             </select>
-          </div>
-
-          {/* Reset Filters button */}
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResetFilters}
-              className="h-7 text-xs text-muted-foreground hover:text-foreground px-2"
+            <select
+              value={pageSize}
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              className={selectClass}
+              aria-label="Page Size"
             >
-              <X className="h-3 w-3 mr-1" /> Reset
-            </Button>
-          )}
+              <option value={4} className="bg-card text-foreground">
+                4 per page
+              </option>
+              <option value={6} className="bg-card text-foreground">
+                6 per page
+              </option>
+              <option value={12} className="bg-card text-foreground">
+                12 per page
+              </option>
+            </select>
+            <div className="flex items-center rounded-lg bg-secondary/40 p-0.5">
+              <button
+                onClick={() => setViewMode("grid")}
+                aria-pressed={viewMode === "grid"}
+                className={cn(
+                  "rounded-md p-1.5 transition-colors",
+                  viewMode === "grid"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                title="Grid View"
+                aria-label="Grid View"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                aria-pressed={viewMode === "table"}
+                className={cn(
+                  "rounded-md p-1.5 transition-colors",
+                  viewMode === "table"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                title="Table View"
+                aria-label="Table View"
+              >
+                <List className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* 5. Listing Presentation (Grid or Table) */}
-      {paginatedLaunches.length === 0 ? (
-        <EmptyState
-          icon={<Coins className="h-7 w-7 text-primary/70" />}
-          title="No Fair Launches Found"
-          description="No fair launches match your current filters and search query. Try broadening your keywords or resetting filters."
-          action={
-            hasActiveFilters ? (
+        {paginatedLaunches.length === 0 ? (
+          <div className="flex flex-col items-center py-20 text-center">
+            <SearchX className="h-8 w-8 text-primary/70" />
+            <h3 className="mt-4 text-base font-semibold text-foreground">No Fair Launches Found</h3>
+            <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-muted-foreground">
+              No fair launches match your current filters and search query. Try broadening your keywords or
+              resetting filters.
+            </p>
+            {hasActiveFilters && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleResetFilters}
-                className="text-xs border-border/60"
+                className="mt-5 border-border/60 text-xs"
               >
                 Reset All Filters
               </Button>
-            ) : undefined
-          }
-        />
-      ) : viewMode === "grid" ? (
-        /* GRID VIEW */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedLaunches.map((fl) => {
-            const token = tokenMap.get(fl.tokenId);
-            const project = fl.projectId ? projectMap.get(fl.projectId) : undefined;
-            const progress = calculateProgress(fl.totalRaised, fl.softCap);
-            const isSepolia =
-              fl.network.toLowerCase().includes("sepolia") || fl.network === "Ethereum";
-
-            return (
-              <div
-                key={fl.id}
-                className="flex flex-col justify-between rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md hover:border-primary/50 transition-all duration-200 group"
-              >
-                <div className="space-y-4">
-                  {/* Card Header: Network + Badges */}
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span
-                        className={`rounded px-2 py-0.5 text-[10px] font-mono font-medium ${
-                          isSepolia
-                            ? "bg-primary/10 text-primary border border-primary/30"
-                            : "bg-muted text-muted-foreground border border-border/40"
-                        }`}
-                      >
-                        {fl.network}
-                      </span>
-                      {fl.category && (
-                        <Badge
-                          variant="secondary"
-                          className="text-[10px] bg-secondary/40 text-muted-foreground px-1.5 py-0"
-                        >
-                          {fl.category}
-                        </Badge>
-                      )}
-                    </div>
+            )}
+          </div>
+        ) : viewMode === "grid" ? (
+          /* GRID VIEW: launch pools */
+          <div className="grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-2 xl:grid-cols-3">
+            {paginatedLaunches.map((fl) => {
+              const token = tokenMap.get(fl.tokenId);
+              const project = fl.projectId ? projectMap.get(fl.projectId) : undefined;
+              const c = getCommitment(fl);
+              const days = windowDays(fl);
+              return (
+                <article
+                  key={fl.id}
+                  className="group flex flex-col rounded-2xl bg-gradient-to-b from-card/80 to-card/20 p-5 ring-1 ring-border/50 transition-shadow hover:ring-primary/40"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
                     <StatusBadge status={fl.status} />
-                  </div>
-
-                  {/* Title & Token Identity */}
-                  <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/30 flex items-center justify-center font-bold text-sm text-primary font-mono shadow-inner">
-                      {token ? token.symbol.slice(0, 3) : getInitials(fl.title)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <Link
-                        href={`/launchpad/launches/${fl.id}`}
-                        className="font-bold text-foreground text-sm hover:text-primary transition-colors line-clamp-1 group-hover:text-primary"
-                      >
-                        {fl.title}
-                      </Link>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                        {token ? (
-                          <Link
-                            href={`/tokens/${token.id}`}
-                            className="font-mono text-primary hover:underline font-semibold"
-                          >
-                            ${token.symbol}
-                          </Link>
-                        ) : (
-                          <span className="font-mono text-foreground font-semibold">
-                            {fl.tokenId.toUpperCase()}
-                          </span>
-                        )}
-                        {project && (
-                          <>
-                            <span className="text-muted-foreground/60">•</span>
-                            <Link
-                              href={`/projects/${project.id}`}
-                              className="hover:text-foreground truncate"
-                            >
-                              {project.name}
-                            </Link>
-                          </>
-                        )}
-                      </div>
+                    <div className="flex min-w-0 items-center gap-2">
+                      {fl.category && (
+                        <span className="max-w-[9rem] truncate text-[11px] text-muted-foreground">{fl.category}</span>
+                      )}
+                      <NetworkChip network={fl.network} />
                     </div>
                   </div>
 
-                  {/* Description */}
+                  <div className="mt-4 flex items-start gap-3">
+                    <TokenTile symbol={token?.symbol} title={fl.title} />
+                    <IdentityLines fl={fl} token={token} project={project} />
+                  </div>
+
                   {fl.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                       {fl.description}
                     </p>
                   )}
 
-                  {/* Progress Bar & Allocation Info */}
-                  <div className="rounded-xl border border-border/40 bg-secondary/20 p-3.5 space-y-2.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Softcap Progress</span>
-                      <span className="font-mono font-bold text-foreground">
-                        {progress}%
-                      </span>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          progress >= 100
-                            ? "bg-emerald-400"
-                            : progress > 0
-                            ? "bg-primary"
-                            : "bg-muted-foreground/30"
-                        }`}
-                        style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
-                      <span>Raised: <strong className="font-mono text-foreground">{fl.totalRaised || "0 ETH"}</strong></span>
-                      <span>Softcap: <strong className="font-mono text-foreground">{fl.softCap || "TBD"}</strong></span>
-                    </div>
+                  <div className="mt-5 space-y-2.5">
+                    <CommitmentFigures fl={fl} />
+                    <CommitmentBar fl={fl} />
+                    <div className="text-[11px] text-muted-foreground">{capNote(fl, c)}</div>
                   </div>
 
-                  {/* Metrics grid */}
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded-lg bg-secondary/30 p-2 space-y-0.5">
-                      <span className="text-[10px] text-muted-foreground block">Total Selling</span>
-                      <span className="font-mono font-semibold text-foreground truncate block">
-                        {fl.totalSelling || "Public Allocation"}
-                      </span>
-                    </div>
-                    <div className="rounded-lg bg-secondary/30 p-2 space-y-0.5">
-                      <span className="text-[10px] text-muted-foreground block flex items-center gap-1">
+                  <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border/40 pt-4 text-xs">
+                    <div className="min-w-0">
+                      <dt className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
                         <Users className="h-3 w-3" /> Participants
-                      </span>
-                      <span className="font-mono font-semibold text-foreground block">
-                        {fl.participantCount ? fl.participantCount.toLocaleString() : "0"}
-                      </span>
+                      </dt>
+                      <dd className="mt-1 font-mono font-semibold text-foreground">
+                        {fmtParticipants(fl.participantCount)}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">For sale</dt>
+                      <dd className="mt-1 truncate font-mono font-semibold text-foreground" title={fl.totalSelling}>
+                        {fl.totalSelling || "—"}
+                      </dd>
+                    </div>
+                    <div className="col-span-2 min-w-0">
+                      <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        Contribution range (per record)
+                      </dt>
+                      <dd className="mt-1 font-mono font-semibold text-foreground">{contributionRange(fl)}</dd>
+                    </div>
+                  </dl>
+
+                  <div className="mt-4 space-y-1.5">
+                    <WindowLane fl={fl} axis={axis} />
+                    <div className="flex items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground">
+                      <span>{scheduleText(fl)}</span>
+                      {days !== null && <span className="shrink-0">{days}d window</span>}
                     </div>
                   </div>
 
-                  {/* Time metadata */}
-                  {(fl.startTime || fl.endTime) && (
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground font-mono">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3 text-muted-foreground" />
-                        {fl.status === "scheduled" ? "Starts:" : "Ends:"}
-                      </span>
-                      <span className="text-foreground">
-                        {fl.status === "scheduled"
-                          ? fl.startTime?.slice(0, 10)
-                          : fl.endTime?.slice(0, 10) || "TBD"}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Card Action */}
-                <div className="mt-5 pt-4 border-t border-border/40 flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-muted-foreground">
-                    ID: {fl.id}
-                  </span>
-                  <Button
-                    asChild
-                    size="sm"
-                    className="h-8 text-xs bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
-                  >
-                    <Link href={`/launchpad/launches/${fl.id}`}>Inspect Launch</Link>
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* TABLE VIEW */
-        <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md overflow-hidden shadow-lg">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-border/60 bg-secondary/20 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
-                  <th
-                    onClick={() => handleSortClick("name")}
-                    className="py-3 px-4 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Launch / Token</span>
-                      {sortBy === "name-asc" && <ChevronUp className="h-3 w-3 text-primary" />}
-                      {sortBy === "name-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
-                    </div>
-                  </th>
-                  <th className="py-3 px-3">Network & Category</th>
-                  <th className="py-3 px-3">Status</th>
-                  <th
-                    onClick={() => handleSortClick("raised")}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Raised / Softcap</span>
-                      {sortBy === "raised-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSortClick("progress")}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Progress</span>
-                      {sortBy === "progress-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
-                    </div>
-                  </th>
-                  <th className="py-3 px-3">Participants</th>
-                  <th
-                    onClick={() => handleSortClick("date")}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Timeline</span>
-                      {sortBy === "date-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
-                      {sortBy === "date-asc" && <ChevronUp className="h-3 w-3 text-primary" />}
-                    </div>
-                  </th>
-                  <th className="py-3 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {paginatedLaunches.map((fl) => {
-                  const token = tokenMap.get(fl.tokenId);
-                  const project = fl.projectId ? projectMap.get(fl.projectId) : undefined;
-                  const progress = calculateProgress(fl.totalRaised, fl.softCap);
-                  const isSepolia =
-                    fl.network.toLowerCase().includes("sepolia") || fl.network === "Ethereum";
-
-                  return (
-                    <tr
-                      key={fl.id}
-                      className="hover:bg-secondary/10 transition-colors group"
+                  <div className="mt-5 flex justify-end">
+                    <Button
+                      asChild
+                      size="sm"
+                      className="h-8 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
                     >
-                      {/* Name & Token */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 shrink-0 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-xs text-primary font-mono">
-                            {token ? token.symbol.slice(0, 3) : getInitials(fl.title)}
-                          </div>
-                          <div className="min-w-0">
-                            <Link
-                              href={`/launchpad/launches/${fl.id}`}
-                              className="font-bold text-foreground hover:text-primary transition-colors line-clamp-1"
-                            >
-                              {fl.title}
-                            </Link>
-                            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                              {token ? (
-                                <Link
-                                  href={`/tokens/${token.id}`}
-                                  className="font-mono text-primary hover:underline font-semibold"
-                                >
-                                  ${token.symbol}
-                                </Link>
-                              ) : (
-                                <span className="font-mono text-foreground font-semibold">
-                                  {fl.tokenId.toUpperCase()}
-                                </span>
-                              )}
-                              {project && (
-                                <>
-                                  <span className="text-muted-foreground/60">•</span>
-                                  <span className="truncate">{project.name}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Network & Category */}
-                      <td className="py-3.5 px-3">
-                        <div className="space-y-1">
-                          <span
-                            className={`inline-block rounded px-2 py-0.5 text-[10px] font-mono ${
-                              isSepolia
-                                ? "bg-primary/10 text-primary border border-primary/30"
-                                : "bg-muted text-muted-foreground border border-border/40"
-                            }`}
-                          >
-                            {fl.network}
-                          </span>
-                          {fl.category && (
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {fl.category}
-                            </p>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="py-3.5 px-3">
-                        <StatusBadge status={fl.status} />
-                      </td>
-
-                      {/* Raised / Softcap */}
-                      <td className="py-3.5 px-3 font-mono">
-                        <div className="text-foreground font-semibold">
-                          {fl.totalRaised || "0 ETH"}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground">
-                          Soft: {fl.softCap || "TBD"}
-                        </div>
-                      </td>
-
-                      {/* Progress */}
-                      <td className="py-3.5 px-3">
-                        <div className="w-24 space-y-1">
-                          <div className="flex justify-between text-[11px] font-mono">
-                            <span className="font-semibold text-foreground">{progress}%</span>
-                          </div>
-                          <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${
-                                progress >= 100
-                                  ? "bg-emerald-400"
-                                  : progress > 0
-                                  ? "bg-primary"
-                                  : "bg-muted-foreground/30"
-                              }`}
-                              style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
-                            />
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Participants */}
-                      <td className="py-3.5 px-3 font-mono text-foreground">
-                        {fl.participantCount ? fl.participantCount.toLocaleString() : "0"}
-                      </td>
-
-                      {/* Timeline */}
-                      <td className="py-3.5 px-3 font-mono text-[11px] text-muted-foreground">
-                        {fl.status === "scheduled"
-                          ? `Starts: ${fl.startTime?.slice(0, 10) || "TBD"}`
-                          : `Ends: ${fl.endTime?.slice(0, 10) || "TBD"}`}
-                      </td>
-
-                      {/* Action */}
-                      <td className="py-3.5 px-4 text-right">
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs border-border/60 hover:border-primary/50"
-                        >
-                          <Link href={`/launchpad/launches/${fl.id}`}>Inspect</Link>
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      <Link href={`/launchpad/launches/${fl.id}`}>
+                        Inspect Launch <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
-        </div>
-      )}
+        ) : (
+          <>
+            {/* TABLE VIEW (xl and up) */}
+            <div className="hidden overflow-x-auto xl:block">
+              <table className="w-full min-w-[1080px] border-collapse text-left text-xs">
+                <thead>
+                  <tr className="border-b border-border/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <th className="py-3 pr-4" aria-sort={ariaSort(["name-asc"], ["name-desc"])}>
+                      <button
+                        type="button"
+                        onClick={() => handleSortClick("name")}
+                        className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                      >
+                        Launch / Token
+                        {sortBy === "name-asc" && <ChevronUp className="h-3 w-3 text-primary" />}
+                        {sortBy === "name-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
+                      </button>
+                    </th>
+                    <th className="px-3 py-3">Network &amp; Category</th>
+                    <th className="px-3 py-3">Status</th>
+                    <th className="px-3 py-3" aria-sort={ariaSort([], ["raised-desc"])}>
+                      <button
+                        type="button"
+                        onClick={() => handleSortClick("raised")}
+                        className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                      >
+                        Raised / Softcap
+                        {sortBy === "raised-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
+                      </button>
+                    </th>
+                    <th className="px-3 py-3" aria-sort={ariaSort([], ["progress-desc"])}>
+                      <button
+                        type="button"
+                        onClick={() => handleSortClick("progress")}
+                        className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                      >
+                        Progress
+                        {sortBy === "progress-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
+                      </button>
+                    </th>
+                    <th className="px-3 py-3">Participants</th>
+                    <th className="px-3 py-3" aria-sort={ariaSort(["date-asc"], ["date-desc"])}>
+                      <button
+                        type="button"
+                        onClick={() => handleSortClick("date")}
+                        className="inline-flex items-center gap-1 uppercase hover:text-foreground"
+                      >
+                        Timeline
+                        {sortBy === "date-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
+                        {sortBy === "date-asc" && <ChevronUp className="h-3 w-3 text-primary" />}
+                      </button>
+                    </th>
+                    <th className="py-3 pl-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {paginatedLaunches.map((fl) => {
+                    const token = tokenMap.get(fl.tokenId);
+                    const project = fl.projectId ? projectMap.get(fl.projectId) : undefined;
+                    const c = getCommitment(fl);
+                    return (
+                      <tr key={fl.id} className="transition-colors hover:bg-secondary/10">
+                        <td className="py-3.5 pr-4">
+                          <div className="flex items-center gap-3">
+                            <TokenTile symbol={token?.symbol} title={fl.title} size="sm" />
+                            <IdentityLines fl={fl} token={token} project={project} />
+                          </div>
+                        </td>
+                        <td className="px-3 py-3.5">
+                          <div className="space-y-1">
+                            <NetworkChip network={fl.network} />
+                            {fl.category && (
+                              <p className="truncate text-[10px] text-muted-foreground">{fl.category}</p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-3.5">
+                          <StatusBadge status={fl.status} />
+                        </td>
+                        <td className="px-3 py-3.5 font-mono">
+                          <div className="font-semibold text-foreground">{fl.totalRaised || "—"}</div>
+                          <div className="text-[10px] text-muted-foreground">Soft: {fl.softCap || "—"}</div>
+                        </td>
+                        <td className="px-3 py-3.5">
+                          <div className="w-28 space-y-1.5">
+                            <div className="font-mono text-[11px] font-semibold text-foreground">
+                              {c.state === "ok" ? `${c.pct}%` : "—"}
+                            </div>
+                            <CommitmentBar fl={fl} thin />
+                          </div>
+                        </td>
+                        <td className="px-3 py-3.5 font-mono text-foreground">
+                          {fmtParticipants(fl.participantCount)}
+                        </td>
+                        <td className="px-3 py-3.5">
+                          <div className="w-40 space-y-1.5">
+                            <WindowLane fl={fl} axis={axis} />
+                            <div className="font-mono text-[10px] text-muted-foreground">{scheduleText(fl)}</div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 pl-3 text-right">
+                          <Button
+                            asChild
+                            size="sm"
+                            variant="outline"
+                            className="h-7 border-border/60 text-xs hover:border-primary/50"
+                          >
+                            <Link href={`/launchpad/launches/${fl.id}`}>Inspect</Link>
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-      {/* 6. Pagination Controls */}
+            {/* TABLE VIEW below xl: stacked list instead of a squeezed table */}
+            <ul className="divide-y divide-border/40 xl:hidden">
+              {paginatedLaunches.map((fl) => {
+                const token = tokenMap.get(fl.tokenId);
+                const project = fl.projectId ? projectMap.get(fl.projectId) : undefined;
+                const c = getCommitment(fl);
+                return (
+                  <li key={fl.id} className="space-y-3 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <TokenTile symbol={token?.symbol} title={fl.title} size="sm" />
+                        <IdentityLines fl={fl} token={token} project={project} />
+                      </div>
+                      <StatusBadge status={fl.status} />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <NetworkChip network={fl.network} />
+                      {fl.category && <span className="text-[11px] text-muted-foreground">{fl.category}</span>}
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-baseline justify-between font-mono text-xs">
+                        <span className="font-semibold text-foreground">
+                          {fl.totalRaised || "—"}{" "}
+                          <span className="font-normal text-muted-foreground">/ {fl.softCap || "—"} soft</span>
+                        </span>
+                        <span className="font-semibold text-foreground">{c.state === "ok" ? `${c.pct}%` : "—"}</span>
+                      </div>
+                      <CommitmentBar fl={fl} thin />
+                    </div>
+                    <div className="flex items-center justify-between gap-3 text-[11px] text-muted-foreground">
+                      <span className="font-mono">{scheduleText(fl)}</span>
+                      <span className="flex shrink-0 items-center gap-1 font-mono text-foreground">
+                        <Users className="h-3 w-3 text-muted-foreground" />
+                        {fmtParticipants(fl.participantCount)}
+                      </span>
+                    </div>
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-full border-border/60 text-xs hover:border-primary/50"
+                    >
+                      <Link href={`/launchpad/launches/${fl.id}`}>Inspect</Link>
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </section>
+
+      {/* 5. Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+        <nav
+          aria-label="Pagination"
+          className="flex flex-col items-center justify-between gap-4 pt-2 sm:flex-row"
+        >
           <div className="text-xs text-muted-foreground">
             Showing <strong className="text-foreground">{startIndex + 1}</strong> to{" "}
-            <strong className="text-foreground">
-              {Math.min(startIndex + pageSize, totalItems)}
-            </strong>{" "}
-            of <strong className="text-foreground">{totalItems}</strong> fair launches
+            <strong className="text-foreground">{Math.min(startIndex + pageSize, totalItems)}</strong> of{" "}
+            <strong className="text-foreground">{totalItems}</strong> fair launches
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -925,9 +1154,9 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
               size="sm"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={effectivePage <= 1}
-              className="h-8 px-2.5 text-xs border-border/60"
+              className="h-8 border-border/60 px-2.5 text-xs"
             >
-              <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Prev
+              <ChevronLeft className="mr-1 h-3.5 w-3.5" /> Prev
             </Button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -936,11 +1165,13 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                 variant={effectivePage === page ? "default" : "outline"}
                 size="sm"
                 onClick={() => setCurrentPage(page)}
-                className={`h-8 w-8 p-0 text-xs ${
+                aria-current={effectivePage === page ? "page" : undefined}
+                className={cn(
+                  "h-8 w-8 p-0 text-xs",
                   effectivePage === page
-                    ? "bg-primary text-primary-foreground font-bold"
+                    ? "bg-primary font-bold text-primary-foreground"
                     : "border-border/60 text-muted-foreground hover:text-foreground"
-                }`}
+                )}
               >
                 {page}
               </Button>
@@ -951,12 +1182,12 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
               size="sm"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={effectivePage >= totalPages}
-              className="h-8 px-2.5 text-xs border-border/60"
+              className="h-8 border-border/60 px-2.5 text-xs"
             >
-              Next <ChevronRight className="h-3.5 w-3.5 ml-1" />
+              Next <ChevronRight className="ml-1 h-3.5 w-3.5" />
             </Button>
           </div>
-        </div>
+        </nav>
       )}
     </div>
   );

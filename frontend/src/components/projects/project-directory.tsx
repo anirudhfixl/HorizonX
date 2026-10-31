@@ -2,11 +2,9 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
-import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { MOCK_PROJECTS, MOCK_TOKENS } from "@/lib/mock-data";
 import { Project, Token } from "@/types";
@@ -19,15 +17,14 @@ import {
   List,
   ShieldCheck,
   ExternalLink,
-  Coins,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
   Info,
-  Calendar,
-  CheckCircle2,
+  ArrowUpRight,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export type ProjectSortOption =
@@ -41,6 +38,14 @@ export interface ProjectDirectoryProps {
   mode?: "canonical" | "explore";
 }
 
+type FilterState = {
+  searchQuery: string;
+  category: string;
+  ecosystem: string;
+  status: string;
+  verification: string;
+};
+
 export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) {
   // State
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,6 +57,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(6);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Map of tokenId -> Token for fast relationship lookup
   const tokenMap = useMemo(() => {
@@ -110,60 +116,77 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     setCurrentPage(1);
   };
 
+  // Single source of truth for matching; identical rules to the previous inline filter.
+  const projectMatches = (p: Project, f: FilterState): boolean => {
+    // 1. Search Query
+    if (f.searchQuery.trim()) {
+      const q = f.searchQuery.toLowerCase().trim();
+      const matchesName = p.name.toLowerCase().includes(q);
+      const matchesDesc = p.description?.toLowerCase().includes(q) ?? false;
+
+      // Match symbols or names of linked tokens
+      const matchesToken = p.tokenIds.some((tId) => {
+        const t = tokenMap.get(tId);
+        if (!t) return false;
+        return t.symbol.toLowerCase().includes(q) || t.name.toLowerCase().includes(q);
+      });
+
+      if (!matchesName && !matchesDesc && !matchesToken) return false;
+    }
+
+    // 2. Category Filter
+    if (f.category !== "all" && p.category !== f.category) return false;
+
+    // 3. Ecosystem Filter (D-04 Scope: Sepolia only or all)
+    if (f.ecosystem === "sepolia") {
+      const eco = (p.ecosystem || "").toLowerCase();
+      if (!eco.includes("sepolia") && eco !== "ethereum") return false;
+    } else if (f.ecosystem !== "all") {
+      if (p.ecosystem !== f.ecosystem) return false;
+    }
+
+    // 4. Status Filter
+    if (f.status !== "all" && p.status !== f.status) return false;
+
+    // 5. Verification Filter
+    if (f.verification === "audited") {
+      if (p.verificationStatus !== "audit_available") return false;
+    } else if (f.verification === "source_verified") {
+      if (p.verificationStatus !== "contract_source_verified") return false;
+    } else if (f.verification === "reviewed") {
+      if (p.verificationStatus !== "project_reviewed") return false;
+    } else if (f.verification === "not_reviewed") {
+      if (p.verificationStatus !== "not_reviewed") return false;
+    }
+
+    return true;
+  };
+
+  const currentFilters: FilterState = {
+    searchQuery,
+    category: categoryFilter,
+    ecosystem: ecosystemFilter,
+    status: statusFilter,
+    verification: verificationFilter,
+  };
+
   // Filter Projects
   const filteredProjects = useMemo(() => {
-    return MOCK_PROJECTS.filter((p) => {
-      // 1. Search Query
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchesName = p.name.toLowerCase().includes(q);
-        const matchesDesc = p.description?.toLowerCase().includes(q) ?? false;
-        
-        // Match symbols or names of linked tokens
-        const matchesToken = p.tokenIds.some((tId) => {
-          const t = tokenMap.get(tId);
-          if (!t) return false;
-          return (
-            t.symbol.toLowerCase().includes(q) ||
-            t.name.toLowerCase().includes(q)
-          );
-        });
-
-        if (!matchesName && !matchesDesc && !matchesToken) return false;
-      }
-
-      // 2. Category Filter
-      if (categoryFilter !== "all" && p.category !== categoryFilter) {
-        return false;
-      }
-
-      // 3. Ecosystem Filter (D-04 Scope: Sepolia only or all)
-      if (ecosystemFilter === "sepolia") {
-        const eco = (p.ecosystem || "").toLowerCase();
-        if (!eco.includes("sepolia") && eco !== "ethereum") return false;
-      } else if (ecosystemFilter !== "all") {
-        if (p.ecosystem !== ecosystemFilter) return false;
-      }
-
-      // 4. Status Filter
-      if (statusFilter !== "all" && p.status !== statusFilter) {
-        return false;
-      }
-
-      // 5. Verification Filter
-      if (verificationFilter === "audited") {
-        if (p.verificationStatus !== "audit_available") return false;
-      } else if (verificationFilter === "source_verified") {
-        if (p.verificationStatus !== "contract_source_verified") return false;
-      } else if (verificationFilter === "reviewed") {
-        if (p.verificationStatus !== "project_reviewed") return false;
-      } else if (verificationFilter === "not_reviewed") {
-        if (p.verificationStatus !== "not_reviewed") return false;
-      }
-
-      return true;
-    });
+    return MOCK_PROJECTS.filter((p) =>
+      projectMatches(p, {
+        searchQuery,
+        category: categoryFilter,
+        ecosystem: ecosystemFilter,
+        status: statusFilter,
+        verification: verificationFilter,
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, categoryFilter, ecosystemFilter, statusFilter, verificationFilter, tokenMap]);
+
+  // Facet counts: how many projects each option would show given the *other* active filters.
+  const facetCount = (key: keyof FilterState, value: string) =>
+    MOCK_PROJECTS.filter((p) => projectMatches(p, { ...currentFilters, [key]: value })).length;
 
   // Sort Projects
   const sortedProjects = useMemo(() => {
@@ -199,6 +222,10 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     statusFilter !== "all" ||
     verificationFilter !== "all";
 
+  const activeFilterCount = [categoryFilter, ecosystemFilter, statusFilter, verificationFilter].filter(
+    (v) => v !== "all"
+  ).length;
+
   // Table header sort handler
   const handleSortClick = (field: "name" | "date" | "tokens") => {
     if (field === "name") {
@@ -218,529 +245,479 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
   const linkedTokensOf = (proj: Project) =>
     proj.tokenIds.map((id) => tokenMap.get(id)).filter((t): t is Token => Boolean(t));
 
-  const stats = [
-    {
-      label: "Total Protocols",
-      value: MOCK_PROJECTS.length,
-      note: "Ecosystem projects",
-      icon: <Briefcase className="h-4 w-4 text-primary" />,
-    },
-    {
-      label: "Sepolia Ecosystem",
-      value: MOCK_PROJECTS.filter((p) => p.ecosystem?.toLowerCase().includes("sepolia")).length,
-      note: "Active D-04 scope",
-      icon: <CheckCircle2 className="h-4 w-4 text-emerald-400" />,
-    },
-    {
-      label: "Security Audited",
-      value: MOCK_PROJECTS.filter(
-        (p) => p.verificationStatus === "audit_available" || p.verificationStatus === "contract_source_verified"
-      ).length,
-      note: "Audited or verified",
-      icon: <ShieldCheck className="h-4 w-4 text-cyan-400" />,
-    },
-    {
-      label: "Linked Tokens",
-      value: MOCK_PROJECTS.reduce((acc, p) => acc + p.tokenIds.length, 0),
-      note: "Catalog tokens",
-      icon: <Coins className="h-4 w-4 text-amber-400" />,
-    },
+  const toneOf = (proj: Project) => {
+    const idx = proj.category ? uniqueCategories.indexOf(proj.category) : -1;
+    return idx < 0 ? NEUTRAL_TONE : TONES[idx % TONES.length];
+  };
+
+  const categoryOptions = [
+    { value: "all", label: "All categories", count: facetCount("category", "all") },
+    ...uniqueCategories.map((c) => ({ value: c, label: c, count: facetCount("category", c) })),
   ];
+  const verificationOptions = [
+    { value: "all", label: "Any tier" },
+    { value: "audited", label: "Audit available" },
+    { value: "source_verified", label: "Source verified" },
+    { value: "reviewed", label: "Project reviewed" },
+    { value: "not_reviewed", label: "Not reviewed" },
+  ].map((o) => ({ ...o, count: facetCount("verification", o.value) }));
+  const statusOptions = [
+    { value: "all", label: "Any status" },
+    { value: "active", label: "Active" },
+    { value: "pending", label: "Pending" },
+  ].map((o) => ({ ...o, count: facetCount("status", o.value) }));
+  const ecosystemOptions = [
+    { value: "all", label: "All ecosystems" },
+    { value: "sepolia", label: "Ethereum Sepolia (11155111)" },
+  ].map((o) => ({ ...o, count: facetCount("ecosystem", o.value) }));
+
+  const activeChips: { label: string; clear: () => void }[] = [];
+  if (categoryFilter !== "all") activeChips.push({ label: categoryFilter, clear: () => handleCategoryChange("all") });
+  if (verificationFilter !== "all")
+    activeChips.push({
+      label: verificationOptions.find((o) => o.value === verificationFilter)?.label ?? verificationFilter,
+      clear: () => handleVerificationChange("all"),
+    });
+  if (statusFilter !== "all")
+    activeChips.push({ label: `${statusFilter === "active" ? "Active" : "Pending"} only`, clear: () => handleStatusChange("all") });
+  if (ecosystemFilter !== "all") activeChips.push({ label: "Ethereum Sepolia", clear: () => handleEcosystemChange("all") });
+
+  const sepoliaCount = MOCK_PROJECTS.filter(isSepoliaProject).length;
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] space-y-8 px-4 py-8 sm:px-6 lg:px-8">
-      {/* 1. Page header */}
-      <PageHeader
-        title={mode === "canonical" ? "Project Directory" : "Explore Projects"}
-        description={
-          mode === "canonical"
-            ? "Browse and discover verified decentralized protocols, developer DAOs, and crypto ecosystem projects on ProMiners."
-            : "Explore verified decentralized protocols, developer DAOs, and crypto ecosystem projects across ProMiners."
-        }
-        breadcrumbs={
-          mode === "canonical"
-            ? [{ label: "Projects" }]
-            : [
-                { label: "Explore", href: "/explore" },
-                { label: "Projects" },
-              ]
-        }
-        badge={
-          <Badge variant="outline" className="border-primary/40 text-primary">
-            {MOCK_PROJECTS.length} Protocols Listed
-          </Badge>
-        }
-      />
+    <div className="mx-auto w-full max-w-[1800px] space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+      {/* 1. Masthead */}
+      <header className="space-y-5">
+        {mode === "explore" && (
+          <Link
+            href="/explore"
+            className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" /> Explore
+          </Link>
+        )}
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div className="space-y-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
+              {mode === "canonical" ? "Projects" : "Explore · Projects"}
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-5xl">
+              {mode === "canonical" ? "Project Directory" : "Explore Projects"}
+            </h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {mode === "canonical"
+                ? "Browse and discover verified decentralized protocols, developer DAOs, and crypto ecosystem projects on ProMiners."
+                : "Explore verified decentralized protocols, developer DAOs, and crypto ecosystem projects across ProMiners."}
+            </p>
+          </div>
+          <dl className="flex items-end gap-8 font-mono">
+            <div>
+              <dd className="text-4xl font-semibold leading-none text-foreground">{MOCK_PROJECTS.length}</dd>
+              <dt className="mt-1.5 font-sans text-[11px] text-muted-foreground">protocols listed</dt>
+            </div>
+            <div>
+              <dd className="text-4xl font-semibold leading-none text-primary">{sepoliaCount}</dd>
+              <dt className="mt-1.5 font-sans text-[11px] text-muted-foreground">on Sepolia</dt>
+            </div>
+          </dl>
+        </div>
 
-      {/* 2. D-04 scope & demo notice */}
-      <div
-        role="note"
-        className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs leading-relaxed text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div className="flex items-start gap-2.5">
-          <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <span>
-            <strong className="text-foreground">Demonstration Data Notice:</strong> Project listings, verification
-            tiers, and ecosystem affiliations are simulated for demonstration. Per Architecture Decision{" "}
-            <strong className="text-foreground">D-04</strong>, Ethereum Sepolia Testnet (Chain ID: 11155111) is the only
-            approved and supported EVM wallet network. Ecosystem metadata reflects protocol origins and does not imply
-            wallet connectivity or transaction support for non-Sepolia networks.
+        <div
+          role="note"
+          className="flex flex-col gap-2 border-l-2 border-primary/50 pl-4 text-xs leading-relaxed text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+        >
+          <span className="flex items-start gap-2">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+            <span>
+              <strong className="text-foreground">Demonstration Data Notice:</strong> Project listings, verification
+              tiers, and ecosystem affiliations are simulated for demonstration. Per Architecture Decision{" "}
+              <strong className="text-foreground">D-04</strong>, Ethereum Sepolia Testnet (Chain ID: 11155111) is the only
+              approved and supported EVM wallet network. Ecosystem metadata reflects protocol origins and does not imply
+              wallet connectivity or transaction support for non-Sepolia networks.
+            </span>
+          </span>
+          <span className="shrink-0 self-start rounded-full border border-primary/30 px-2.5 py-0.5 font-mono text-[11px] text-primary sm:self-auto">
+            D-04: Sepolia (11155111) Only
           </span>
         </div>
-        <Badge
-          variant="outline"
-          className="shrink-0 self-start border-primary/30 font-mono text-[11px] text-primary sm:self-auto"
-        >
-          D-04: Sepolia (11155111) Only
-        </Badge>
-      </div>
+      </header>
 
-      {/* 3. Summary: one divided strip */}
-      <dl className="grid grid-cols-2 overflow-hidden rounded-2xl border border-border/60 bg-card/50 backdrop-blur-md lg:grid-cols-4">
-        {stats.map((s, i) => (
-          <div
-            key={s.label}
-            className={cn(
-              "space-y-1 p-4 sm:p-5",
-              i % 2 === 1 && "border-l border-border/50",
-              i >= 2 && "border-t border-border/50 lg:border-t-0",
-              i > 0 && "lg:border-l lg:border-border/50"
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-12">
+        {/* 2. Facet rail */}
+        <aside aria-label="Filters" className="lg:sticky lg:top-24 lg:self-start">
+          <button
+            type="button"
+            onClick={() => setFiltersOpen((o) => !o)}
+            aria-expanded={filtersOpen}
+            className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-foreground ring-1 ring-border/60 lg:hidden"
+          >
+            <span className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-primary" /> Filters
+              {activeFilterCount > 0 && (
+                <span className="rounded-full bg-primary px-1.5 font-mono text-[10px] text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              )}
+            </span>
+            {filtersOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+
+          <div className={cn("space-y-7 pt-5 lg:block lg:pt-0", filtersOpen ? "block" : "hidden")}>
+            <FacetGroup label="Category" ariaLabel="Filter by category" options={categoryOptions} value={categoryFilter} onChange={handleCategoryChange} />
+            <FacetGroup label="Verification" ariaLabel="Filter by verification" options={verificationOptions} value={verificationFilter} onChange={handleVerificationChange} />
+            <FacetGroup label="Status" ariaLabel="Filter by status" options={statusOptions} value={statusFilter} onChange={handleStatusChange} />
+            <FacetGroup label="Ecosystem" ariaLabel="Filter by ecosystem" options={ecosystemOptions} value={ecosystemFilter} onChange={handleEcosystemChange} />
+          </div>
+        </aside>
+
+        {/* 3. Results column */}
+        <div className="min-w-0 space-y-6">
+          <section aria-label="Search" className="space-y-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search by project name, description, or token ($PMIN)..."
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                aria-label="Search projects"
+                className="h-12 rounded-2xl border-border/60 bg-secondary/40 pl-12 pr-11 text-sm text-foreground placeholder:text-muted-foreground/70"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearchChange("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            {activeChips.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
+                {activeChips.map((c) => (
+                  <button
+                    key={c.label}
+                    onClick={c.clear}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary ring-1 ring-primary/30 transition-colors hover:bg-primary/20"
+                    aria-label={`Remove filter ${c.label}`}
+                  >
+                    {c.label} <X className="h-3 w-3" />
+                  </button>
+                ))}
+              </div>
             )}
-          >
-            <dt className="flex items-center justify-between gap-2 text-xs font-medium text-muted-foreground">
-              <span>{s.label}</span>
-              {s.icon}
-            </dt>
-            <dd className="font-mono text-2xl font-bold tracking-tight text-foreground">{s.value}</dd>
-            <p className="text-[11px] text-muted-foreground">{s.note}</p>
-          </div>
-        ))}
-      </dl>
+          </section>
 
-      {/* 4. Filters: one flat panel, labelled controls */}
-      <section aria-label="Search and filters" className="space-y-4 rounded-2xl border border-border/60 bg-card/40 p-4 sm:p-5">
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search by project name, description, or token ($PMIN)..."
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            aria-label="Search projects"
-            className="h-11 border-border/70 bg-secondary/30 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground/70"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => handleSearchChange("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
-              aria-label="Clear search"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+          {/* Results bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 pb-3 text-xs text-muted-foreground">
+            <div aria-live="polite">
+              Showing <span className="font-semibold text-foreground">{totalItems === 0 ? 0 : startIndex + 1}</span> to{" "}
+              <span className="font-semibold text-foreground">{Math.min(startIndex + pageSize, totalItems)}</span> of{" "}
+              <span className="font-semibold text-foreground">{totalItems}</span> projects
+              {hasActiveFilters && " (filtered)"}
+            </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <FilterSelect label="Category" ariaLabel="Filter by category" value={categoryFilter} onChange={handleCategoryChange}>
-            <option value="all">All Categories ({MOCK_PROJECTS.length})</option>
-            {uniqueCategories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </FilterSelect>
-
-          {/* D-04 scope restriction preserved */}
-          <FilterSelect label="Ecosystem" ariaLabel="Filter by ecosystem" value={ecosystemFilter} onChange={handleEcosystemChange}>
-            <option value="all">All Ecosystems ({MOCK_PROJECTS.length})</option>
-            <option value="sepolia">Ethereum Sepolia (11155111 — Active)</option>
-          </FilterSelect>
-
-          <FilterSelect label="Status" ariaLabel="Filter by status" value={statusFilter} onChange={handleStatusChange}>
-            <option value="all">All Statuses</option>
-            <option value="active">Active Only</option>
-            <option value="pending">Pending Only</option>
-          </FilterSelect>
-
-          <FilterSelect
-            label="Verification"
-            ariaLabel="Filter by verification"
-            value={verificationFilter}
-            onChange={handleVerificationChange}
-          >
-            <option value="all">All Verification Tiers</option>
-            <option value="audited">Security Audited</option>
-            <option value="source_verified">Source Code Verified</option>
-            <option value="reviewed">Protocol Reviewed</option>
-            <option value="not_reviewed">Not Reviewed</option>
-          </FilterSelect>
-
-          <FilterSelect
-            label="Sort by"
-            ariaLabel="Sort projects"
-            value={sortBy}
-            onChange={(v) => setSortBy(v as ProjectSortOption)}
-          >
-            <option value="name-asc">Name (A → Z)</option>
-            <option value="name-desc">Name (Z → A)</option>
-            <option value="date-desc">Newest First</option>
-            <option value="date-asc">Oldest First</option>
-            <option value="tokens-desc">Most Linked Tokens</option>
-          </FilterSelect>
-        </div>
-      </section>
-
-      {/* 5. Results bar: count, page size, view toggle, reset */}
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
-        <div aria-live="polite">
-          Showing <span className="font-semibold text-foreground">{totalItems === 0 ? 0 : startIndex + 1}</span> to{" "}
-          <span className="font-semibold text-foreground">{Math.min(startIndex + pageSize, totalItems)}</span> of{" "}
-          <span className="font-semibold text-foreground">{totalItems}</span> projects
-          {hasActiveFilters && " (filtered)"}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {hasActiveFilters && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResetFilters}
-              className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-primary"
-              title="Reset all filters"
-            >
-              <X className="h-3 w-3" /> Reset
-            </Button>
-          )}
-
-          <div className="flex items-center gap-1.5">
-            <span>Per page:</span>
-            {[6, 12, 24].map((size) => (
-              <button
-                key={size}
-                onClick={() => handlePageSizeChange(size)}
-                aria-pressed={pageSize === size}
-                className={cn(
-                  "rounded px-2 py-1 text-xs transition-colors",
-                  pageSize === size
-                    ? "bg-primary font-semibold text-primary-foreground"
-                    : "bg-secondary/40 text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center rounded-lg border border-border/70 bg-secondary/30 p-0.5" role="group" aria-label="View mode">
-            <button
-              onClick={() => setViewMode("grid")}
-              aria-pressed={viewMode === "grid"}
-              className={cn(
-                "rounded-md p-1.5 text-xs transition-colors",
-                viewMode === "grid" ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            <div className="flex flex-wrap items-center gap-3">
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-primary"
+                  title="Reset all filters"
+                >
+                  <X className="h-3 w-3" /> Reset
+                </Button>
               )}
-              title="Grid View"
-              aria-label="Grid View"
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => setViewMode("table")}
-              aria-pressed={viewMode === "table"}
-              className={cn(
-                "rounded-md p-1.5 text-xs transition-colors",
-                viewMode === "table" ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              )}
-              title="Table View"
-              aria-label="Table View"
-            >
-              <List className="h-3.5 w-3.5" />
-            </button>
+
+              <label className="flex items-center gap-1.5">
+                <span>Sort</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as ProjectSortOption)}
+                  aria-label="Sort projects"
+                  className="h-8 rounded-lg border border-border/70 bg-secondary/30 px-2 text-xs text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="name-asc">Name (A → Z)</option>
+                  <option value="name-desc">Name (Z → A)</option>
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="tokens-desc">Most Linked Tokens</option>
+                </select>
+              </label>
+
+              <div className="flex items-center gap-1.5">
+                <span>Per page:</span>
+                {[6, 12, 24].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => handlePageSizeChange(size)}
+                    aria-pressed={pageSize === size}
+                    className={cn(
+                      "rounded px-2 py-1 text-xs transition-colors",
+                      pageSize === size
+                        ? "bg-primary font-semibold text-primary-foreground"
+                        : "bg-secondary/40 text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center rounded-lg border border-border/70 bg-secondary/30 p-0.5" role="group" aria-label="View mode">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  aria-pressed={viewMode === "grid"}
+                  className={cn(
+                    "rounded-md p-1.5 text-xs transition-colors",
+                    viewMode === "grid" ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                  title="Grid View"
+                  aria-label="Grid View"
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  aria-pressed={viewMode === "table"}
+                  className={cn(
+                    "rounded-md p-1.5 text-xs transition-colors",
+                    viewMode === "table" ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  )}
+                  title="Table View"
+                  aria-label="Table View"
+                >
+                  <List className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* 6. Results */}
-      {paginatedProjects.length === 0 ? (
-        <EmptyState
-          icon={<Briefcase className="h-10 w-10 text-muted-foreground/60" />}
-          title="No projects found"
-          description={
-            hasActiveFilters
-              ? "No projects match your active search and filter criteria. Try resetting your filters."
-              : "No project entries are currently available in the directory."
-          }
-          action={
-            hasActiveFilters ? (
-              <Button onClick={handleResetFilters} variant="outline" size="sm" className="mt-2">
-                Clear All Filters
-              </Button>
-            ) : undefined
-          }
-        />
-      ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {paginatedProjects.map((proj) => {
-            const linkedTokens = linkedTokensOf(proj);
-            return (
-              <article
-                key={proj.id}
-                className="group flex flex-col gap-4 rounded-2xl border border-border/60 bg-card/50 p-5 transition-all hover:border-primary/50 hover:shadow-md"
-              >
-                {/* Identity + status */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <Avatar name={proj.name} className="h-11 w-11 rounded-xl text-sm" />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <h3 className="truncate text-base font-bold leading-tight text-foreground">{proj.name}</h3>
-                        {proj.websiteUrl && (
-                          <a
-                            href={proj.websiteUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="shrink-0 text-muted-foreground transition-colors hover:text-primary"
-                            title="Official Website"
-                            aria-label={`Official website for ${proj.name}`}
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        )}
-                      </div>
-                      <p className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">
-                        Owner: {proj.ownerAddress}
-                      </p>
-                    </div>
-                  </div>
-                  <StatusBadge status={proj.status} />
-                </div>
-
-                <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                  {proj.description || "No description provided."}
-                </p>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {proj.category && (
-                    <Badge variant="outline" className="border-primary/30 text-[10px] text-primary">
-                      {proj.category}
-                    </Badge>
-                  )}
-                  {proj.ecosystem && <EcosystemBadge proj={proj} isSepolia={isSepoliaProject(proj)} />}
-                  <VerificationPill status={proj.verificationStatus} />
-                </div>
-
-                {/* Linked tokens */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Coins className="h-3.5 w-3.5 text-primary" /> Associated Tokens:
-                    </span>
-                    <span className="font-mono text-[10px]">
-                      {linkedTokens.length} {linkedTokens.length === 1 ? "token" : "tokens"}
-                    </span>
-                  </div>
-                  {linkedTokens.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {linkedTokens.map((t) => (
-                        <Link
-                          key={t.id}
-                          href={`/tokens/${t.id}`}
-                          className="inline-flex items-center gap-1 rounded border border-border/60 bg-secondary/70 px-2 py-0.5 font-mono text-[10px] text-foreground transition-colors hover:border-primary/40 hover:bg-primary/20"
-                          title={`Inspect ${t.name} ($${t.symbol})`}
-                        >
-                          <span>${t.symbol}</span>
-                          <span className="text-[9px] text-muted-foreground">({t.name})</span>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-[11px] italic text-muted-foreground/70">No tokens currently associated</div>
-                  )}
-                </div>
-
-                {/* Footer */}
-                <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/40 pt-3">
-                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <Calendar className="h-3 w-3" /> {proj.createdAt}
-                  </span>
-                  <Button asChild size="sm" variant="outline" className="h-8 border-border/60 text-xs hover:border-primary">
-                    <Link href={`/projects/${proj.id}`}>Project Overview →</Link>
+          {/* Results */}
+          {paginatedProjects.length === 0 ? (
+            <EmptyState
+              icon={<Briefcase className="h-10 w-10 text-muted-foreground/60" />}
+              title="No projects found"
+              description={
+                hasActiveFilters
+                  ? "No projects match your active search and filter criteria. Try resetting your filters."
+                  : "No project entries are currently available in the directory."
+              }
+              action={
+                hasActiveFilters ? (
+                  <Button onClick={handleResetFilters} variant="outline" size="sm" className="mt-2">
+                    Clear All Filters
                   </Button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/50">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] text-left text-xs text-foreground">
-              <caption className="sr-only">Project directory</caption>
-              <thead className="border-b border-border/60 bg-secondary/40 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                <tr>
-                  <th
-                    scope="col"
-                    aria-sort={sortBy === "name-asc" ? "ascending" : sortBy === "name-desc" ? "descending" : "none"}
-                    className="px-4 py-3.5"
-                  >
-                    <button
-                      onClick={() => handleSortClick("name")}
-                      className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground"
-                    >
-                      <span>Project</span>
-                      {sortBy === "name-asc" ? (
-                        <ChevronUp className="h-3.5 w-3.5 text-primary" />
-                      ) : sortBy === "name-desc" ? (
-                        <ChevronDown className="h-3.5 w-3.5 text-primary" />
-                      ) : (
-                        <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
-                      )}
-                    </button>
-                  </th>
-                  <th scope="col" className="px-4 py-3.5">
-                    Category
-                  </th>
-                  <th scope="col" className="px-4 py-3.5">
-                    Ecosystem
-                  </th>
-                  <th scope="col" className="px-4 py-3.5">
-                    Status & Verification
-                  </th>
-                  <th
-                    scope="col"
-                    aria-sort={sortBy === "tokens-desc" ? "descending" : "none"}
-                    className="px-4 py-3.5"
-                  >
-                    <button
-                      onClick={() => handleSortClick("tokens")}
-                      className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground"
-                    >
-                      <span>Linked Tokens</span>
-                      {sortBy === "tokens-desc" ? (
-                        <ChevronDown className="h-3.5 w-3.5 text-primary" />
-                      ) : (
-                        <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
-                      )}
-                    </button>
-                  </th>
-                  <th
-                    scope="col"
-                    aria-sort={sortBy === "date-desc" ? "descending" : sortBy === "date-asc" ? "ascending" : "none"}
-                    className="px-4 py-3.5"
-                  >
-                    <button
-                      onClick={() => handleSortClick("date")}
-                      className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground"
-                    >
-                      <span>Created</span>
-                      {sortBy === "date-desc" ? (
-                        <ChevronDown className="h-3.5 w-3.5 text-primary" />
-                      ) : sortBy === "date-asc" ? (
-                        <ChevronUp className="h-3.5 w-3.5 text-primary" />
-                      ) : (
-                        <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
-                      )}
-                    </button>
-                  </th>
-                  <th scope="col" className="px-4 py-3.5 text-right">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40">
-                {paginatedProjects.map((proj) => {
-                  const linkedTokens = linkedTokensOf(proj);
-                  return (
-                    <tr key={proj.id} className="group transition-colors hover:bg-secondary/20">
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <Avatar name={proj.name} className="h-9 w-9 rounded-lg text-xs" />
+                ) : undefined
+              }
+            />
+          ) : viewMode === "grid" ? (
+            <ul className="grid grid-cols-1 gap-x-12 2xl:grid-cols-2">
+              {paginatedProjects.map((proj) => {
+                const linkedTokens = linkedTokensOf(proj);
+                const tone = toneOf(proj);
+                return (
+                  <li key={proj.id} className="group relative border-b border-border/40 py-7 first:pt-2 transition-colors">
+                    <div className="flex gap-5">
+                      <Avatar name={proj.name} className={cn("h-16 w-16 rounded-2xl text-lg", tone.tile)} />
+                      <div className="min-w-0 flex-1 space-y-3">
+                        <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <div className="flex items-center gap-1.5 font-bold text-foreground transition-colors group-hover:text-primary">
-                              <Link href={`/projects/${proj.id}`}>{proj.name}</Link>
+                            <div className="flex items-center gap-2">
+                              <h3 className="truncate text-xl font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
+                                <Link href={`/projects/${proj.id}`} className="after:absolute after:inset-0">
+                                  {proj.name}
+                                </Link>
+                              </h3>
                               {proj.websiteUrl && (
                                 <a
                                   href={proj.websiteUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-muted-foreground hover:text-primary"
+                                  className="relative z-10 shrink-0 text-muted-foreground transition-colors hover:text-primary"
                                   title="Official Website"
                                   aria-label={`Official website for ${proj.name}`}
                                 >
-                                  <ExternalLink className="h-3 w-3" />
+                                  <ExternalLink className="h-3.5 w-3.5" />
                                 </a>
                               )}
                             </div>
-                            <span className="font-mono text-[10px] text-muted-foreground">{proj.ownerAddress}</span>
+                            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                              {proj.category && <span className={cn("font-semibold", tone.text)}>{proj.category}</span>}
+                              {proj.category && proj.ecosystem && <span aria-hidden>·</span>}
+                              {proj.ecosystem && <EcosystemMark proj={proj} isSepolia={isSepoliaProject(proj)} />}
+                            </p>
                           </div>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-3.5">
-                        {proj.category ? (
-                          <Badge variant="outline" className="border-primary/30 text-[10px] text-primary">
-                            {proj.category}
-                          </Badge>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-
-                      <td className="px-4 py-3.5">
-                        {proj.ecosystem ? <EcosystemBadge proj={proj} isSepolia={isSepoliaProject(proj)} /> : "—"}
-                      </td>
-
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-2">
                           <StatusBadge status={proj.status} />
-                          {proj.verificationStatus === "audit_available" && (
-                            <span className="text-emerald-400" title="Security Audited">
-                              <ShieldCheck className="h-4 w-4" />
+                        </div>
+
+                        <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                          {proj.description || "No description provided."}
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1">
+                          <VerificationMark status={proj.verificationStatus} />
+                          {linkedTokens.length > 0 ? (
+                            <span className="relative z-10 flex flex-wrap items-center gap-1.5">
+                              {linkedTokens.map((t) => (
+                                <Link
+                                  key={t.id}
+                                  href={`/tokens/${t.id}`}
+                                  className="inline-flex items-center gap-1 rounded-md bg-secondary/70 px-2 py-0.5 font-mono text-[11px] text-foreground transition-colors hover:bg-primary/20"
+                                  title={`Inspect ${t.name} ($${t.symbol})`}
+                                >
+                                  ${t.symbol}
+                                </Link>
+                              ))}
                             </span>
-                          )}
-                          {proj.verificationStatus === "contract_source_verified" && (
-                            <span className="text-cyan-400" title="Source Verified">
-                              <ShieldCheck className="h-4 w-4" />
-                            </span>
+                          ) : (
+                            <span className="text-[11px] italic text-muted-foreground/70">No tokens currently associated</span>
                           )}
                         </div>
-                      </td>
 
-                      <td className="px-4 py-3.5">
-                        {linkedTokens.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {linkedTokens.map((t) => (
-                              <Link
-                                key={t.id}
-                                href={`/tokens/${t.id}`}
-                                className="inline-block rounded border border-border/60 bg-secondary/70 px-1.5 py-0.5 font-mono text-[10px] text-foreground transition-colors hover:border-primary/40 hover:bg-primary/20"
-                              >
-                                ${t.symbol}
-                              </Link>
-                            ))}
-                          </div>
+                        <div className="flex items-center justify-between gap-3 pt-1 font-mono text-[11px] text-muted-foreground">
+                          <span title="Project owner">{proj.ownerAddress}</span>
+                          <span className="flex items-center gap-3">
+                            <span>Listed {proj.createdAt}</span>
+                            <span className="inline-flex items-center gap-0.5 font-sans font-semibold text-primary">
+                              Overview <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[860px] text-left text-xs text-foreground">
+                <caption className="sr-only">Project directory</caption>
+                <thead className="border-b border-border/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <tr>
+                    <th
+                      scope="col"
+                      aria-sort={sortBy === "name-asc" ? "ascending" : sortBy === "name-desc" ? "descending" : "none"}
+                      className="px-3 py-3.5"
+                    >
+                      <button onClick={() => handleSortClick("name")} className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground">
+                        <span>Project</span>
+                        {sortBy === "name-asc" ? (
+                          <ChevronUp className="h-3.5 w-3.5 text-primary" />
+                        ) : sortBy === "name-desc" ? (
+                          <ChevronDown className="h-3.5 w-3.5 text-primary" />
                         ) : (
-                          <span className="text-[10px] italic text-muted-foreground/70">None</span>
+                          <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
                         )}
-                      </td>
-
-                      <td className="whitespace-nowrap px-4 py-3.5 font-mono text-[11px] text-muted-foreground">
-                        {proj.createdAt}
-                      </td>
-
-                      <td className="px-4 py-3.5 text-right">
-                        <Button asChild size="sm" variant="outline" className="h-8 border-border/60 text-xs hover:border-primary">
-                          <Link href={`/projects/${proj.id}`}>Inspect</Link>
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                      </button>
+                    </th>
+                    <th scope="col" className="px-3 py-3.5">Category</th>
+                    <th scope="col" className="px-3 py-3.5">Ecosystem</th>
+                    <th scope="col" className="px-3 py-3.5">Status & Verification</th>
+                    <th scope="col" aria-sort={sortBy === "tokens-desc" ? "descending" : "none"} className="px-3 py-3.5">
+                      <button onClick={() => handleSortClick("tokens")} className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground">
+                        <span>Linked Tokens</span>
+                        {sortBy === "tokens-desc" ? (
+                          <ChevronDown className="h-3.5 w-3.5 text-primary" />
+                        ) : (
+                          <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
+                        )}
+                      </button>
+                    </th>
+                    <th
+                      scope="col"
+                      aria-sort={sortBy === "date-desc" ? "descending" : sortBy === "date-asc" ? "ascending" : "none"}
+                      className="px-3 py-3.5"
+                    >
+                      <button onClick={() => handleSortClick("date")} className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground">
+                        <span>Created</span>
+                        {sortBy === "date-desc" ? (
+                          <ChevronDown className="h-3.5 w-3.5 text-primary" />
+                        ) : sortBy === "date-asc" ? (
+                          <ChevronUp className="h-3.5 w-3.5 text-primary" />
+                        ) : (
+                          <ArrowUpDown className="h-3.5 w-3.5 opacity-50" />
+                        )}
+                      </button>
+                    </th>
+                    <th scope="col" className="px-3 py-3.5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40">
+                  {paginatedProjects.map((proj) => {
+                    const linkedTokens = linkedTokensOf(proj);
+                    const tone = toneOf(proj);
+                    return (
+                      <tr key={proj.id} className="group transition-colors hover:bg-secondary/20">
+                        <td className="px-3 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <Avatar name={proj.name} className={cn("h-9 w-9 rounded-lg text-xs", tone.tile)} />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5 font-bold text-foreground transition-colors group-hover:text-primary">
+                                <Link href={`/projects/${proj.id}`}>{proj.name}</Link>
+                                {proj.websiteUrl && (
+                                  <a
+                                    href={proj.websiteUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-muted-foreground hover:text-primary"
+                                    title="Official Website"
+                                    aria-label={`Official website for ${proj.name}`}
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
+                                )}
+                              </div>
+                              <span className="font-mono text-[10px] text-muted-foreground">{proj.ownerAddress}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3.5">
+                          {proj.category ? <span className={cn("text-xs font-semibold", tone.text)}>{proj.category}</span> : "—"}
+                        </td>
+                        <td className="px-3 py-3.5">
+                          {proj.ecosystem ? <EcosystemMark proj={proj} isSepolia={isSepoliaProject(proj)} /> : "—"}
+                        </td>
+                        <td className="px-3 py-3.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StatusBadge status={proj.status} />
+                            <VerificationMark status={proj.verificationStatus} compact />
+                          </div>
+                        </td>
+                        <td className="px-3 py-3.5">
+                          {linkedTokens.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {linkedTokens.map((t) => (
+                                <Link
+                                  key={t.id}
+                                  href={`/tokens/${t.id}`}
+                                  className="inline-block rounded-md bg-secondary/70 px-1.5 py-0.5 font-mono text-[10px] text-foreground transition-colors hover:bg-primary/20"
+                                >
+                                  ${t.symbol}
+                                </Link>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-[10px] italic text-muted-foreground/70">None</span>
+                          )}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-3.5 font-mono text-[11px] text-muted-foreground">{proj.createdAt}</td>
+                        <td className="px-3 py-3.5 text-right">
+                          <Button asChild size="sm" variant="outline" className="h-8 border-border/60 text-xs hover:border-primary">
+                            <Link href={`/projects/${proj.id}`}>Inspect</Link>
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
 
       {/* 7. Pagination */}
       {totalPages > 1 && (
@@ -794,6 +771,8 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
           </div>
         </nav>
       )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -802,31 +781,61 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
 /* Local presentational helpers (no state, no data)                    */
 /* ------------------------------------------------------------------ */
 
-function FilterSelect({
+// Category identity tones. Assigned by a category's position in the sorted category list,
+// so the same category always gets the same colour. Purely visual; carries no data meaning.
+const TONES = [
+  { tile: "border-primary/30 from-primary/25 to-primary/5", text: "text-primary" },
+  { tile: "border-cyan-500/30 from-cyan-500/25 to-cyan-500/5", text: "text-cyan-400" },
+  { tile: "border-violet-500/30 from-violet-500/25 to-violet-500/5", text: "text-violet-400" },
+  { tile: "border-emerald-500/30 from-emerald-500/25 to-emerald-500/5", text: "text-emerald-400" },
+  { tile: "border-rose-500/30 from-rose-500/25 to-rose-500/5", text: "text-rose-400" },
+  { tile: "border-amber-500/30 from-amber-500/25 to-amber-500/5", text: "text-amber-400" },
+];
+const NEUTRAL_TONE = { tile: "border-border/60 from-secondary to-secondary/30", text: "text-muted-foreground" };
+
+function FacetGroup({
   label,
   ariaLabel,
+  options,
   value,
   onChange,
-  children,
 }: {
   label: string;
   ariaLabel: string;
+  options: { value: string; label: string; count: number }[];
   value: string;
   onChange: (value: string) => void;
-  children: React.ReactNode;
 }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={ariaLabel}
-        className="h-10 w-full min-w-0 rounded-lg border border-border/70 bg-secondary/30 px-3 text-xs text-foreground transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-      >
-        {children}
-      </select>
-    </label>
+    <div role="group" aria-label={ariaLabel} className="space-y-1">
+      <h2 className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</h2>
+      <ul>
+        {options.map((o) => {
+          const active = value === o.value;
+          const empty = o.count === 0 && !active;
+          return (
+            <li key={o.value}>
+              <button
+                type="button"
+                onClick={() => onChange(o.value)}
+                aria-pressed={active}
+                className={cn(
+                  "flex w-full items-center justify-between gap-3 rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
+                  active
+                    ? "bg-primary/10 font-semibold text-primary"
+                    : empty
+                    ? "text-muted-foreground/40 hover:text-muted-foreground"
+                    : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+                )}
+              >
+                <span className="truncate">{o.label}</span>
+                <span className="font-mono text-[11px] opacity-70">{o.count}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -837,7 +846,7 @@ function Avatar({ name, className }: { name: string; className?: string }) {
     <div
       aria-hidden="true"
       className={cn(
-        "flex shrink-0 items-center justify-center border border-primary/30 bg-gradient-to-br from-primary/20 to-amber-500/10 font-bold text-foreground",
+        "flex shrink-0 items-center justify-center border bg-gradient-to-br font-bold text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
         className
       )}
     >
@@ -846,37 +855,34 @@ function Avatar({ name, className }: { name: string; className?: string }) {
   );
 }
 
-function EcosystemBadge({ proj, isSepolia }: { proj: Project; isSepolia: boolean }) {
+function EcosystemMark({ proj, isSepolia }: { proj: Project; isSepolia: boolean }) {
   return (
-    <Badge
-      variant={isSepolia ? "default" : "secondary"}
-      className={cn(
-        "text-[10px]",
-        isSepolia
-          ? "border border-primary/40 bg-primary/20 text-primary hover:bg-primary/30"
-          : "bg-secondary text-muted-foreground"
-      )}
+    <span
+      className={cn("inline-flex items-center gap-1.5", isSepolia ? "text-foreground" : "text-muted-foreground")}
       title={isSepolia ? "D-04 Approved Network (11155111)" : "Catalog Origin — Non-active network per D-04"}
     >
+      <span aria-hidden className={cn("h-1.5 w-1.5 rounded-full", isSepolia ? "bg-primary" : "bg-muted-foreground/50")} />
       {proj.ecosystem}
-    </Badge>
+    </span>
   );
 }
 
-function VerificationPill({ status }: { status?: Project["verificationStatus"] }) {
-  if (status === "audit_available") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-        <ShieldCheck className="h-3 w-3" /> Audited
-      </span>
-    );
-  }
-  if (status === "contract_source_verified") {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-medium text-cyan-400">
-        <ShieldCheck className="h-3 w-3" /> Verified Source
-      </span>
-    );
-  }
-  return null;
+const VERIFICATION_LABELS: Partial<Record<NonNullable<Project["verificationStatus"]>, { label: string; cls: string; icon: boolean }>> = {
+  audit_available: { label: "Audit available", cls: "text-emerald-400", icon: true },
+  contract_source_verified: { label: "Source verified", cls: "text-cyan-400", icon: true },
+  project_reviewed: { label: "Project reviewed", cls: "text-muted-foreground", icon: false },
+  not_reviewed: { label: "Not reviewed", cls: "text-muted-foreground/70", icon: false },
+};
+
+/** Shows exactly the stored verification tier; nothing is inferred. Renders nothing if the tier is unset. */
+function VerificationMark({ status, compact }: { status?: Project["verificationStatus"]; compact?: boolean }) {
+  const v = status ? VERIFICATION_LABELS[status] : undefined;
+  if (!v) return null;
+  if (compact && !v.icon) return null;
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 text-[11px] font-medium", v.cls)} title={v.label}>
+      {v.icon ? <ShieldCheck className="h-3.5 w-3.5" /> : <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />}
+      {compact ? <span className="sr-only">{v.label}</span> : v.label}
+    </span>
+  );
 }

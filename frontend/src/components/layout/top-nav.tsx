@@ -41,11 +41,19 @@ export function TopNav() {
   } = useWallet();
   const { openModal } = useModal();
 
+  const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [navTheme, setNavTheme] = useState<"light" | "dark">("dark");
   const navRef = useRef<HTMLElement>(null);
+
+  // Keep wallet-dependent markup identical during SSR and the first client render.
+  // Wagmi may restore a wallet session immediately on the client, so render its
+  // resolved state only after hydration has completed.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Scroll detection: window.scrollY > 36 activates subtle glass treatment
   useEffect(() => {
@@ -209,7 +217,7 @@ export function TopNav() {
           </button>
 
           {/* Real ProMiners Connect Wallet Control (41px height) */}
-          {isConnecting ? (
+          {mounted ? (isConnecting ? (
             <button
               type="button"
               className="wallet-btn wallet-btn-loading"
@@ -245,6 +253,16 @@ export function TopNav() {
               type="button"
               className="wallet-btn wallet-btn-connect"
               onClick={() => openModal("CONNECT_WALLET")}
+            >
+              <Wallet className="h-4 w-4" />
+              <span>Connect Wallet</span>
+            </button>
+          )) : (
+            <button
+              type="button"
+              className="wallet-btn wallet-btn-connect"
+              disabled
+              aria-label="Wallet status loading"
             >
               <Wallet className="h-4 w-4" />
               <span>Connect Wallet</span>

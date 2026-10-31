@@ -20,7 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <TopNav />
             </Suspense>
 
-            <main className="flex-1 pt-24 sm:pt-28 pb-16">
+            <main className="flex-1 pt-24 sm:pt-28 pb-0">
               <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading...</div>}>
                 {children}
               </Suspense>

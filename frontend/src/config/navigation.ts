@@ -20,7 +20,7 @@ export const TOP_NAV_ITEMS: NavItem[] = [
     description: 'Discover projects, tokens and campaigns',
     children: [
       { label: 'All', href: '/explore', description: 'Discovery hub' },
-      { label: 'Tokens', href: '/explore/tokens', description: 'Browse all tokens' },
+      { label: 'Tokens', href: '/tokens', description: 'Browse all tokens' },
       { label: 'Projects', href: '/explore/projects', description: 'Browse all projects' },
       { label: 'Presales', href: '/explore/presales', description: 'Upcoming and live presales' },
       { label: 'Fair Launches', href: '/explore/launches', description: 'Fair launch listings' },
@@ -32,9 +32,8 @@ export const TOP_NAV_ITEMS: NavItem[] = [
     label: 'Tokens',
     href: '/tokens',
     children: [
-      { label: 'Token Dashboard', href: '/tokens', description: 'Token overview and stats' },
-      { label: 'Explore Tokens', href: '/tokens/explore', description: 'Browse all tokens' },
-      { label: 'My Tokens', href: '/tokens/my', description: 'Your created tokens', requiresWallet: true },
+      { label: 'Token Directory', href: '/tokens', description: 'Browse, search and filter all tokens' },
+      { label: 'My Tokens', href: '/tokens/my', description: 'Your created and managed tokens', requiresWallet: true },
     ],
   },
   {
