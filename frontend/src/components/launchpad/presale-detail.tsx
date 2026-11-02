@@ -1,7 +1,4 @@
-"use client";
-
 import React, { useRef, useState, useTransition } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -55,6 +52,7 @@ import {
   AlertTriangle,
   Lock,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export interface PresaleDetailProps {
   presale: Presale;
@@ -534,7 +532,7 @@ export function PresaleDetail({
       } else {
         url.searchParams.set("tab", tab);
       }
-      window.history.replaceState(null, "", url.toString());
+      window.history.replaceState(window.history.state, "", url.toString());
     }
   };
 
@@ -599,14 +597,21 @@ export function PresaleDetail({
       contractAddress={presale.contractAddress}
       activeTab={activeTab}
       onTabChange={handleTabChange}
+      headerAside={
+        <dl className="lf-detail-metrics" aria-label="Presale summary">
+          <div><dt>Raised</dt><dd>{presale.totalRaised ?? "—"}</dd></div>
+          <div><dt>Hard cap</dt><dd>{presale.hardCap ?? "—"}</dd></div>
+          <div><dt>Participants</dt><dd>{presale.participantCount?.toLocaleString() ?? "—"}</dd></div>
+        </dl>
+      }
     >
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* TAB 1: OVERVIEW                                                        */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "overview" && (
-        <div className="grid grid-cols-1 gap-x-12 gap-y-12 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="lf-detail-content grid grid-cols-1 gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* Left Column: Raise, Timeline, Spotlights */}
-          <div className="space-y-12">
+          <div className="min-w-0 space-y-8">
             {/* Simulation Disclosure Banner */}
             <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
               <div className="flex items-start gap-3">
@@ -674,7 +679,7 @@ export function PresaleDetail({
                           {token.symbol.slice(0, 4)}
                         </span>
                         <div className="min-w-0">
-                          <Link href={`/tokens/${token.id}`} className="truncate font-semibold text-foreground hover:text-primary transition-colors block">
+                          <Link to={`/tokens/${token.id}`} className="truncate font-semibold text-foreground hover:text-primary transition-colors block">
                             {token.name}
                           </Link>
                           <p className="font-mono text-xs text-muted-foreground">{token.symbol} · {token.standard || "ERC-20"}</p>
@@ -704,10 +709,10 @@ export function PresaleDetail({
                         </div>
                       </dl>
                       <div className="flex flex-wrap gap-3 pt-2 text-xs">
-                        <Link href={`/tokens/${token.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                        <Link to={`/tokens/${token.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
                           Token Overview <ArrowUpRight className="h-3 w-3" />
                         </Link>
-                        <Link href={`/tokens/${token.id}/contract`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                        <Link to={`/tokens/${token.id}/contract`} className="inline-flex items-center gap-1 text-primary hover:underline">
                           Contract <ArrowUpRight className="h-3 w-3" />
                         </Link>
                       </div>
@@ -735,7 +740,7 @@ export function PresaleDetail({
                           {project.name.slice(0, 2).toUpperCase()}
                         </span>
                         <div className="min-w-0">
-                          <Link href={`/projects/${project.id}`} className="truncate font-semibold text-foreground hover:text-primary transition-colors block">
+                          <Link to={`/projects/${project.id}`} className="truncate font-semibold text-foreground hover:text-primary transition-colors block">
                             {project.name}
                           </Link>
                           <p className="text-xs text-muted-foreground">{project.category || "Ecosystem Project"}</p>
@@ -761,7 +766,7 @@ export function PresaleDetail({
                         </div>
                       </dl>
                       <div className="pt-2 text-xs">
-                        <Link href={`/projects/${project.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                        <Link to={`/projects/${project.id}`} className="inline-flex items-center gap-1 text-primary hover:underline">
                           Project Profile <ArrowUpRight className="h-3 w-3" />
                         </Link>
                       </div>
@@ -780,7 +785,7 @@ export function PresaleDetail({
                 <ul className="mt-4 divide-y divide-border/60 border-y border-border/60">
                   {siblingPresales.map((p) => (
                     <li key={p.id}>
-                      <Link href={`/launchpad/presales/${p.id}`} className="group flex items-center justify-between gap-4 py-3">
+                      <Link to={`/launchpad/presales/${p.id}`} className="group flex items-center justify-between gap-4 py-3">
                         <span className="min-w-0">
                           <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Presale</span>
                           <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{p.title}</span>
@@ -791,7 +796,7 @@ export function PresaleDetail({
                   ))}
                   {fairLaunches.map((f) => (
                     <li key={f.id}>
-                      <Link href={`/launchpad/launches/${f.id}`} className="group flex items-center justify-between gap-4 py-3">
+                      <Link to={`/launchpad/launches/${f.id}`} className="group flex items-center justify-between gap-4 py-3">
                         <span className="min-w-0">
                           <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Fair Launch</span>
                           <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{f.title}</span>

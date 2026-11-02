@@ -1,13 +1,11 @@
-"use client";
-
 import React, { useState } from "react";
-import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { MetricCard } from "@/components/shared/metric-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
+import { SIMULATED_TRANSFER_TEMPLATES, TOKEN_HOLDER_ALLOCATION_TEMPLATES } from "@/data";
 import {
   Token,
   TokenMarketData,
@@ -39,6 +37,7 @@ import {
   ChevronRight,
   BookOpen,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export type TokenWithMarket = Token & { market: TokenMarketData };
 
@@ -296,98 +295,34 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
   const fdv = rawSupply * (token.market?.price || 0);
 
   // Holder Distribution Breakdown
-  const holdersBreakdown = [
-    {
-      name: "Protocol Treasury & Governance",
-      address: project?.ownerAddress || "0x18F4...9A21",
-      percentage: 35,
-      balance: `${formatNumber(Math.round(rawSupply * 0.35))} ${token.symbol}`,
-      type: "Multi-Sig Treasury",
-    },
-    {
-      name: "Staking & Liquidity Rewards",
-      address: "0x772A...4D91",
-      percentage: 25,
-      balance: `${formatNumber(Math.round(rawSupply * 0.25))} ${token.symbol}`,
-      type: "Reward Contract",
-    },
-    {
-      name: "Public Sale & Fair Distribution",
-      address: "0x42B1...1E03",
-      percentage: 20,
-      balance: `${formatNumber(Math.round(rawSupply * 0.20))} ${token.symbol}`,
-      type: "Community Allocations",
-    },
-    {
-      name: "Core Contributors & Ecosystem Reserve",
-      address: token.creatorAddress || "0x892A...A7D1",
-      percentage: 12,
-      balance: `${formatNumber(Math.round(rawSupply * 0.12))} ${token.symbol}`,
-      type: "Vested (24 Months)",
-    },
-    {
-      name: "DEX AMM Liquidity Vault",
-      address: "0x61E3...5B22",
-      percentage: 8,
-      balance: `${formatNumber(Math.round(rawSupply * 0.08))} ${token.symbol}`,
-      type: "Liquidity Pool",
-    },
-  ];
+  const holdersBreakdown = TOKEN_HOLDER_ALLOCATION_TEMPLATES.map((item) => ({
+    name: item.name,
+    address: ("addressSource" in item && item.addressSource === "project-owner")
+      ? project?.ownerAddress || item.addressFallback
+      : ("addressSource" in item && item.addressSource === "token-creator")
+        ? token.creatorAddress || item.addressFallback
+        : item.addressFallback,
+    percentage: item.percentage,
+    balance: `${formatNumber(Math.round(rawSupply * item.percentage / 100))} ${token.symbol}`,
+    type: item.type,
+  }));
 
   // Simulated Transfer History
-  const mockTransfers = [
-    {
-      hash: "0x8a92b4c1d3e5f7a9b0c2d4e6f8a1b3c5d7e9f0a2",
-      method: "Transfer",
-      from: "0x18F4...9A21 (Treasury)",
-      to: "0x772A...4D91 (Rewards Vault)",
-      amount: `${formatNumber(Math.round(rawSupply * 0.005))} ${token.symbol}`,
-      age: "18 mins ago",
-      block: 6812490,
-    },
-    {
-      hash: "0x4b7c9e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d",
-      method: "Transfer",
-      from: "0x61E3...5B22 (DEX Pool)",
-      to: "0x3918...4920",
-      amount: `${formatNumber(Math.round(rawSupply * 0.001))} ${token.symbol}`,
-      age: "2 hours ago",
-      block: 6811980,
-    },
-    {
-      hash: "0x1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e",
-      method: "Transfer",
-      from: "0x892A...A7D1 (Deployer)",
-      to: "0x61E3...5B22 (DEX Pool)",
-      amount: `${formatNumber(Math.round(rawSupply * 0.02))} ${token.symbol}`,
-      age: "1 day ago",
-      block: 6808420,
-    },
-    {
-      hash: "0x9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d",
-      method: "Transfer",
-      from: "0x892A...A7D1 (Deployer)",
-      to: "0x18F4...9A21 (Treasury)",
-      amount: `${formatNumber(Math.round(rawSupply * 0.35))} ${token.symbol}`,
-      age: "3 days ago",
-      block: 6799400,
-    },
-    {
-      hash: "0x5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f",
-      method: "Initial Mint",
-      from: "0x0000...0000 (Genesis)",
-      to: "0x892A...A7D1 (Deployer)",
-      amount: `${token.totalSupply || "100,000,000"} ${token.symbol}`,
-      age: token.createdAt,
-      block: 6701000,
-    },
-  ];
+  const mockTransfers = SIMULATED_TRANSFER_TEMPLATES.map((item) => ({
+    hash: item.hash,
+    method: item.method,
+    from: item.from,
+    to: item.to,
+    amount: `${formatNumber(Math.round(rawSupply * ("amountRatio" in item ? item.amountRatio : 1)))} ${token.symbol}`,
+    age: "age" in item ? item.age : token.createdAt,
+    block: item.block,
+  }));
 
   const totalEcosystemItems =
     presales.length + fairLaunches.length + airdrops.length + stakingPools.length;
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="tk-page tk-page--detail-workspace space-y-8 py-6">
       {/* 1. Page Header */}
       <PageHeader
         title={`${token.name} (${token.symbol})`}
@@ -419,7 +354,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
               size="sm"
               className="bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90"
             >
-              <Link href={`/exchange/tokens/${token.id}`}>Trade {token.symbol}</Link>
+              <Link to={`/exchange/tokens/${token.id}`}>Trade {token.symbol}</Link>
             </Button>
 
             {token.contractAddress ? (
@@ -536,7 +471,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
       <div className="border-b border-border/40">
         <div className="flex items-center gap-2 overflow-x-auto">
           <Link
-            href={`/tokens/${token.id}`}
+            to={`/tokens/${token.id}`}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-all ${
               activeTab === "overview"
                 ? "border-primary text-primary bg-primary/10"
@@ -547,7 +482,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
             Overview & Utilities
           </Link>
           <Link
-            href={`/tokens/${token.id}/contract`}
+            to={`/tokens/${token.id}/contract`}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-all ${
               activeTab === "contract"
                 ? "border-primary text-primary bg-primary/10"
@@ -558,7 +493,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
             Contract & Source
           </Link>
           <Link
-            href={`/tokens/${token.id}/activity`}
+            to={`/tokens/${token.id}/activity`}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-xl border-b-2 transition-all ${
               activeTab === "activity"
                 ? "border-primary text-primary bg-primary/10"
@@ -727,7 +662,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
                       </div>
                       <div className="min-w-0">
                         <Link
-                          href={`/projects/${project.id}`}
+                          to={`/projects/${project.id}`}
                           className="font-semibold text-foreground text-sm hover:text-primary transition-colors block truncate"
                         >
                           {project.name}
@@ -760,7 +695,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
                         variant="outline"
                         className="h-7 text-xs border-border/60 hover:border-primary/50"
                       >
-                        <Link href={`/projects/${project.id}`}>Project Hub</Link>
+                        <Link to={`/projects/${project.id}`}>Project Hub</Link>
                       </Button>
                     </div>
                   </div>
@@ -792,7 +727,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
                     {presales.map((ps) => (
                       <Link
                         key={ps.id}
-                        href={`/launchpad/presales/${ps.id}`}
+                        to={`/launchpad/presales/${ps.id}`}
                         className="rounded-xl border border-border/40 bg-secondary/20 p-3 block hover:border-primary/40 transition-colors"
                       >
                         <div className="flex items-center justify-between text-xs">
@@ -814,7 +749,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
                     {fairLaunches.map((fl) => (
                       <Link
                         key={fl.id}
-                        href={`/launchpad/launches/${fl.id}`}
+                        to={`/launchpad/launches/${fl.id}`}
                         className="rounded-xl border border-border/40 bg-secondary/20 p-3 block hover:border-primary/40 transition-colors"
                       >
                         <div className="flex items-center justify-between text-xs">
@@ -836,7 +771,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
                     {airdrops.map((air) => (
                       <Link
                         key={air.id}
-                        href={`/airdrops/campaigns/${air.id}`}
+                        to={`/airdrops/campaigns/${air.id}`}
                         className="rounded-xl border border-border/40 bg-secondary/20 p-3 block hover:border-primary/40 transition-colors"
                       >
                         <div className="flex items-center justify-between text-xs">
@@ -858,7 +793,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
                     {stakingPools.map((pool) => (
                       <Link
                         key={pool.id}
-                        href={`/staking/pools/${pool.id}`}
+                        to={`/staking/pools/${pool.id}`}
                         className="rounded-xl border border-border/40 bg-secondary/20 p-3 block hover:border-primary/40 transition-colors"
                       >
                         <div className="flex items-center justify-between text-xs">

@@ -1,13 +1,9 @@
-"use client";
-
 import React, { useState, useMemo, useCallback, useRef, useSyncExternalStore } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/projects/copy-button";
 import { cn } from "@/lib/utils";
-import { MOCK_TOKENS } from "@/lib/mock-data";
+import { TOKENS } from "@/data";
 import { Token, TokenMarketData } from "@/types";
 import { useWallet } from "@/contexts/wallet-context";
 import { SESSION_TOKENS_STORAGE_KEY } from "@/lib/data-provenance";
@@ -30,6 +26,7 @@ import {
   ExternalLink,
   ArrowUpRight,
 } from "lucide-react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 export type TokenWithMarket = Token & { market: TokenMarketData };
 
@@ -172,9 +169,9 @@ function readSessionRaw(): string {
 /* ------------------------------------------------------------------ */
 
 export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const navigate = useNavigate();
+  const pathname = useLocation().pathname;
+  const [searchParams] = useSearchParams();
   const { isConnected, shortAddress } = useWallet();
 
   // Read session-simulated deployments if present
@@ -218,7 +215,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
 
   // Combined master catalog: standard mock tokens + any session deployments
   const masterCatalog = useMemo<TokenWithMarket[]>(() => {
-    const combined = [...(MOCK_TOKENS as TokenWithMarket[])];
+    const combined = [...(TOKENS as TokenWithMarket[])];
     for (const st of sessionTokens) {
       if (!combined.some((t) => t.contractAddress?.toLowerCase() === st.contractAddress?.toLowerCase())) {
         combined.unshift(st);
@@ -275,12 +272,12 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
       const targetUrl = qs ? `${pathname}?${qs}` : pathname;
 
       if (replace) {
-        window.history.replaceState(null, "", targetUrl);
+        navigate(targetUrl, { replace: true });
       } else {
-        router.push(targetUrl, { scroll: false });
+        navigate(targetUrl);
       }
     },
-    [searchQuery, networkFilter, categoryFilter, statusFilter, verificationFilter, sortField, sortOrder, currentPage, pageSize, pathname, router]
+    [searchQuery, networkFilter, categoryFilter, statusFilter, verificationFilter, sortField, sortOrder, currentPage, pageSize, pathname, navigate]
   );
 
   // Debounced search query URL update (avoids pushing excessive history while typing)
@@ -332,7 +329,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
 
   const resetFilters = () => {
     setSearchQuery("");
-    router.push(pathname, { scroll: false });
+    navigate(pathname);
   };
 
   // Derive unique categories from master catalog
@@ -530,7 +527,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
               size="sm"
               className="h-9 border-border/60 text-xs font-semibold hover:bg-secondary/60"
             >
-              <Link href="/tokens/my">
+              <Link to="/tokens/my">
                 <Wallet className="mr-1.5 h-3.5 w-3.5 text-primary" />
                 <span>My Tokens</span>
                 {isConnected && (
@@ -545,7 +542,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
               size="sm"
               className="h-9 gap-1.5 bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
             >
-              <Link href="/tokens/create">
+              <Link to="/tokens/create">
                 <Plus className="h-3.5 w-3.5" /> Create Token
               </Link>
             </Button>
@@ -853,7 +850,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
                 size="sm"
                 className="gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
               >
-                <Link href="/tokens/create">
+                <Link to="/tokens/create">
                   <Plus className="h-3.5 w-3.5" /> Create Token
                 </Link>
               </Button>
@@ -947,7 +944,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <Link
-                                  href={`/tokens/${token.id}`}
+                                  to={`/tokens/${token.id}`}
                                   className="truncate text-sm font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                                 >
                                   {token.name}
@@ -1080,7 +1077,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
                             size="sm"
                             className="h-8 gap-1 px-2.5 text-xs font-semibold text-primary hover:bg-primary/10 hover:text-primary"
                           >
-                            <Link href={`/tokens/${token.id}`}>
+                            <Link to={`/tokens/${token.id}`}>
                               <span>Inspect</span>
                               <ChevronRight className="h-3.5 w-3.5" />
                             </Link>
@@ -1126,7 +1123,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                               <Link
-                                href={`/tokens/${token.id}`}
+                                to={`/tokens/${token.id}`}
                                 className="truncate text-sm font-semibold text-foreground hover:text-primary"
                               >
                                 {token.name}
@@ -1210,7 +1207,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
                         )}
 
                         <Button asChild size="sm" variant="ghost" className="h-7 text-xs font-semibold text-primary">
-                          <Link href={`/tokens/${token.id}`}>
+                          <Link to={`/tokens/${token.id}`}>
                             View Details <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                           </Link>
                         </Button>

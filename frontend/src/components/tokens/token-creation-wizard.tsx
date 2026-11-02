@@ -1,11 +1,11 @@
-"use client";
-
 import React, { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { TOKEN_CATEGORIES } from "@/data";
+export { TOKEN_CATEGORIES } from "@/data";
+import { TokenCreationGlobeLayout } from "@/components/tokens/token-creation-globe-layout";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { MOCK_PROJECTS } from "@/lib/mock-data";
+import { PROJECTS } from "@/data";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
@@ -26,6 +26,7 @@ import {
   TriangleAlert,
   Pencil,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export type SimulationStage =
   | "idle"
@@ -221,21 +222,6 @@ export function generateDeterministicTxHash(name: string, symbol: string): strin
   const hex = Math.abs(hash).toString(16).padStart(12, "0");
   return `0x${hex}4b7c9e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d`.slice(0, 66);
 }
-
-export const TOKEN_CATEGORIES = [
-  "Governance",
-  "DeFi",
-  "Infrastructure",
-  "AI & Compute",
-  "Security & Privacy",
-  "DePIN",
-  "Meme & Community",
-];
-
-
-// ---------------------------------------------------------------------------
-// Presentation helpers (UI only — no form or deployment logic lives here)
-// ---------------------------------------------------------------------------
 
 const WIZARD_STEPS = [
   { num: 1, label: "Identity", full: "Identity & Category" },
@@ -610,51 +596,16 @@ export function TokenCreationWizard() {
     isPermit && "Permit",
   ].filter(Boolean) as string[];
   const featureSummary = featureNames.join(", ") || "Standard ERC-20";
-  const linkedProject = MOCK_PROJECTS.find((p) => p.id === projectId);
+  const linkedProject = PROJECTS.find((p) => p.id === projectId);
   const stageIndex = SIMULATION_STAGES.findIndex((s) => s.key === simulationStage);
   const isIdle = simulationStage === "idle";
   const currentStep = WIZARD_STEPS[step - 1];
 
-  // Live specification — shared by the desktop side rail and the mobile disclosure.
-  const specSummary = (
-    <div>
-      <div className="flex items-center gap-3 pb-4">
-        <div
-          aria-hidden="true"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15 font-mono text-sm font-bold text-primary"
-        >
-          {tokenSymbol.slice(0, 2) || "TK"}
-        </div>
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold text-foreground">{tokenName || "Unnamed token"}</div>
-          <div className="truncate font-mono text-xs text-muted-foreground">
-            ${tokenSymbol || "SYMBOL"} · ERC-20
-          </div>
-        </div>
-      </div>
-      <dl className="divide-y divide-border/50 border-t border-border/50">
-        <SpecRow label="Category">{category}</SpecRow>
-        <SpecRow label="Project">{linkedProject ? linkedProject.name : "Standalone"}</SpecRow>
-        <SpecRow label="Network">Sepolia · 11155111</SpecRow>
-        <SpecRow label="Decimals" mono>
-          {decimals}
-        </SpecRow>
-        <SpecRow label="Supply" mono>
-          {baseUnitsResult.isValid ? totalSupply : "Invalid"}
-        </SpecRow>
-        <SpecRow label="Features">{featureSummary}</SpecRow>
-      </dl>
-    </div>
-  );
-
   return (
-    <section id="create-token-wizard" aria-labelledby="create-token-title" className="mx-auto w-full max-w-6xl scroll-mt-28 py-10 sm:py-14">
+    <section id="create-token-wizard" aria-labelledby="create-token-title" className="mx-auto w-full max-w-none scroll-mt-28 py-4 sm:py-5">
       {/* Header */}
-      <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
-          <p className="font-mono text-xs uppercase tracking-[0.18em] text-primary">
-            Token deployment workflow · Sepolia testnet (D-04)
-          </p>
           <h2 id="create-token-title" className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
             Token Creation &amp; Deployment Simulation
           </h2>
@@ -680,24 +631,12 @@ export function TokenCreationWizard() {
         </div>
       </header>
 
-      {/* Simulation boundary — one persistent, honest line */}
-      <div className="mt-6 flex items-start gap-3 border-l-2 border-primary/60 py-0.5 pl-4">
-        <Shield className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          <span className="font-semibold text-foreground">Simulation boundary: </span>
-          Under Architecture Decision <code className="font-mono text-primary">D-04</code>, transactions are supported
-          exclusively on Ethereum Sepolia (<code className="font-mono text-primary">11155111</code>). This wizard
-          simulates deployment schema validation, source code generation, and receipt generation. No real smart
-          contracts or blockchain transactions are submitted.
-        </p>
-      </div>
-
       {/* Stepper */}
       {isIdle && (
         <nav
           id="token-wizard-steps"
           aria-label="Token creation steps"
-          className="mt-10 scroll-mt-28"
+          className="mt-4 scroll-mt-28"
         >
           <ol className="grid grid-cols-4 gap-2 sm:gap-4">
             {WIZARD_STEPS.map((s) => {
@@ -754,19 +693,21 @@ export function TokenCreationWizard() {
         </nav>
       )}
 
-      <div className={cn("mt-10", isIdle && "grid gap-x-14 gap-y-8 lg:grid-cols-[minmax(0,1fr)_300px]")}>
-        <div className="min-w-0">
+      <div className="mt-0 w-full">
+        <TokenCreationGlobeLayout>
+          <div className="min-w-0">
           {/* ===================== STEP 1: IDENTITY ===================== */}
           {isIdle && step === 1 && (
-            <div className="space-y-8">
-              <div className="space-y-1">
-                <h3 className="text-xl font-semibold tracking-tight text-foreground">Token identity &amp; classification</h3>
-                <p className="text-sm text-muted-foreground">
+            <div className="space-y-5">
+              <div className="mb-1 border-b border-border/60 pb-4 text-center">
+                <h3 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                  Token identity &amp; classification
+                </h3>
+                <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
                   Define the public name, ticker symbol, catalog category, and ecosystem association for your asset.
                 </p>
               </div>
-
-              <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
+              <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
                 <Field
                   id="tc-name"
                   label="Token name"
@@ -837,7 +778,7 @@ export function TokenCreationWizard() {
                     <option value="" className="bg-popover text-foreground">
                       None (Standalone Community Asset)
                     </option>
-                    {MOCK_PROJECTS.map((p) => (
+                    {PROJECTS.map((p) => (
                       <option key={p.id} value={p.id} className="bg-popover text-foreground">
                         {p.name} ({p.category})
                       </option>
@@ -869,7 +810,7 @@ export function TokenCreationWizard() {
 
           {/* ===================== STEP 2: SUPPLY & NETWORK ===================== */}
           {isIdle && step === 2 && (
-            <div className="space-y-8">
+            <div className="space-y-5">
               <div className="space-y-1">
                 <h3 className="text-xl font-semibold tracking-tight text-foreground">Supply &amp; network</h3>
                 <p className="text-sm text-muted-foreground">
@@ -1021,7 +962,7 @@ export function TokenCreationWizard() {
 
           {/* ===================== STEP 3: EXTENSIONS ===================== */}
           {isIdle && step === 3 && (
-            <div className="space-y-8">
+            <div className="space-y-5">
               <div className="space-y-1">
                 <h3 className="text-xl font-semibold tracking-tight text-foreground">Contract extensions</h3>
                 <p className="text-sm text-muted-foreground">
@@ -1111,7 +1052,7 @@ export function TokenCreationWizard() {
 
           {/* ===================== STEP 4: REVIEW ===================== */}
           {isIdle && step === 4 && (
-            <div className="space-y-8">
+            <div className="space-y-5">
               <div className="space-y-1">
                 <h3 className="text-xl font-semibold tracking-tight text-foreground">Review &amp; launch simulation</h3>
                 <p className="text-sm text-muted-foreground">
@@ -1339,10 +1280,10 @@ export function TokenCreationWizard() {
                 </Button>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button asChild variant="outline" size="lg" className="text-xs">
-                    <Link href="/tokens/explore">Inspect Token Explorer</Link>
+                    <Link to="/tokens/explore">Inspect Token Explorer</Link>
                   </Button>
                   <Button asChild size="lg" className="bg-primary text-xs font-semibold text-primary-foreground">
-                    <Link href="/tokens">Back to Dashboard</Link>
+                    <Link to="/tokens">Back to Dashboard</Link>
                   </Button>
                 </div>
               </div>
@@ -1351,7 +1292,7 @@ export function TokenCreationWizard() {
 
           {/* Step navigation */}
           {isIdle && (
-            <div className="sticky bottom-0 z-10 -mx-4 mt-10 flex items-center justify-between border-t border-border/50 bg-background/90 px-4 py-4 backdrop-blur-md sm:mx-0 sm:px-0 lg:static lg:bg-transparent lg:backdrop-blur-none">
+            <div className="sticky bottom-0 z-10 -mx-4 mt-6 flex items-center justify-between border-t border-border/50 bg-background/90 px-4 py-3 backdrop-blur-md sm:mx-0 sm:px-0 lg:static lg:bg-transparent lg:backdrop-blur-none">
               {step > 1 ? (
                 <Button variant="outline" size="lg" onClick={() => goTo(step - 1)} className="gap-1.5 text-xs">
                   <ArrowLeft className="h-3.5 w-3.5" /> Back
@@ -1381,36 +1322,7 @@ export function TokenCreationWizard() {
           )}
         </div>
 
-        {/* Live specification — side rail on desktop */}
-        {isIdle && (
-          <aside aria-label="Token specification" className="hidden lg:block">
-            <div className="sticky top-28">
-              <h3 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                Specification
-              </h3>
-              {specSummary}
-              <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-                Updates as you type. Simulation only: nothing is deployed to a network.
-              </p>
-            </div>
-          </aside>
-        )}
-
-        {/* Live specification — disclosure below the form on small screens */}
-        {isIdle && (
-          <details className="group order-first border-y border-border/50 py-3 lg:hidden">
-            <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-foreground">
-              <span>
-                Specification{" "}
-                <span className="font-mono text-xs font-normal text-muted-foreground">
-                  ${tokenSymbol || "SYMBOL"}
-                </span>
-              </span>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-open:rotate-90" />
-            </summary>
-            <div className="mt-4">{specSummary}</div>
-          </details>
-        )}
+        </TokenCreationGlobeLayout>
       </div>
     </section>
   );

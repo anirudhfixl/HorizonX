@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { Activity, ArrowRight, Compass } from "lucide-react";
 import { OrbitalHeroSection } from "@/components/ui/orbital-hero-section";
@@ -32,7 +30,7 @@ export function ExploreOrbitalHero() {
     <section className="explore-hero" aria-labelledby="explore-hero-title">
       <OrbitalHeroSection
         className="explore-hero-scene"
-        focus={narrow ? [0.5, 0.76] : [0.76, 0.43]}
+        focus={narrow ? [0.5, 0.76] : [0.76, 0.52]}
         scrim={narrow ? "top" : "left"}
         scrimStrength={narrow ? 0.96 : 0.91}
         viewRadius={narrow ? 2.2 : 3.45}

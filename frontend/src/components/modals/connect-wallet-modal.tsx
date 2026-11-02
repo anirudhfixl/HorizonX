@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";

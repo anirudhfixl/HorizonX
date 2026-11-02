@@ -1,12 +1,11 @@
-"use client";
-
+import "@/components/launchpad/launchpad.css";
+import { LaunchpadWorkspaceHeader } from "@/components/launchpad/launchpad-section-nav";
 import React, { useState, useMemo, useSyncExternalStore } from "react";
-import Link from "next/link";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MOCK_FAIR_LAUNCHES, MOCK_TOKENS, MOCK_PROJECTS } from "@/lib/mock-data";
+import { FAIR_LAUNCHES, TOKENS, PROJECTS } from "@/data";
 import { readSessionLaunchesRaw, subscribeSessionLaunches, sessionFairLaunchToFairLaunch } from "@/lib/launch-storage";
 import { Token, Project, FairLaunch } from "@/types";
 import { cn } from "@/lib/utils";
@@ -22,11 +21,11 @@ import {
   ChevronDown,
   Info,
   ArrowRight,
-  ArrowLeft,
   Users,
   SearchX,
   Filter,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export type FairLaunchSortOption =
   | "name-asc"
@@ -391,14 +390,14 @@ function IdentityLines({
   return (
     <div className="min-w-0">
       <Link
-        href={`/launchpad/launches/${fl.id}`}
+        to={`/launchpad/launches/${fl.id}`}
         className="line-clamp-2 text-sm font-semibold leading-snug text-foreground transition-colors hover:text-primary"
       >
         {fl.title}
       </Link>
       <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
         {token ? (
-          <Link href={`/tokens/${token.id}`} className="font-mono font-semibold text-primary hover:underline">
+          <Link to={`/tokens/${token.id}`} className="font-mono font-semibold text-primary hover:underline">
             ${token.symbol}
           </Link>
         ) : (
@@ -407,7 +406,7 @@ function IdentityLines({
         {project && (
           <>
             <span className="text-muted-foreground/50">·</span>
-            <Link href={`/projects/${project.id}`} className="truncate hover:text-foreground">
+            <Link to={`/projects/${project.id}`} className="truncate hover:text-foreground">
               {project.name}
             </Link>
           </>
@@ -436,13 +435,13 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
   // Maps for fast token and project metadata lookups
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
-    MOCK_TOKENS.forEach((t) => map.set(t.id, t));
+    TOKENS.forEach((t) => map.set(t.id, t));
     return map;
   }, []);
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
-    MOCK_PROJECTS.forEach((p) => map.set(p.id, p));
+    PROJECTS.forEach((p) => map.set(p.id, p));
     return map;
   }, []);
 
@@ -462,7 +461,7 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
   }, [sessionRaw]);
 
   const allFairLaunches = useMemo(() => {
-    return [...sessionFairLaunches, ...MOCK_FAIR_LAUNCHES];
+    return [...sessionFairLaunches, ...FAIR_LAUNCHES];
   }, [sessionFairLaunches]);
 
   const sessionLaunchIds = useMemo(() => {
@@ -615,17 +614,11 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
     "h-8 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:border-primary focus:outline-none";
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-10 px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="launchpad-page mx-auto w-full max-w-none space-y-8 px-4 py-8 sm:px-6 lg:px-10 xl:px-12 2xl:px-16 lg:py-12">
+      {mode === "canonical" && <LaunchpadWorkspaceHeader items={[{ label: "Launchpad", to: "/launchpad" }, { label: "Fair launches" }]} />}
       {/* 1. Masthead */}
       <header className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="space-y-3">
-          <Link
-            href={mode === "canonical" ? "/launchpad" : "/explore"}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            {mode === "canonical" ? "Launchpad" : "Explore"}
-          </Link>
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             {mode === "canonical" ? "Launchpad · Fair launches" : "Explore · Fair launch discovery"}
           </div>
@@ -643,7 +636,7 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
           size="sm"
           className="gap-1.5 self-start bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90 lg:self-auto"
         >
-          <Link href="/launchpad/launches/create">
+          <Link to="/launchpad/launches/create">
             <Plus className="h-3.5 w-3.5" /> Create Fair Launch
           </Link>
         </Button>
@@ -1044,7 +1037,7 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                       size="sm"
                       className="h-8 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
                     >
-                      <Link href={`/launchpad/launches/${fl.id}`}>
+                      <Link to={`/launchpad/launches/${fl.id}`}>
                         Inspect Launch <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
                     </Button>
@@ -1163,7 +1156,7 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                             variant="outline"
                             className="h-7 border-border/60 text-xs hover:border-primary/50"
                           >
-                            <Link href={`/launchpad/launches/${fl.id}`}>Inspect</Link>
+                            <Link to={`/launchpad/launches/${fl.id}`}>Inspect</Link>
                           </Button>
                         </td>
                       </tr>
@@ -1218,7 +1211,7 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                       variant="outline"
                       className="h-8 w-full border-border/60 text-xs hover:border-primary/50"
                     >
-                      <Link href={`/launchpad/launches/${fl.id}`}>Inspect</Link>
+                      <Link to={`/launchpad/launches/${fl.id}`}>Inspect</Link>
                     </Button>
                   </li>
                 );

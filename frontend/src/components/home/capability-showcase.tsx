@@ -1,7 +1,4 @@
-"use client";
-
 import { useEffect, useRef } from "react";
-import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,87 +11,8 @@ import {
   Wallet,
 } from "lucide-react";
 import { CardSpotlight } from "@/components/ui/card-spotlight";
-
-const offerings = [
-  {
-    number: "01",
-    eyebrow: "TOKEN STUDIO",
-    icon: Coins,
-    title: "Bring your token to life.",
-    description:
-      "Set up the essentials, review the details and move from an idea to a deployed token through a guided flow.",
-    href: "/tokens/create",
-    action: "Create a token",
-    surface: "bg-[#21151d]",
-    glow: "rgba(236, 72, 153, 0.18)",
-    colors: [[236, 72, 153], [168, 85, 247]],
-  },
-  {
-    number: "02",
-    eyebrow: "LAUNCHPAD",
-    icon: Rocket,
-    title: "Take your project to market.",
-    description:
-      "Shape a launch, configure a presale and give supporters a clear way to discover your project.",
-    href: "/launchpad",
-    action: "Explore launches",
-    surface: "bg-[#171a25]",
-    glow: "rgba(99, 102, 241, 0.2)",
-    colors: [[99, 102, 241], [59, 130, 246]],
-  },
-  {
-    number: "03",
-    eyebrow: "COMMUNITY CAMPAIGNS",
-    icon: Gift,
-    title: "Turn attention into participation.",
-    description:
-      "Create airdrop campaigns, define participation requirements and bring your community into the journey.",
-    href: "/airdrops",
-    action: "View campaigns",
-    surface: "bg-[#241316]",
-    glow: "rgba(248, 113, 113, 0.18)",
-    colors: [[248, 113, 113], [217, 70, 239]],
-  },
-  {
-    number: "04",
-    eyebrow: "STAKING",
-    icon: Layers3,
-    title: "Give holders a reason to stay.",
-    description:
-      "Explore staking pools and participation options that help keep your ecosystem active beyond launch.",
-    href: "/staking",
-    action: "Explore staking",
-    surface: "bg-[#171b20]",
-    glow: "rgba(45, 212, 191, 0.16)",
-    colors: [[45, 212, 191], [99, 102, 241]],
-  },
-  {
-    number: "05",
-    eyebrow: "WALLET & ASSETS",
-    icon: Wallet,
-    title: "Keep your assets in view.",
-    description:
-      "Connect your wallet and review supported assets and balances from one dedicated workspace.",
-    href: "/account/wallets",
-    action: "Open wallet",
-    surface: "bg-[#1c1727]",
-    glow: "rgba(167, 139, 250, 0.2)",
-    colors: [[167, 139, 250], [96, 165, 250]],
-  },
-  {
-    number: "06",
-    eyebrow: "MARKET DISCOVERY",
-    icon: Blocks,
-    title: "Find what is moving.",
-    description:
-      "Browse tokens and market activity to discover projects and keep up with the wider ecosystem.",
-    href: "/exchange",
-    action: "Explore markets",
-    surface: "bg-[#1b1b1a]",
-    glow: "rgba(251, 191, 36, 0.15)",
-    colors: [[251, 191, 36], [249, 115, 22]],
-  },
-];
+import { HOME_CAPABILITIES } from "@/data";
+import { Link } from "react-router-dom";
 
 export function CapabilityShowcase() {
   const railRef = useRef<HTMLDivElement>(null);
@@ -110,7 +28,7 @@ export function CapabilityShowcase() {
       if (!first) return;
       const styles = window.getComputedStyle(rail);
       const gap = Number.parseFloat(styles.columnGap || styles.gap || "0") || 0;
-      cycleWidthRef.current = (first.offsetWidth + gap) * offerings.length;
+      cycleWidthRef.current = (first.offsetWidth + gap) * HOME_CAPABILITIES.length;
       rail.scrollLeft = cycleWidthRef.current;
     };
 
@@ -195,19 +113,19 @@ export function CapabilityShowcase() {
           className="capability-rail -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-8 sm:gap-4 sm:px-8 lg:-mx-12 lg:px-12"
           aria-label="HorizonX platform capabilities"
         >
-          {[...offerings, ...offerings, ...offerings].map((item, index) => {
-            const Icon = item.icon;
+          {[...HOME_CAPABILITIES, ...HOME_CAPABILITIES, ...HOME_CAPABILITIES].map((item, index) => {
+            const Icon = ({ coins: Coins, rocket: Rocket, gift: Gift, layers3: Layers3, wallet: Wallet, blocks: Blocks } as const)[item.icon];
             return (
               <CardSpotlight
                 key={`${item.number}-${index}`}
                 radius={260}
                 color={item.glow}
-                colors={item.colors}
+                colors={item.colors.map((color) => [...color])}
                 data-capability-card
                 className={`group relative min-h-[360px] w-[min(82vw,340px)] shrink-0 snap-start overflow-hidden rounded-[5px] border border-white/[.12] ${item.surface} p-0 shadow-[0_18px_50px_rgba(0,0,0,.16)] transition-[border-color,transform] duration-300 hover:-translate-y-1 hover:border-white/25 sm:min-h-[390px] sm:w-[340px] lg:w-[360px]`}
               >
                 <Link
-                  href={item.href}
+                  to={item.href}
                   className="relative z-10 flex min-h-[360px] flex-col p-6 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-300 sm:min-h-[390px] sm:p-7"
                 >
                   <div className="flex items-start justify-between">
@@ -245,7 +163,6 @@ export function CapabilityShowcase() {
             );
           })}
         </div>
-
 
       </div>
     </section>

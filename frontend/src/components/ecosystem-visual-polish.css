@@ -1,0 +1,175 @@
+/* Match the exact Token workspace palette inside Launchpad and Airdrops.
+   These scoped values intentionally override the platform's default blue-black
+   theme only within these two ecosystems. */
+.launchpad-page,
+.airdrop-page {
+  --page-bg: #0B0806;
+  --surface-primary: #121518;
+  --surface-elevated: #191D21;
+  --border-subtle: #2A3037;
+  --border-strong: #3A424B;
+  --text-primary: #E5E9F4;
+  --text-muted: #8793AD;
+  --background: var(--page-bg);
+  --foreground: var(--text-primary);
+  --card: var(--surface-primary);
+  --card-foreground: var(--text-primary);
+  --popover: var(--surface-primary);
+  --popover-foreground: var(--text-primary);
+  --primary: #A99AFF;
+  --primary-foreground: #0B0806;
+  --secondary: var(--surface-elevated);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface-elevated);
+  --muted-foreground: var(--text-muted);
+  --accent: #191D21;
+  --accent-foreground: var(--text-primary);
+  --border: var(--border-subtle);
+  --input: #20262B;
+  --ring: #A99AFF;
+  --brand-from: #A99AFF;
+  --brand-to: #6FDBE9;
+  --footer-bg: var(--page-bg);
+  --footer-divider: var(--border-subtle);
+  --footer-text: var(--text-primary);
+  --footer-text-muted: var(--text-muted);
+  color: var(--text-primary);
+  background-color: var(--page-bg);
+}
+
+/* Shared visual normalization for Launchpad and Airdrops.
+   Scoped to these ecosystems so Token pages and unrelated routes remain untouched. */
+.launchpad-page,
+.airdrop-page {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none !important;
+  margin-inline: 0 !important;
+  color: var(--foreground);
+  font-family: var(--font-outfit), "Outfit", ui-sans-serif, system-ui, sans-serif;
+  background: var(--page-bg);
+}
+
+.launchpad-page *,
+.airdrop-page * {
+  font-family: inherit;
+}
+
+.launchpad-page h1,
+.airdrop-page h1 {
+  margin-block: 0;
+  color: var(--foreground);
+  font-size: clamp(2rem, 3.2vw, 2.75rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.08 !important;
+  letter-spacing: -0.045em !important;
+  text-wrap: balance;
+}
+
+.launchpad-page h2,
+.airdrop-page h2 {
+  color: var(--foreground);
+  font-size: clamp(1.125rem, 1.5vw, 1.3rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  letter-spacing: -0.025em;
+}
+
+.launchpad-page h3,
+.airdrop-page h3 {
+  color: var(--foreground);
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: -0.015em;
+}
+
+.launchpad-page p,
+.airdrop-page p {
+  line-height: 1.55;
+}
+
+.launchpad-page :is(small, [class*="text-xs"]),
+.airdrop-page :is(small, [class*="text-xs"]) {
+  line-height: 1.45;
+}
+
+.launchpad-page [class~="bg-card/60"],
+.airdrop-page [class~="bg-card/60"],
+.launchpad-page [class~="bg-card"],
+.airdrop-page [class~="bg-card"] {
+  background-color: color-mix(in srgb, var(--surface-primary) 94%, transparent) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+.launchpad-page [class*="border-border"],
+.airdrop-page [class*="border-border"] {
+  border-color: var(--border-subtle);
+}
+
+.launchpad-page [class*="bg-secondary"],
+.airdrop-page [class*="bg-secondary"] {
+  background-color: color-mix(in srgb, var(--surface-elevated) 76%, transparent);
+}
+
+.launchpad-page input,
+.launchpad-page select,
+.launchpad-page textarea,
+.airdrop-page input,
+.airdrop-page select,
+.airdrop-page textarea {
+  color: var(--foreground);
+  background-color: color-mix(in srgb, var(--surface-primary) 92%, transparent);
+  border-color: var(--border-subtle);
+  font-size: .875rem;
+}
+
+.launchpad-page input::placeholder,
+.launchpad-page textarea::placeholder,
+.airdrop-page input::placeholder,
+.airdrop-page textarea::placeholder {
+  color: var(--muted-foreground);
+  opacity: .82;
+}
+
+.launchpad-page article,
+.airdrop-page article {
+  border-color: var(--border-subtle);
+  background-color: color-mix(in srgb, var(--surface-primary) 94%, transparent);
+  border-radius: 12px;
+}
+
+.launchpad-page :is(button, a),
+.airdrop-page :is(button, a) {
+  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+  transition-duration: 160ms;
+  transition-timing-function: ease;
+}
+
+.launchpad-page :is(button, a):focus-visible,
+.airdrop-page :is(button, a):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.launchpad-page .lp-breadcrumb,
+.airdrop-page [aria-label="Breadcrumb"] {
+  color: var(--muted-foreground);
+  font-size: .78rem;
+  line-height: 1.25rem;
+}
+
+.launchpad-page .lp-section-nav {
+  border-color: var(--border-subtle);
+}
+
+@media (max-width: 768px) {
+  .launchpad-page h1,
+  .airdrop-page h1 {
+    font-size: clamp(1.85rem, 7vw, 2.25rem) !important;
+  }
+  .launchpad-page h2,
+  .airdrop-page h2 {
+    font-size: 1.1rem !important;
+  }
+}

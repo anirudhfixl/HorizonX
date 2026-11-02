@@ -1,13 +1,10 @@
-"use client";
-
 import React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { TOP_NAV_ITEMS, CREATE_ITEMS, USER_MENU_ITEMS } from "@/config/navigation";
+import { TOP_NAV_ITEMS, CREATE_ITEMS, USER_MENU_ITEMS } from "@/data";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
 import { Button } from "@/components/ui/button";
 import { X, Wallet, Zap, Plus, ExternalLink } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -15,7 +12,7 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
   const { isConnected, isUnsupportedNetwork, shortAddress, balance, switchNetwork } = useWallet();
   const { openModal } = useModal();
 
@@ -98,7 +95,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
               {CREATE_ITEMS.slice(0, 4).map((item) => (
                 <Link
                   key={item.label}
-                  href={item.href || "/"}
+                  to={item.href || "/"}
                   onClick={onClose}
                   className="rounded-md border border-border/40 bg-secondary/40 px-2 py-1.5 text-[11px] font-medium text-foreground hover:bg-primary/10 hover:text-primary transition-colors text-center"
                 >
@@ -117,7 +114,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
               {TOP_NAV_ITEMS.map((item) => (
                 <div key={item.label} className="space-y-1">
                   <Link
-                    href={item.href || item.children?.[0]?.href || "/"}
+                    to={item.href || item.children?.[0]?.href || "/"}
                     onClick={onClose}
                     className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       item.href && pathname.startsWith(item.href)
@@ -132,7 +129,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                       {item.children.map((child) => (
                         <Link
                           key={child.label}
-                          href={child.href || "/"}
+                          to={child.href || "/"}
                           onClick={onClose}
                           className="block rounded-md px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
                         >
@@ -156,7 +153,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 {USER_MENU_ITEMS.map((uItem) => (
                   <Link
                     key={uItem.label}
-                    href={uItem.href || "/"}
+                    to={uItem.href || "/"}
                     onClick={onClose}
                     className="block rounded-lg px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
                   >
@@ -172,7 +169,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
         <div className="pt-6 border-t border-border/40 text-[11px] text-muted-foreground flex items-center justify-between">
           <span>ProMiners Protocol</span>
           <Link
-            href="/docs"
+            to="/docs"
             onClick={onClose}
             className="flex items-center gap-1 text-primary hover:underline"
           >

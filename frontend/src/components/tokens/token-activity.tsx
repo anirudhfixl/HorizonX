@@ -1,12 +1,10 @@
-"use client";
-
 import React, { useMemo, useState } from "react";
-import Link from "next/link";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { TokenDetailShell } from "./token-detail-shell";
 import { getExplorerBaseUrl, isSepoliaNetwork } from "@/components/tokens/token-profile";
 import { cn } from "@/lib/utils";
+import { TOKENOMICS_ALLOCATION_TEMPLATES } from "@/data";
 import type {
   Token,
   TokenMarketData,
@@ -21,7 +19,11 @@ import {
   ChevronRight,
   DatabaseZap,
   ExternalLink,
+  Search,
+  CalendarDays,
+  Layers3,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type ActivityToken = Token & { market?: TokenMarketData };
 
@@ -195,6 +197,7 @@ export function TokenActivity({
 }: TokenActivityProps) {
   const [filter, setFilter] = useState<EventSource | "all">("all");
   const [order, setOrder] = useState<"newest" | "oldest">("newest");
+  const [query, setQuery] = useState("");
 
   const sepolia = isSepoliaNetwork(token.network);
   const explorerBase = getExplorerBaseUrl(token.network);
@@ -206,9 +209,12 @@ export function TokenActivity({
   );
 
   const filtered = useMemo(() => {
-    if (filter === "all") return events;
-    return events.filter((e) => e.source === filter);
-  }, [events, filter]);
+    const q = query.trim().toLowerCase();
+    return events.filter((e) =>
+      (filter === "all" || e.source === filter) &&
+      (!q || `${e.title} ${e.label} ${e.detail || ""} ${SOURCE_LABEL[e.source]}`.toLowerCase().includes(q))
+    );
+  }, [events, filter, query]);
 
   const sorted = useMemo(() => sortEvents(filtered, order), [filtered, order]);
 
@@ -242,17 +248,26 @@ export function TokenActivity({
   ];
 
   // Illustrative allocation model for tokenomics transparency (sums to 100%)
-  const illustrativeAllocations = [
-    { label: "Ecosystem Rewards & Incentives", pct: 35, color: "bg-sky-400" },
-    { label: "Public Sale & Liquidity Seed", pct: 25, color: "bg-emerald-400" },
-    { label: "Protocol Staking Vaults", pct: 20, color: "bg-violet-400" },
-    { label: "Core Contributors & Advisors", pct: 12, color: "bg-amber-400" },
-    { label: "Community Treasury", pct: 8, color: "bg-pink-400" },
-  ];
+  const illustrativeAllocations = TOKENOMICS_ALLOCATION_TEMPLATES;
 
   return (
     <TokenDetailShell token={token} project={project} activeTab="activity">
-      <div className="space-y-12">
+      <div className="space-y-8">
+        <section className="grid gap-3 sm:grid-cols-3" aria-label="Activity summary">
+          {[
+            { label: "Recorded milestones", value: events.length, icon: Layers3 },
+            { label: "Activity categories", value: Object.values(counts).filter((v) => v > 0).length - (counts.all > 0 ? 1 : 0), icon: DatabaseZap },
+            { label: "Latest recorded date", value: events.length ? new Date(Math.max(...events.map((e) => Date.parse(e.date)))).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }) : "—", icon: CalendarDays },
+          ].map((item) => { const Icon = item.icon; return (
+            <div key={item.label} className="rounded-xl border border-border/50 bg-card/35 px-4 py-3.5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-muted-foreground">{item.label}</span>
+                <Icon className="h-4 w-4 text-primary/80" aria-hidden />
+              </div>
+              <p className="mt-2 text-xl font-semibold tracking-tight text-foreground">{item.value}</p>
+            </div>
+          ); })}
+        </section>
         {/* ─── 1. On-Chain Transparency Status Banner ───────────────────── */}
         <section
           aria-labelledby="chain-heading"
@@ -266,7 +281,7 @@ export function TokenActivity({
                   No Live On-Chain Event Indexer Connected
                 </h2>
                 <p className="text-xs leading-relaxed text-muted-foreground max-w-3xl">
-                  ProMiners does not run a dedicated historical RPC block indexer for ${token.symbol}. Live transfer history, real-time token holders, block confirmations, and transaction receipts are not queried on this page. The timeline below represents platform catalog milestones recorded in metadata.
+                  ProMiners does not run a dedicated historical RPC block indexer for {token.symbol}. Live transfer history, real-time token holders, block confirmations, and transaction receipts are not queried on this page. The timeline below represents platform catalog milestones recorded in metadata.
                 </p>
                 {!sepolia && (
                   <p className="text-[11px] text-muted-foreground">
@@ -279,7 +294,7 @@ export function TokenActivity({
             {token.contractAddress && (
               <Button asChild size="sm" className="h-9 shrink-0 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90">
                 <a href={`${explorerBase}/token/${token.contractAddress}`} target="_blank" rel="noopener noreferrer">
-                  <span>View Live Transfers on Explorer</span>
+                  <span>Open token on explorer</span>
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </Button>
@@ -288,19 +303,23 @@ export function TokenActivity({
         </section>
 
         {/* ─── 2. Catalog Milestones Timeline ───────────────────────────── */}
-        <section aria-labelledby="timeline-heading" className="grid gap-8 lg:grid-cols-[16rem_1fr] lg:gap-14">
-          <aside className="lg:sticky lg:top-24 lg:self-start space-y-4">
-            <div>
+        <section aria-labelledby="timeline-heading" className="space-y-5">
+          <div className="flex flex-col gap-4 border-b border-border/50 pb-5 xl:flex-row xl:items-end xl:justify-between">
+            <div className="max-w-2xl">
               <Eyebrow>Catalog Timeline</Eyebrow>
-              <h2 id="timeline-heading" className="text-xl font-bold tracking-tight text-foreground sm:text-2xl mt-1">
+              <h2 id="timeline-heading" className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
                 Platform History
               </h2>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                 Chronological platform events from the token record and registered ecosystem campaigns.
               </p>
             </div>
-
-            <div role="group" aria-label="Filter by milestone type" className="flex flex-wrap gap-1 lg:flex-col">
+            <div className="flex w-full flex-col gap-3 xl:max-w-[34rem]">
+              <label className="relative block">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search activity, campaign or milestone…" aria-label="Search activity" className="h-10 w-full rounded-lg border border-border/60 bg-secondary/20 pl-9 pr-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground/70 focus:border-primary/60 focus:ring-2 focus:ring-primary/15" />
+              </label>
+              <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter by milestone type">
               {chips.map((c) => {
                 const active = filter === c.key;
                 return (
@@ -310,10 +329,10 @@ export function TokenActivity({
                     aria-pressed={active}
                     onClick={() => setFilter(c.key)}
                     className={cn(
-                      "inline-flex items-center justify-between gap-3 rounded-lg px-3 py-1.5 text-xs transition-colors",
+                      "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors",
                       active
-                        ? "bg-primary/15 font-semibold text-primary"
-                        : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+                        ? "border-primary/35 bg-primary/10 font-semibold text-primary"
+                        : "border-border/40 bg-secondary/15 text-muted-foreground hover:border-border hover:bg-secondary/40 hover:text-foreground"
                     )}
                   >
                     <span className="inline-flex items-center gap-2">
@@ -324,50 +343,52 @@ export function TokenActivity({
                   </button>
                 );
               })}
-            </div>
-
-            <Button
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[11px] text-muted-foreground">Showing <span className="font-semibold text-foreground">{sorted.length}</span> of {events.length} recorded milestones</p>
+                <Button
               variant="outline"
               size="sm"
-              className="h-8 border-border/60 text-xs text-muted-foreground hover:text-foreground w-full justify-center"
+              className="h-8 shrink-0 border-border/60 text-xs text-muted-foreground hover:text-foreground"
               onClick={() => setOrder((o) => (o === "newest" ? "oldest" : "newest"))}
               aria-label={`Sort order: ${order === "newest" ? "newest first" : "oldest first"}. Click to reverse.`}
             >
               <ArrowDownUp className="mr-1.5 h-3.5 w-3.5" />
-              {order === "newest" ? "Newest First" : "Oldest First"}
-            </Button>
-
-            <p className="text-[11px] leading-relaxed text-muted-foreground">
-              Times are in UTC. Dates without time are recorded calendar days. Scheduled campaign dates represent platform targets.
-            </p>
-          </aside>
+              {order === "newest" ? "Newest first" : "Oldest first"}
+                </Button>
+              </div>
+            </div>
+          </div>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">Times are displayed in UTC. Date-only records represent calendar dates; scheduled campaign dates are platform targets, not confirmed chain events.</p>
 
           <div className="min-w-0">
             {events.length === 0 ? (
               <div className="rounded-2xl border border-border/40 bg-card/20 py-14 text-center">
-                <p className="text-sm font-medium text-foreground">No Dated Records for ${token.symbol}</p>
+                <p className="text-sm font-medium text-foreground">No Dated Records for {token.symbol}</p>
                 <p className="mt-1 text-xs text-muted-foreground">The catalog holds no dates for this token or linked campaigns.</p>
               </div>
             ) : groups.length === 0 ? (
-              <div className="rounded-2xl border border-border/40 bg-card/20 py-14 text-center">
-                <p className="text-sm font-medium text-foreground">No {SOURCE_LABEL[filter as EventSource]?.toLowerCase()} records</p>
-                <Button variant="outline" size="sm" className="mt-3 h-8 text-xs" onClick={() => setFilter("all")}>
-                  Show All Milestones
+              <div className="rounded-2xl border border-dashed border-border/60 bg-card/20 px-5 py-14 text-center">
+                <Search className="mx-auto h-5 w-5 text-muted-foreground" aria-hidden />
+                <p className="mt-3 text-sm font-medium text-foreground">No matching activity found</p>
+                <p className="mt-1 text-xs text-muted-foreground">Try another search term or clear the active filters.</p>
+                <Button variant="outline" size="sm" className="mt-3 h-8 text-xs" onClick={() => { setFilter("all"); setQuery(""); }}>
+                  Clear filters
                 </Button>
               </div>
             ) : (
-              <ol className="relative space-y-6">
+              <ol className="relative space-y-5">
                 {groups.map(([key, items]) => {
                   const d = formatDay(key);
                   return (
-                    <li key={key} className="relative grid grid-cols-[3.5rem_1fr] gap-x-4 pb-4 sm:grid-cols-[5.5rem_1fr] sm:gap-x-6">
+                    <li key={key} className="relative grid grid-cols-[3.25rem_1fr] gap-x-3 sm:grid-cols-[5rem_1fr] sm:gap-x-5">
                       <div className="text-right">
                         <p className="font-mono text-2xl font-bold leading-none text-foreground">{d.day}</p>
                         <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">{d.month} {d.year}</p>
                         <p className="hidden text-[11px] text-muted-foreground/70 sm:block">{d.weekday}</p>
                       </div>
-                      <div className="relative border-l border-border/50 pl-5 sm:pl-7">
-                        <ul className="space-y-4">
+                      <div className="relative border-l border-border/50 pl-4 sm:pl-6">
+                        <ul className="space-y-2.5">
                           {items.map((e) => {
                             const body = (
                               <>
@@ -397,11 +418,11 @@ export function TokenActivity({
                             return (
                               <li key={e.id} className="relative">
                                 {e.href ? (
-                                  <Link href={e.href} className="group relative block rounded-lg p-2 -m-2 hover:bg-secondary/20 transition-colors">
+                                  <Link to={e.href} className="group relative block rounded-xl border border-border/40 bg-card/25 p-3 transition-all hover:border-primary/30 hover:bg-secondary/25 sm:p-4">
                                     {body}
                                   </Link>
                                 ) : (
-                                  <div className="group relative p-2 -m-2">{body}</div>
+                                  <div className="group relative rounded-xl border border-border/40 bg-card/25 p-3 sm:p-4">{body}</div>
                                 )}
                               </li>
                             );
@@ -417,7 +438,7 @@ export function TokenActivity({
         </section>
 
         {/* ─── 3. Illustrative Tokenomics Breakdown ─────────────────────── */}
-        <section aria-labelledby="tokenomics-heading" className="rounded-2xl border border-border/40 bg-card/30 p-6 space-y-5 border-t border-border/40 pt-8">
+        <section aria-labelledby="tokenomics-heading" className="rounded-2xl border border-border/50 bg-card/25 p-5 space-y-5 sm:p-6">
           <div>
             <div className="flex items-center justify-between">
               <Eyebrow>Tokenomics Transparency</Eyebrow>

@@ -1,7 +1,4 @@
-"use client";
-
 import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { useModal } from "@/contexts/modal-context";
 import {
   Dialog,
@@ -18,6 +15,7 @@ import {
   PlusCircle,
   ArrowRight,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface SearchResultItem {
   id: string;
@@ -115,7 +113,7 @@ const SEARCH_ITEMS: SearchResultItem[] = [
 ];
 
 export function CommandPaletteModal() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const { isOpen, closeModal } = useModal();
   const [query, setQuery] = useState("");
 
@@ -135,7 +133,7 @@ export function CommandPaletteModal() {
   const handleSelect = (href: string) => {
     closeModal();
     setQuery("");
-    router.push(href);
+    navigate(href);
   };
 
   return (

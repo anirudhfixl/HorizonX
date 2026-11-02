@@ -1,7 +1,4 @@
-"use client";
-
 import React, { useState } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/projects/copy-button";
@@ -14,7 +11,12 @@ import {
   Check,
   Copy,
   ExternalLink,
+  Search,
+  ShieldCheck,
+  FileCode2,
+  Layers3,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 type ContractToken = Token & { market?: TokenMarketData };
 
@@ -142,6 +144,7 @@ function LedgerRow({ row }: { row: Row }) {
 export function TokenContract({ token, project }: TokenContractProps) {
   const [view, setView] = useState<"functions" | "events" | "json">("functions");
   const [abiCopied, setAbiCopied] = useState(false);
+  const [interfaceQuery, setInterfaceQuery] = useState("");
 
   const sepolia = isSepoliaNetwork(token.network);
   const explorerBase = getExplorerBaseUrl(token.network);
@@ -164,6 +167,9 @@ export function TokenContract({ token, project }: TokenContractProps) {
   const abiJson = JSON.stringify(EIP20_INTERFACE, null, 2);
   const functions = EIP20_INTERFACE.filter((i) => i.type === "function");
   const events = EIP20_INTERFACE.filter((i) => i.type === "event");
+  const visibleInterfaceItems = (view === "functions" ? functions : events).filter((item) =>
+    `${abiSignature(item)} ${(item.outputs || []).map((output) => output.type).join(" ")}`.toLowerCase().includes(interfaceQuery.trim().toLowerCase())
+  );
 
   const identityRows: Row[] = [
     {
@@ -209,7 +215,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
     {
       label: "Linked project",
       value: project ? (
-        <Link href={`/projects/${project.id}`} className="inline-flex items-center gap-1 text-primary hover:underline font-medium">
+        <Link to={`/projects/${project.id}`} className="inline-flex items-center gap-1 text-primary hover:underline font-medium">
           {project.name}
         </Link>
       ) : undefined,
@@ -239,7 +245,19 @@ export function TokenContract({ token, project }: TokenContractProps) {
 
   return (
     <TokenDetailShell token={token} project={project} activeTab="contract">
-      <div className="space-y-12">
+      <div className="space-y-8">
+        <section className="grid gap-3 sm:grid-cols-3" aria-label="Contract overview">
+          {[
+            { label: "Contract address", value: addr ? (addrValid ? "Recorded · valid format" : "Recorded · check format") : "Not recorded", icon: FileCode2, tone: addrValid ? "text-emerald-400" : "text-amber-400" },
+            { label: "Token standard", value: token.standard || "Not specified", icon: Layers3, tone: "text-primary" },
+            { label: "Verification tier", value: VERIF_LABEL[tier] || tier, icon: ShieldCheck, tone: tier === "contract_source_verified" || tier === "audit_available" ? "text-emerald-400" : "text-muted-foreground" },
+          ].map((item) => { const Icon = item.icon; return (
+            <div key={item.label} className="rounded-xl border border-border/50 bg-card/35 px-4 py-3.5">
+              <div className="flex items-center justify-between gap-3"><span className="text-xs text-muted-foreground">{item.label}</span><Icon className={cn("h-4 w-4", item.tone)} aria-hidden /></div>
+              <p className="mt-2 truncate text-sm font-semibold text-foreground" title={item.value}>{item.value}</p>
+            </div>
+          ); })}
+        </section>
         {/* ─── 1. Contract Address & Explorer Bar ─────────────────────────── */}
         <section aria-labelledby="address-heading" className="rounded-2xl border border-border/40 bg-card/30 p-6 space-y-4">
           <Eyebrow>Contract Deployment Address</Eyebrow>
@@ -261,24 +279,25 @@ export function TokenContract({ token, project }: TokenContractProps) {
                     <Copy className="h-3.5 w-3.5" />
                     <span>Copy</span>
                   </Button>
-                  <Button asChild size="sm" className="h-8 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90">
-                    <a href={`${explorerBase}/token/${addr}`} target="_blank" rel="noopener noreferrer">
-                      <span>Token Explorer</span>
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                  </Button>
+                  {addrValid ? (
+                    <Button asChild size="sm" className="h-8 gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90">
+                      <a href={`${explorerBase}/token/${addr}`} target="_blank" rel="noopener noreferrer">
+                        <span>Open explorer</span>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <span className="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-[11px] font-medium text-amber-400">Address format needs review</span>
+                  )}
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
-                <a
-                  href={`${explorerBase}/address/${addr}#code`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-                >
-                  Inspect source code on explorer <ArrowUpRight className="h-3 w-3" />
-                </a>
+                {addrValid ? (
+                  <a href={`${explorerBase}/address/${addr}#code`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline font-medium">
+                    Inspect source code on explorer <ArrowUpRight className="h-3 w-3" />
+                  </a>
+                ) : <span className="text-amber-400">Explorer links are disabled until the address format is valid.</span>}
                 <span className="text-muted-foreground">
                   {addrValid ? "Format: valid 20-byte EVM hex address." : "Format: not a valid 20-byte hex address."}
                 </span>
@@ -292,7 +311,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
         </section>
 
         {/* ─── 2. Spec Sheet Ledger ───────────────────────────────────────── */}
-        <section aria-labelledby="ledger-heading" className="space-y-4">
+        <section aria-labelledby="ledger-heading" className="rounded-2xl border border-border/50 bg-card/20 p-5 space-y-4 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border/40 pb-4">
             <div>
               <Eyebrow>Contract Ledger</Eyebrow>
@@ -317,7 +336,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
         </section>
 
         {/* ─── 3. Verification Transparency Notice ────────────────────────── */}
-        <section aria-labelledby="verif-heading" className="rounded-2xl border border-border/40 bg-card/30 p-6 space-y-4">
+        <section aria-labelledby="verif-heading" className="rounded-2xl border border-border/50 bg-card/25 p-5 space-y-4 sm:p-6">
           <div className="flex items-center justify-between">
             <Eyebrow>Verification Status</Eyebrow>
             <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-0.5 text-xs font-semibold text-primary">
@@ -335,7 +354,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
         </section>
 
         {/* ─── 4. EIP-20 Reference Interface & ABI ────────────────────────── */}
-        <section aria-labelledby="iface-heading" className="space-y-4 border-t border-border/40 pt-8">
+        <section aria-labelledby="iface-heading" className="rounded-2xl border border-border/50 bg-card/20 p-5 space-y-4 sm:p-6">
           <div>
             <Eyebrow>Interface Specification</Eyebrow>
             <h2 id="iface-heading" className="text-xl font-bold tracking-tight text-foreground sm:text-2xl mt-1">
@@ -348,7 +367,8 @@ export function TokenContract({ token, project }: TokenContractProps) {
 
           {erc20 ? (
             <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div className="flex flex-wrap items-center gap-3">
                 <div role="group" aria-label="Interface view" className="flex items-center gap-1 rounded-xl border border-border/50 bg-secondary/30 p-1 text-xs">
                   {(["functions", "events", "json"] as const).map((k) => (
                     <button
@@ -366,6 +386,11 @@ export function TokenContract({ token, project }: TokenContractProps) {
                       {k === "functions" ? `Functions (${functions.length})` : k === "events" ? `Events (${events.length})` : "Raw ABI JSON"}
                     </button>
                   ))}
+                </div>
+                {view !== "json" && <label className="relative block min-w-0 flex-1 xl:max-w-xs">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                  <input value={interfaceQuery} onChange={(e) => setInterfaceQuery(e.target.value)} placeholder={`Search ${view}…`} aria-label={`Search ABI ${view}`} className="h-9 w-full rounded-lg border border-border/60 bg-secondary/20 pl-9 pr-3 text-xs text-foreground outline-none placeholder:text-muted-foreground/70 focus:border-primary/60 focus:ring-2 focus:ring-primary/15" />
+                </label>}
                 </div>
 
                 {view === "json" && (
@@ -387,8 +412,8 @@ export function TokenContract({ token, project }: TokenContractProps) {
                 </pre>
               ) : (
                 <ul className="divide-y divide-border/40 border-y border-border/40">
-                  {(view === "functions" ? functions : events).map((it) => (
-                    <li key={it.name} className="grid gap-1 py-3 sm:grid-cols-[1fr_auto] sm:items-baseline sm:gap-6">
+                  {visibleInterfaceItems.map((it) => (
+                    <li key={it.name} className="grid gap-2 rounded-lg px-3 py-3 transition-colors hover:bg-secondary/20 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6">
                       <code className="min-w-0 break-words font-mono text-[13px] text-foreground font-medium">
                         {abiSignature(it)}
                       </code>
@@ -406,6 +431,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
                       </span>
                     </li>
                   ))}
+                  {visibleInterfaceItems.length === 0 && <li className="px-3 py-10 text-center text-xs text-muted-foreground">No matching {view} in the reference interface.</li>}
                 </ul>
               )}
             </div>
@@ -417,7 +443,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
         </section>
 
         {/* ─── 5. Unavailable Details Notice ──────────────────────────────── */}
-        <section aria-labelledby="na-heading" className="space-y-4 border-t border-border/40 pt-8">
+        <section aria-labelledby="na-heading" className="rounded-2xl border border-border/50 bg-card/20 p-5 space-y-4 sm:p-6">
           <Eyebrow>Compiler Transparency</Eyebrow>
           <h2 id="na-heading" className="text-xl font-bold tracking-tight text-foreground sm:text-2xl mt-1">
             Build Artifacts Not Cached
@@ -437,7 +463,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
         </section>
 
         {/* ─── 6. D-04 Notice ─────────────────────────────────────────────── */}
-        <p className="border-l-2 border-primary/40 pl-4 text-xs leading-relaxed text-muted-foreground">
+        <p className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
           <strong className="font-semibold text-foreground">Architecture Decision D-04: </strong>
           Ethereum Sepolia (Chain ID 11155111) is the only network supported for Web3 wallet connectivity. No transactions or state mutations are executed on this inspector.
         </p>

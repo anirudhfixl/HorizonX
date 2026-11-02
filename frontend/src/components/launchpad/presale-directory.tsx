@@ -1,13 +1,12 @@
-"use client";
-
+import "@/components/launchpad/launchpad.css";
+import { LaunchpadWorkspaceHeader } from "@/components/launchpad/launchpad-section-nav";
 import React, { useState, useMemo, useSyncExternalStore } from "react";
-import Link from "next/link";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MOCK_PRESALES, MOCK_TOKENS, MOCK_PROJECTS } from "@/lib/mock-data";
+import { PRESALES, TOKENS, PROJECTS } from "@/data";
 import { readSessionLaunchesRaw, subscribeSessionLaunches, sessionPresaleToPresale } from "@/lib/launch-storage";
 import { Token, Project, Presale } from "@/types";
 import { cn } from "@/lib/utils";
@@ -22,12 +21,12 @@ import {
   ChevronDown,
   Info,
   ArrowRight,
-  ArrowLeft,
   Rows3,
   Table2,
   Filter,
   SearchX,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export type PresaleSortOption =
   | "name-asc"
@@ -176,13 +175,13 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
   // Maps for fast token and project metadata lookups
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
-    MOCK_TOKENS.forEach((t) => map.set(t.id, t));
+    TOKENS.forEach((t) => map.set(t.id, t));
     return map;
   }, []);
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
-    MOCK_PROJECTS.forEach((p) => map.set(p.id, p));
+    PROJECTS.forEach((p) => map.set(p.id, p));
     return map;
   }, []);
 
@@ -202,7 +201,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
   }, [sessionRaw]);
 
   const allPresales = useMemo(() => {
-    return [...sessionPresales, ...MOCK_PRESALES];
+    return [...sessionPresales, ...PRESALES];
   }, [sessionPresales]);
 
   const sessionPresaleIds = useMemo(() => {
@@ -393,7 +392,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
     const token = tokenMap.get(ps.tokenId);
     return token ? (
       <Link
-        href={`/tokens/${token.id}`}
+        to={`/tokens/${token.id}`}
         className="font-mono text-xs font-semibold text-primary hover:underline"
         title={`Inspect ${token.name}`}
       >
@@ -406,17 +405,11 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-10 px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+    <div className="launchpad-page mx-auto w-full max-w-none space-y-8 px-4 py-8 sm:px-6 lg:px-10 xl:px-12 2xl:px-16 lg:py-12">
+      {mode === "canonical" && <LaunchpadWorkspaceHeader items={[{ label: "Launchpad", to: "/launchpad" }, { label: "Presales" }]} />}
       {/* 1. Header (Aligned with Fair Launch Directory) */}
       <header className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="space-y-3">
-          <Link
-            href={mode === "canonical" ? "/launchpad" : "/explore"}
-            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            {mode === "canonical" ? "Launchpad" : "Explore"}
-          </Link>
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
             {mode === "canonical" ? "Launchpad · Presales" : "Explore · Presales discovery"}
           </div>
@@ -434,7 +427,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
           size="sm"
           className="gap-1.5 self-start bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90 lg:self-auto"
         >
-          <Link href="/launchpad/presales/create">
+          <Link to="/launchpad/presales/create">
             <Plus className="h-3.5 w-3.5" /> Create Presale
           </Link>
         </Button>
@@ -739,7 +732,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                         )}
                       </div>
                       <h3 className="text-lg font-semibold leading-snug text-foreground">
-                        <Link href={`/launchpad/presales/${ps.id}`} className="hover:text-primary">
+                        <Link to={`/launchpad/presales/${ps.id}`} className="hover:text-primary">
                           {ps.title}
                         </Link>
                       </h3>
@@ -787,7 +780,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
                         <span className="text-muted-foreground">{scheduleText(ps)}</span>
                         <Link
-                          href={`/launchpad/presales/${ps.id}`}
+                          to={`/launchpad/presales/${ps.id}`}
                           className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
                         >
                           {ps.status === "live" ? "Participate" : "View Details"} <ArrowRight className="h-3.5 w-3.5" />
@@ -862,11 +855,11 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                           <span aria-hidden="true" className={cn("w-0.5 shrink-0 rounded-full", railClass(ps.status))} />
                           <div>
                             <div className="font-semibold text-foreground group-hover:text-primary">
-                              <Link href={`/launchpad/presales/${ps.id}`}>{ps.title}</Link>
+                              <Link to={`/launchpad/presales/${ps.id}`}>{ps.title}</Link>
                             </div>
                             <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground">
                               {tokenMap.get(ps.tokenId) ? (
-                                <Link href={`/tokens/${ps.tokenId}`} className="font-semibold text-primary hover:underline">
+                                <Link to={`/tokens/${ps.tokenId}`} className="font-semibold text-primary hover:underline">
                                   ${tokenMap.get(ps.tokenId)!.symbol}
                                 </Link>
                               ) : (
@@ -902,7 +895,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                       </td>
                       <td className="px-4 py-3.5 text-[11px] text-muted-foreground">{scheduleText(ps)}</td>
                       <td className="py-3.5 pl-4 text-right">
-                        <Link href={`/launchpad/presales/${ps.id}`} className="font-semibold text-primary hover:underline">
+                        <Link to={`/launchpad/presales/${ps.id}`} className="font-semibold text-primary hover:underline">
                           Inspect
                         </Link>
                       </td>

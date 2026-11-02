@@ -1,7 +1,4 @@
-"use client";
-
 import React from "react";
-import Link from "next/link";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { TokenDetailShell } from "./token-detail-shell";
@@ -21,6 +18,7 @@ import {
   ExternalLink,
   FileCode2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export type TokenProfileData = Token & { market: TokenMarketData };
 
@@ -241,7 +239,7 @@ export function TokenProfile({
                   </span>
                   <div className="min-w-0">
                     <Link
-                      href={`/projects/${project.id}`}
+                      to={`/projects/${project.id}`}
                       className="text-base font-semibold text-foreground hover:text-primary transition-colors block truncate"
                     >
                       {project.name}
@@ -258,7 +256,7 @@ export function TokenProfile({
 
                 <div className="flex flex-wrap items-center gap-3 pt-1">
                   <Button asChild size="sm" variant="outline" className="h-8 border-border/60 text-xs text-foreground hover:bg-secondary/40">
-                    <Link href={`/projects/${project.id}`}>
+                    <Link to={`/projects/${project.id}`}>
                       <span>View Project Profile</span>
                       <ChevronRight className="ml-1 h-3.5 w-3.5" />
                     </Link>
@@ -385,7 +383,7 @@ export function TokenProfile({
               </p>
             </div>
             <Button asChild size="sm" className="bg-primary text-primary-foreground font-semibold text-xs h-9">
-              <Link href={`/tokens/${token.id}/contract`}>
+              <Link to={`/tokens/${token.id}/contract`}>
                 <FileCode2 className="mr-1.5 h-3.5 w-3.5" />
                 <span>Open Contract Inspector</span>
               </Link>
@@ -430,7 +428,7 @@ export function TokenProfile({
                 {utilities.map((u) => (
                   <li key={u.key}>
                     <Link
-                      href={u.href}
+                      to={u.href}
                       className="group grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-1 py-4 transition-colors hover:bg-secondary/20 px-2 rounded-lg"
                     >
                       <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">{u.kind}</span>

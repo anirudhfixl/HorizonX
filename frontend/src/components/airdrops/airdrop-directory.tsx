@@ -1,14 +1,22 @@
-"use client";
-
-import React, { useState, useMemo } from "react";
-import Link from "next/link";
+import "@/components/airdrops/airdrops.css";
+import { AirdropWorkspaceHeader } from "@/components/airdrops/airdrop-section-nav";
+import React, { useState, useMemo, useSyncExternalStore } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { MOCK_AIRDROPS, MOCK_TOKENS, MOCK_PROJECTS } from "@/lib/mock-data";
+import { AIRDROPS, TOKENS, PROJECTS } from "@/data";
+import {
+  readSessionAirdropsRaw,
+  subscribeSessionAirdrops,
+  parseSessionAirdrops,
+  getAirdropProvenance,
+  calculateClaimProgress,
+  parseRewardAmount,
+} from "@/lib/airdrop-storage";
 import { Token, Project, AirdropCampaignType } from "@/types";
 import {
   Gift,
@@ -29,6 +37,7 @@ import {
   Sparkles,
   ExternalLink,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export type AirdropSortOption =
   | "name-asc"
@@ -43,20 +52,21 @@ export interface AirdropDirectoryProps {
   mode?: "canonical" | "explore";
 }
 
-// Helper to compute claim progress percentage (e.g. 6420 / 10000 -> 64%)
-export function calculateClaimProgress(claimedCount?: number, recipientCount?: number): number {
-  if (!claimedCount || !recipientCount || recipientCount === 0) return 0;
-  return Math.min(100, Math.max(0, Math.round((claimedCount / recipientCount) * 100)));
-}
-
-// Helper to extract numeric quantity from reward string (e.g. "2,500,000 PMIN" -> 2500000)
-export function parseRewardAmount(val?: string): number {
-  if (!val) return 0;
-  const num = parseFloat(val.replace(/,/g, "").replace(/[^0-9.]/g, ""));
-  return isNaN(num) ? 0 : num;
-}
+export { calculateClaimProgress, parseRewardAmount };
 
 export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) {
+  // Session subscription for reactive airdrop catalog updates
+  const sessionRaw = useSyncExternalStore(
+    subscribeSessionAirdrops,
+    readSessionAirdropsRaw,
+    () => ""
+  );
+
+  const allAirdrops = useMemo(() => {
+    const sessionCampaigns = parseSessionAirdrops(sessionRaw);
+    return [...sessionCampaigns, ...AIRDROPS];
+  }, [sessionRaw]);
+
   // Filter and view state
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -71,35 +81,35 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
   // Maps for fast token and project metadata lookups
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
-    MOCK_TOKENS.forEach((t) => map.set(t.id, t));
+    TOKENS.forEach((t) => map.set(t.id, t));
     return map;
   }, []);
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
-    MOCK_PROJECTS.forEach((p) => map.set(p.id, p));
+    PROJECTS.forEach((p) => map.set(p.id, p));
     return map;
   }, []);
 
   // Unique categories derived from airdrops and linked tokens
   const uniqueCategories = useMemo(() => {
     const set = new Set<string>();
-    MOCK_AIRDROPS.forEach((air) => {
+    allAirdrops.forEach((air) => {
       if (air.category) set.add(air.category);
       const token = tokenMap.get(air.tokenId);
       if (token?.category) set.add(token.category);
     });
     return Array.from(set).sort();
-  }, [tokenMap]);
+  }, [allAirdrops, tokenMap]);
 
   // Unique campaign types derived from data
   const uniqueTypes = useMemo(() => {
     const set = new Set<AirdropCampaignType>();
-    MOCK_AIRDROPS.forEach((air) => {
+    allAirdrops.forEach((air) => {
       if (air.type) set.add(air.type);
     });
     return Array.from(set).sort();
-  }, []);
+  }, [allAirdrops]);
 
   // Filter Change Handlers with immediate page reset
   const handleSearchChange = (value: string) => {
@@ -144,7 +154,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
 
   // Filtered airdrops
   const filteredAirdrops = useMemo(() => {
-    return MOCK_AIRDROPS.filter((air) => {
+    return allAirdrops.filter((air) => {
       const token = tokenMap.get(air.tokenId);
       const project = air.projectId ? projectMap.get(air.projectId) : undefined;
 
@@ -156,13 +166,21 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
         const matchesTokenName = token?.name.toLowerCase().includes(q) ?? false;
         const matchesTokenSymbol = token?.symbol.toLowerCase().includes(q) ?? false;
         const matchesProject = project?.name.toLowerCase().includes(q) ?? false;
+        const matchesNetwork = air.network.toLowerCase().includes(q);
+        const matchesCategory = air.category?.toLowerCase().includes(q) ?? false;
+        const matchesType = air.type.toLowerCase().includes(q);
+        const matchesId = air.id.toLowerCase().includes(q);
 
         if (
           !matchesTitle &&
           !matchesDesc &&
           !matchesTokenName &&
           !matchesTokenSymbol &&
-          !matchesProject
+          !matchesProject &&
+          !matchesNetwork &&
+          !matchesCategory &&
+          !matchesType &&
+          !matchesId
         ) {
           return false;
         }
@@ -194,7 +212,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
 
       return true;
     });
-  }, [searchQuery, statusFilter, networkFilter, categoryFilter, typeFilter, tokenMap, projectMap]);
+  }, [allAirdrops, searchQuery, statusFilter, networkFilter, categoryFilter, typeFilter, tokenMap, projectMap]);
 
   // Sorted airdrops
   const sortedAirdrops = useMemo(() => {
@@ -269,14 +287,15 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="airdrop-page w-full max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-7 space-y-7">
+      <AirdropWorkspaceHeader items={[{ label: "Airdrops", to: "/airdrops" }, { label: "Campaigns" }]} />
       {/* 1. Page Header */}
       <PageHeader
-        title={mode === "canonical" ? "All Airdrop Campaigns" : "Airdrop Discovery"}
+        title={mode === "canonical" ? "Airdrop Campaign Directory" : "Explore Airdrop Opportunities"}
         description={
           mode === "canonical"
-            ? "Explore active, upcoming, and completed merkle proofs, batch rewards, and community incentive distributions."
-            : "Discover ongoing token airdrops, retroactive claim pools, and merkle distributions across the ProMiners ecosystem."
+            ? "Review distribution campaigns, compare reward pools, and inspect campaign progress across supported and discovery-only networks."
+            : "Discover airdrop campaigns, review their distribution details, and compare available reward opportunities across HorizonX."
         }
         breadcrumbs={
           mode === "canonical"
@@ -292,7 +311,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
         actions={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="sm" className="text-xs border-border/60">
-              <Link href="/airdrops/claim">
+              <Link to="/airdrops/claim">
                 <ExternalLink className="h-3.5 w-3.5 mr-1" /> Claim Portal
               </Link>
             </Button>
@@ -301,7 +320,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
               size="sm"
               className="bg-primary text-primary-foreground text-xs gap-1.5 font-semibold hover:bg-primary/90"
             >
-              <Link href="/airdrops/campaigns/create">
+              <Link to="/airdrops/campaigns/create">
                 <Plus className="h-3.5 w-3.5" /> Launch Airdrop
               </Link>
             </Button>
@@ -332,7 +351,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
             <Gift className="h-4 w-4 text-primary" />
           </div>
           <div className="text-2xl font-bold font-mono text-foreground">
-            {MOCK_AIRDROPS.length}
+            {allAirdrops.length}
           </div>
           <p className="text-[11px] text-muted-foreground">Incentive reward pools</p>
         </div>
@@ -343,22 +362,22 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
             <Sparkles className="h-4 w-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-bold font-mono text-emerald-400">
-            {MOCK_AIRDROPS.filter((air) => air.status === "active").length}
+            {allAirdrops.filter((air) => air.status === "active").length}
           </div>
-          <p className="text-[11px] text-muted-foreground">Currently claimable</p>
+          <p className="text-[11px] text-muted-foreground">Marked active in catalogue</p>
         </div>
 
         <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Sepolia Active (D-04)</span>
+            <span>Sepolia Listings (D-04)</span>
             <CheckCircle2 className="h-4 w-4 text-primary" />
           </div>
           <div className="text-2xl font-bold font-mono text-primary">
             {
-              MOCK_AIRDROPS.filter(
+              allAirdrops.filter(
                 (air) =>
                   air.network.toLowerCase().includes("sepolia") ||
-                  air.network === "Ethereum"
+                  air.network.toLowerCase() === "ethereum"
               ).length
             }
           </div>
@@ -371,9 +390,9 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
             <Users className="h-4 w-4 text-amber-400" />
           </div>
           <div className="text-2xl font-bold font-mono text-amber-400">
-            {MOCK_AIRDROPS.reduce((acc, air) => acc + (air.recipientCount || 0), 0).toLocaleString()}
+            {allAirdrops.reduce((acc, air) => acc + (air.recipientCount || 0), 0).toLocaleString()}
           </div>
-          <p className="text-[11px] text-muted-foreground">Eligible addresses</p>
+          <p className="text-[11px] text-muted-foreground">Recorded eligible-address count</p>
         </div>
       </div>
 
@@ -381,7 +400,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
       <div className="rounded-2xl border border-border/60 bg-card/60 p-4 sm:p-5 backdrop-blur-md space-y-4">
         {/* Top bar: Search + View Mode */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 max-w-xl">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="text"
@@ -602,7 +621,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
         />
       ) : viewMode === "grid" ? (
         /* GRID VIEW */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 xl:gap-5">
           {paginatedAirdrops.map((air) => {
             const token = tokenMap.get(air.tokenId);
             const project = air.projectId ? projectMap.get(air.projectId) : undefined;
@@ -613,7 +632,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
             return (
               <div
                 key={air.id}
-                className="flex flex-col justify-between rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md hover:border-primary/50 transition-all duration-200 group"
+                className="flex flex-col justify-between rounded-2xl border border-border/60 bg-card/55 p-5 sm:p-5 backdrop-blur-md hover:border-primary/45 hover:bg-card/80 hover:shadow-xl hover:shadow-primary/5 transition-all duration-200 group min-w-0"
               >
                 <div className="space-y-4">
                   {/* Card Header: Network + Type + Badges */}
@@ -640,7 +659,10 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                         </Badge>
                       )}
                     </div>
-                    <StatusBadge status={air.status} />
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <ProvenanceBadge kind={getAirdropProvenance(air)} />
+                      <StatusBadge status={air.status} />
+                    </div>
                   </div>
 
                   {/* Title & Token Identity */}
@@ -650,7 +672,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                     </div>
                     <div className="min-w-0 flex-1">
                       <Link
-                        href={`/airdrops/campaigns/${air.id}`}
+                        to={`/airdrops/campaigns/${air.id}`}
                         className="font-bold text-foreground text-sm hover:text-primary transition-colors line-clamp-1 group-hover:text-primary"
                       >
                         {air.title}
@@ -658,7 +680,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
                         {token ? (
                           <Link
-                            href={`/tokens/${token.id}`}
+                            to={`/tokens/${token.id}`}
                             className="font-mono text-primary hover:underline font-semibold"
                           >
                             ${token.symbol}
@@ -672,7 +694,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                           <>
                             <span className="text-muted-foreground/60">•</span>
                             <Link
-                              href={`/projects/${project.id}`}
+                              to={`/projects/${project.id}`}
                               className="hover:text-foreground truncate"
                             >
                               {project.name}
@@ -691,7 +713,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                   )}
 
                   {/* Reward Pool Highlight */}
-                  <div className="rounded-xl border border-border/40 bg-secondary/20 p-3.5 space-y-2.5">
+                  <div className="rounded-xl border border-border/40 bg-secondary/15 p-3.5 space-y-2.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">Reward Pool</span>
                       <span className="font-mono font-bold text-emerald-400">
@@ -746,7 +768,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                       size="sm"
                       className="h-8 text-xs bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
                     >
-                      <Link href={`/airdrops/campaigns/${air.id}`}>View Campaign</Link>
+                      <Link to={`/airdrops/campaigns/${air.id}`}>View Campaign</Link>
                     </Button>
                   </div>
                 </div>
@@ -835,7 +857,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                           </div>
                           <div className="min-w-0">
                             <Link
-                              href={`/airdrops/campaigns/${air.id}`}
+                              to={`/airdrops/campaigns/${air.id}`}
                               className="font-bold text-foreground hover:text-primary transition-colors line-clamp-1"
                             >
                               {air.title}
@@ -843,7 +865,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                               {token ? (
                                 <Link
-                                  href={`/tokens/${token.id}`}
+                                  to={`/tokens/${token.id}`}
                                   className="font-mono text-primary hover:underline font-semibold"
                                 >
                                   ${token.symbol}
@@ -891,9 +913,12 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                         </span>
                       </td>
 
-                      {/* Status */}
+                      {/* Status & Provenance */}
                       <td className="py-3.5 px-3">
-                        <StatusBadge status={air.status} />
+                        <div className="flex flex-col items-start gap-1">
+                          <StatusBadge status={air.status} />
+                          <ProvenanceBadge kind={getAirdropProvenance(air)} />
+                        </div>
                       </td>
 
                       {/* Total Pool */}
@@ -944,7 +969,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                           variant="outline"
                           className="h-7 text-xs border-border/60 hover:border-primary/50"
                         >
-                          <Link href={`/airdrops/campaigns/${air.id}`}>Inspect</Link>
+                          <Link to={`/airdrops/campaigns/${air.id}`}>Inspect</Link>
                         </Button>
                       </td>
                     </tr>

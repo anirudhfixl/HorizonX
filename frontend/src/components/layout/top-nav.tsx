@@ -1,12 +1,11 @@
-"use client";
-
 import React, { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { TOP_NAV_ITEMS } from "@/config/navigation";
+import { TOP_NAV_ITEMS } from "@/data";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
 import { Loader2, AlertTriangle, Wallet } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+
+const PRIMARY_ENTRY_LABELS = new Set(["Explore", "Projects", "Tokens", "Launchpad", "Airdrops"]);
 
 function Chevron({ open = false }: { open?: boolean }) {
   return (
@@ -30,7 +29,7 @@ function Chevron({ open = false }: { open?: boolean }) {
 }
 
 export function TopNav() {
-  const pathname = usePathname();
+  const pathname = useLocation().pathname;
   const {
     isConnected,
     isConnecting,
@@ -119,23 +118,42 @@ export function TopNav() {
       ref={navRef}
     >
       <nav className="navbar" aria-label="Main navigation">
-        {/* Column 1: Brand Identity */}
+        {/* Left zone: Brand identity */}
+        <div className="nav-zone nav-zone-brand">
         <Link
           className="brand"
-          href="/"
-          aria-label="ProMiners home"
+          to="/"
+          aria-label="HorizonX home"
           onClick={closeMenus}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/prominers-logo.svg" alt="ProMiners" />
+          <img src="/prominers-logo.svg" alt="HorizonX" />
         </Link>
+        </div>
 
-        {/* Column 2: Navigation Links */}
+        {/* Center zone: primary entry links and secondary dropdowns */}
+        <div className="nav-links-zone">
         <div className={`nav-links ${mobileOpen ? "mobile-open" : ""}`}>
           {TOP_NAV_ITEMS.map((item) => {
             const hasChildren = Boolean(item.children && item.children.length > 0);
             const isMenuOpen = activeMenu === item.label;
             const isCurrent = item.href ? pathname.startsWith(item.href) : false;
+
+            if (PRIMARY_ENTRY_LABELS.has(item.label)) {
+              return (
+                <Link
+                  key={item.label}
+                  className={`nav-link primary-entry ${isCurrent ? "active" : ""}`}
+                  to={item.href || "/"}
+                  onClick={closeMenus}
+                  aria-current={isCurrent ? "page" : undefined}
+                >
+                  <span>{item.label}</span>
+                  <svg className="primary-entry-arrow" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M3.25 8h9.5M8.5 3.75 12.75 8 8.5 12.25" />
+                  </svg>
+                </Link>
+              );
+            }
 
             if (hasChildren) {
               return (
@@ -156,7 +174,7 @@ export function TopNav() {
                     {item.children!.map((child) => (
                       <Link
                         key={child.label}
-                        href={child.href || "/"}
+                        to={child.href || "/"}
                         role="menuitem"
                         onClick={closeMenus}
                       >
@@ -177,7 +195,7 @@ export function TopNav() {
               <Link
                 key={item.label}
                 className={`nav-link ${isCurrent ? "active" : ""}`}
-                href={item.href || "/"}
+                to={item.href || "/"}
                 onClick={closeMenus}
               >
                 {item.label}
@@ -185,17 +203,11 @@ export function TopNav() {
             );
           })}
         </div>
+        </div>
 
-        {/* Column 3: Actions (Dashboard, Scoped Theme Toggle, Connect Wallet) */}
+        {/* Right zone: theme toggle and wallet */}
+        <div className="nav-zone nav-zone-actions">
         <div className="nav-actions">
-          <Link
-            className="dashboard-link"
-            href="/explore"
-            onClick={closeMenus}
-          >
-            Dashboard
-          </Link>
-
           {/* Scoped Theme Toggle (36px circular button) */}
           <button
             className="theme-toggle"
@@ -268,6 +280,7 @@ export function TopNav() {
               <span>Connect Wallet</span>
             </button>
           )}
+        </div>
         </div>
 
         {/* Mobile Menu Toggle Hamburger */}

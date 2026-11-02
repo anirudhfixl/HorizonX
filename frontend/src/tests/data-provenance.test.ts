@@ -92,7 +92,7 @@ const srcRoot = join(__dirname, "..");
 for (const file of [
   "components/tokens/token-creation-wizard.tsx",
   "components/tokens/my-tokens-hub.tsx",
-  "app/tokens/page.tsx",
+  "lib/tokens/dashboard-metrics.ts",
 ]) {
   const source = readFileSync(join(srcRoot, file), "utf8");
   assert(

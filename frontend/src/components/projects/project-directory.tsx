@@ -1,12 +1,9 @@
-"use client";
-
 import React, { useState, useMemo } from "react";
-import Link from "next/link";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MOCK_PROJECTS, MOCK_TOKENS } from "@/lib/mock-data";
+import { PROJECTS, TOKENS } from "@/data";
 import { Project, Token } from "@/types";
 import { cn } from "@/lib/utils";
 import {
@@ -22,10 +19,11 @@ import {
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
-  Info,
   ArrowUpRight,
   SlidersHorizontal,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ProjectBreadcrumb, ProjectSectionNav } from "@/components/projects/project-section-nav";
 
 export type ProjectSortOption =
   | "name-asc"
@@ -62,14 +60,14 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
   // Map of tokenId -> Token for fast relationship lookup
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
-    MOCK_TOKENS.forEach((t) => map.set(t.id, t));
+    TOKENS.forEach((t) => map.set(t.id, t));
     return map;
   }, []);
 
   // Unique categories derived from centralized mock data
   const uniqueCategories = useMemo(() => {
     const set = new Set<string>();
-    MOCK_PROJECTS.forEach((p) => {
+    PROJECTS.forEach((p) => {
       if (p.category) set.add(p.category);
     });
     return Array.from(set).sort();
@@ -172,7 +170,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
 
   // Filter Projects
   const filteredProjects = useMemo(() => {
-    return MOCK_PROJECTS.filter((p) =>
+    return PROJECTS.filter((p) =>
       projectMatches(p, {
         searchQuery,
         category: categoryFilter,
@@ -186,7 +184,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
 
   // Facet counts: how many projects each option would show given the *other* active filters.
   const facetCount = (key: keyof FilterState, value: string) =>
-    MOCK_PROJECTS.filter((p) => projectMatches(p, { ...currentFilters, [key]: value })).length;
+    PROJECTS.filter((p) => projectMatches(p, { ...currentFilters, [key]: value })).length;
 
   // Sort Projects
   const sortedProjects = useMemo(() => {
@@ -258,8 +256,6 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     { value: "all", label: "Any tier" },
     { value: "audited", label: "Audit available" },
     { value: "source_verified", label: "Source verified" },
-    { value: "reviewed", label: "Project reviewed" },
-    { value: "not_reviewed", label: "Not reviewed" },
   ].map((o) => ({ ...o, count: facetCount("verification", o.value) }));
   const statusOptions = [
     { value: "all", label: "Any status" },
@@ -282,15 +278,21 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     activeChips.push({ label: `${statusFilter === "active" ? "Active" : "Pending"} only`, clear: () => handleStatusChange("all") });
   if (ecosystemFilter !== "all") activeChips.push({ label: "Ethereum Sepolia", clear: () => handleEcosystemChange("all") });
 
-  const sepoliaCount = MOCK_PROJECTS.filter(isSepoliaProject).length;
+  const sepoliaCount = PROJECTS.filter(isSepoliaProject).length;
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] space-y-10 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto w-full max-w-[1800px] space-y-8 px-4 py-6 sm:px-6 lg:px-8">
+      {mode === "canonical" && (
+        <div className="project-directory-context">
+          <ProjectSectionNav />
+          <ProjectBreadcrumb current="Directory" />
+        </div>
+      )}
       {/* 1. Masthead */}
       <header className="space-y-5">
         {mode === "explore" && (
           <Link
-            href="/explore"
+            to="/explore"
             className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
           >
             <ChevronLeft className="h-3.5 w-3.5" /> Explore
@@ -312,7 +314,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
           </div>
           <dl className="flex items-end gap-8 font-mono">
             <div>
-              <dd className="text-4xl font-semibold leading-none text-foreground">{MOCK_PROJECTS.length}</dd>
+              <dd className="text-4xl font-semibold leading-none text-foreground">{PROJECTS.length}</dd>
               <dt className="mt-1.5 font-sans text-[11px] text-muted-foreground">protocols listed</dt>
             </div>
             <div>
@@ -322,24 +324,6 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
           </dl>
         </div>
 
-        <div
-          role="note"
-          className="flex flex-col gap-2 border-l-2 border-primary/50 pl-4 text-xs leading-relaxed text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:gap-6"
-        >
-          <span className="flex items-start gap-2">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-            <span>
-              <strong className="text-foreground">Demonstration Data Notice:</strong> Project listings, verification
-              tiers, and ecosystem affiliations are simulated for demonstration. Per Architecture Decision{" "}
-              <strong className="text-foreground">D-04</strong>, Ethereum Sepolia Testnet (Chain ID: 11155111) is the only
-              approved and supported EVM wallet network. Ecosystem metadata reflects protocol origins and does not imply
-              wallet connectivity or transaction support for non-Sepolia networks.
-            </span>
-          </span>
-          <span className="shrink-0 self-start rounded-full border border-primary/30 px-2.5 py-0.5 font-mono text-[11px] text-primary sm:self-auto">
-            D-04: Sepolia (11155111) Only
-          </span>
-        </div>
       </header>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-12">
@@ -528,7 +512,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <h3 className="truncate text-xl font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
-                                <Link href={`/projects/${proj.id}`} className="after:absolute after:inset-0">
+                                <Link to={`/projects/${proj.id}`} className="after:absolute after:inset-0">
                                   {proj.name}
                                 </Link>
                               </h3>
@@ -565,7 +549,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                               {linkedTokens.map((t) => (
                                 <Link
                                   key={t.id}
-                                  href={`/tokens/${t.id}`}
+                                  to={`/tokens/${t.id}`}
                                   className="inline-flex items-center gap-1 rounded-md bg-secondary/70 px-2 py-0.5 font-mono text-[11px] text-foreground transition-colors hover:bg-primary/20"
                                   title={`Inspect ${t.name} ($${t.symbol})`}
                                 >
@@ -658,7 +642,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                             <Avatar name={proj.name} className={cn("h-9 w-9 rounded-lg text-xs", tone.tile)} />
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5 font-bold text-foreground transition-colors group-hover:text-primary">
-                                <Link href={`/projects/${proj.id}`}>{proj.name}</Link>
+                                <Link to={`/projects/${proj.id}`}>{proj.name}</Link>
                                 {proj.websiteUrl && (
                                   <a
                                     href={proj.websiteUrl}
@@ -694,7 +678,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                               {linkedTokens.map((t) => (
                                 <Link
                                   key={t.id}
-                                  href={`/tokens/${t.id}`}
+                                  to={`/tokens/${t.id}`}
                                   className="inline-block rounded-md bg-secondary/70 px-1.5 py-0.5 font-mono text-[10px] text-foreground transition-colors hover:bg-primary/20"
                                 >
                                   ${t.symbol}
@@ -708,7 +692,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                         <td className="whitespace-nowrap px-3 py-3.5 font-mono text-[11px] text-muted-foreground">{proj.createdAt}</td>
                         <td className="px-3 py-3.5 text-right">
                           <Button asChild size="sm" variant="outline" className="h-8 border-border/60 text-xs hover:border-primary">
-                            <Link href={`/projects/${proj.id}`}>Inspect</Link>
+                            <Link to={`/projects/${proj.id}`}>Inspect</Link>
                           </Button>
                         </td>
                       </tr>

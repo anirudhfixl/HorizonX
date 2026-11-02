@@ -1,13 +1,10 @@
-"use client";
-
 import React, { useState, useMemo } from "react";
-import Link from "next/link";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MOCK_STAKING_POOLS, MOCK_TOKENS, MOCK_PROJECTS } from "@/lib/mock-data";
+import { STAKING_POOLS, TOKENS, PROJECTS } from "@/data";
 import { Token, Project } from "@/types";
 import {
   Layers,
@@ -28,6 +25,7 @@ import {
   Unlock,
   TrendingUp,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export type StakingSortOption =
   | "name-asc"
@@ -84,20 +82,20 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
   // Fast token and project metadata lookups
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
-    MOCK_TOKENS.forEach((t) => map.set(t.id, t));
+    TOKENS.forEach((t) => map.set(t.id, t));
     return map;
   }, []);
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
-    MOCK_PROJECTS.forEach((p) => map.set(p.id, p));
+    PROJECTS.forEach((p) => map.set(p.id, p));
     return map;
   }, []);
 
   // Unique categories derived from pools and linked tokens
   const uniqueCategories = useMemo(() => {
     const set = new Set<string>();
-    MOCK_STAKING_POOLS.forEach((pool) => {
+    STAKING_POOLS.forEach((pool) => {
       if (pool.category) set.add(pool.category);
       const token = tokenMap.get(pool.tokenId);
       if (token?.category) set.add(token.category);
@@ -148,7 +146,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
 
   // Filtered pools
   const filteredPools = useMemo(() => {
-    return MOCK_STAKING_POOLS.filter((pool) => {
+    return STAKING_POOLS.filter((pool) => {
       const token = tokenMap.get(pool.tokenId);
       const project = pool.projectId ? projectMap.get(pool.projectId) : undefined;
 
@@ -288,7 +286,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
 
   // Total depositors across all pools
   const totalStakersCount = useMemo(() => {
-    return MOCK_STAKING_POOLS.reduce((acc, p) => acc + (p.stakerCount || 0), 0);
+    return STAKING_POOLS.reduce((acc, p) => acc + (p.stakerCount || 0), 0);
   }, []);
 
   return (
@@ -315,7 +313,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
         actions={
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="sm" className="text-xs border-border/60">
-              <Link href="/staking/my">
+              <Link to="/staking/my">
                 <Layers className="h-3.5 w-3.5 mr-1" /> My Positions
               </Link>
             </Button>
@@ -324,7 +322,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
               size="sm"
               className="bg-primary text-primary-foreground text-xs gap-1.5 font-semibold hover:bg-primary/90"
             >
-              <Link href="/staking/pools/create">
+              <Link to="/staking/pools/create">
                 <Plus className="h-3.5 w-3.5" /> Deploy Staking Pool
               </Link>
             </Button>
@@ -355,7 +353,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
             <Layers className="h-4 w-4 text-primary" />
           </div>
           <div className="text-2xl font-bold font-mono text-foreground">
-            {MOCK_STAKING_POOLS.length}
+            {STAKING_POOLS.length}
           </div>
           <p className="text-[11px] text-muted-foreground">Yield vaults cataloged</p>
         </div>
@@ -366,7 +364,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
             <TrendingUp className="h-4 w-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-bold font-mono text-emerald-400">
-            {MOCK_STAKING_POOLS.filter((pool) => pool.status === "active").length}
+            {STAKING_POOLS.filter((pool) => pool.status === "active").length}
           </div>
           <p className="text-[11px] text-muted-foreground">Currently accruing yield</p>
         </div>
@@ -378,7 +376,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
           </div>
           <div className="text-2xl font-bold font-mono text-primary">
             {
-              MOCK_STAKING_POOLS.filter(
+              STAKING_POOLS.filter(
                 (pool) =>
                   pool.network.toLowerCase().includes("sepolia") ||
                   pool.network.toLowerCase() === "ethereum"
@@ -694,7 +692,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
                   {/* Pool Title & Description */}
                   <div>
                     <h3 className="font-semibold text-foreground text-sm hover:text-primary transition-colors line-clamp-1">
-                      <Link href={`/staking/pools/${pool.id}`}>{pool.name}</Link>
+                      <Link to={`/staking/pools/${pool.id}`}>{pool.name}</Link>
                     </h3>
                     <p className="text-xs text-muted-foreground line-clamp-2 mt-1 leading-relaxed">
                       {pool.description || "Audited non-custodial staking vault with block-by-block reward issuance."}
@@ -709,7 +707,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
                       </div>
                       <div className="truncate">
                         <Link
-                          href={`/tokens/${pool.tokenId}`}
+                          to={`/tokens/${pool.tokenId}`}
                           className="font-medium text-foreground hover:text-primary transition-colors truncate block"
                         >
                           {token?.name || pool.tokenId}
@@ -721,7 +719,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
                     </div>
                     {project && (
                       <Link
-                        href={`/projects/${project.id}`}
+                        to={`/projects/${project.id}`}
                         className="text-[11px] text-muted-foreground hover:text-primary truncate max-w-[120px] text-right"
                       >
                         {project.name}
@@ -793,7 +791,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
                     size="sm"
                     className="h-8 text-xs bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
                   >
-                    <Link href={`/staking/pools/${pool.id}`}>
+                    <Link to={`/staking/pools/${pool.id}`}>
                       {pool.status === "active" ? "Stake Asset" : "View Vault"}
                     </Link>
                   </Button>
@@ -894,7 +892,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
                           </div>
                           <div>
                             <Link
-                              href={`/staking/pools/${pool.id}`}
+                              to={`/staking/pools/${pool.id}`}
                               className="font-semibold text-foreground hover:text-primary transition-colors block"
                             >
                               {pool.name}
@@ -976,7 +974,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
                           size="sm"
                           className="h-7 text-xs bg-primary text-primary-foreground font-semibold hover:bg-primary/90"
                         >
-                          <Link href={`/staking/pools/${pool.id}`}>
+                          <Link to={`/staking/pools/${pool.id}`}>
                             {pool.status === "active" ? "Stake" : "View"}
                           </Link>
                         </Button>

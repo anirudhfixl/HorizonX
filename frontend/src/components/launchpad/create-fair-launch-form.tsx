@@ -1,14 +1,13 @@
-"use client";
-
+import "@/components/launchpad/launchpad.css";
+import { LaunchpadWorkspaceHeader } from "@/components/launchpad/launchpad-section-nav";
 import React, { useRef, useState } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { MOCK_TOKENS, MOCK_PROJECTS } from "@/lib/mock-data";
+import { TOKENS, PROJECTS } from "@/data";
 import { cn } from "@/lib/utils";
 import { findCatalogToken, formatNumber, parseNumber } from "@/lib/presale-create";
 import {
@@ -31,6 +30,7 @@ import {
   type SessionFairLaunch,
 } from "@/lib/launch-storage";
 import { AlertCircle, ArrowLeft, ArrowRight, Info, Wallet } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const STEPS: { key: FlStepKey; label: string; short: string }[] = [
   { key: "token", label: "Token & Metadata", short: "Token selection and project details" },
@@ -156,7 +156,7 @@ export function CreateFairLaunchForm() {
   const checking = false;
   const current = STEPS[step];
   const errors = validateFairLaunch(draft);
-  const catalog = findCatalogToken(draft.tokenAddress, MOCK_TOKENS);
+  const catalog = findCatalogToken(draft.tokenAddress, TOKENS);
   const supplyComparison = compareToSupply(draft.totalSelling, selectedTokenInfo?.totalSupply ? { totalSupply: selectedTokenInfo.totalSupply } : catalog);
 
   const stepErrorList = (FL_STEP_FIELDS[current.key as Exclude<FlStepKey, "review">] || []).filter((f) => touched[f] && errors[f]);
@@ -303,18 +303,8 @@ export function CreateFairLaunchForm() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-        <Link href="/launchpad" className="hover:text-foreground">
-          Launchpad
-        </Link>
-        <span aria-hidden="true">/</span>
-        <Link href="/launchpad/launches" className="hover:text-foreground">
-          Fair launches
-        </Link>
-        <span aria-hidden="true">/</span>
-        <span className="text-foreground">Create</span>
-      </nav>
+    <div className="launchpad-page mx-auto w-full max-w-none px-4 py-8 sm:px-6 lg:px-10 xl:px-12 2xl:px-16">
+      <LaunchpadWorkspaceHeader items={[{ label: "Launchpad", to: "/launchpad" }, { label: "Fair launches", to: "/launchpad/launches" }, { label: "Create fair launch" }]} />
 
       <header className="mt-6 max-w-3xl">
         <Eyebrow>Fair launch setup</Eyebrow>
@@ -400,20 +390,20 @@ export function CreateFairLaunchForm() {
             <div className="mt-6 flex flex-wrap gap-3">
               {createdSessionId && (
                 <Link
-                  href={`/launchpad/launches/${createdSessionId}`}
+                  to={`/launchpad/launches/${createdSessionId}`}
                   className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90"
                 >
                   View Created Fair Launch →
                 </Link>
               )}
               <Link
-                href="/launchpad/my"
+                to="/launchpad/my"
                 className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-secondary/40 px-4 text-sm font-medium text-foreground hover:bg-secondary"
               >
                 Go to My Launches
               </Link>
               <Link
-                href="/launchpad/launches"
+                to="/launchpad/launches"
                 className="inline-flex h-9 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-muted-foreground hover:text-foreground"
               >
                 Browse All Fair Launches
@@ -511,7 +501,7 @@ export function CreateFairLaunchForm() {
                         className="mt-1.5 w-full rounded-lg border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                       >
                         <option value="">None / Independent Launch</option>
-                        {MOCK_PROJECTS.map((proj) => (
+                        {PROJECTS.map((proj) => (
                           <option key={proj.id} value={proj.id}>
                             {proj.name}
                           </option>
@@ -710,7 +700,7 @@ export function CreateFairLaunchForm() {
                   <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
                 </Button>
               ) : (
-                <Link href="/launchpad/launches" className="text-sm text-muted-foreground hover:text-foreground">
+                <Link to="/launchpad/launches" className="text-sm text-muted-foreground hover:text-foreground">
                   Cancel
                 </Link>
               )}

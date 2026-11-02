@@ -1,14 +1,13 @@
-"use client";
-
+import "@/components/launchpad/launchpad.css";
+import { LaunchpadWorkspaceHeader } from "@/components/launchpad/launchpad-section-nav";
 import React, { useRef, useState } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { MOCK_PROJECTS, MOCK_TOKENS } from "@/lib/mock-data";
+import { PROJECTS, TOKENS } from "@/data";
 import { cn } from "@/lib/utils";
 import {
   DEFAULT_DRAFT,
@@ -33,6 +32,7 @@ import {
   type SessionPresale,
 } from "@/lib/launch-storage";
 import { AlertCircle, ArrowLeft, ArrowRight, Check, Info, Wallet } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const STEPS: { key: StepKey; label: string; short: string }[] = [
   { key: "token", label: "Token & Metadata", short: "Token selection and launch details" },
@@ -212,7 +212,7 @@ export function CreatePresaleForm() {
   const current = STEPS[step];
   const errors = validateDraft(draft);
   const derived = deriveDraft(draft);
-  const catalog = findCatalogToken(draft.tokenAddress, MOCK_TOKENS);
+  const catalog = findCatalogToken(draft.tokenAddress, TOKENS);
 
   const stepErrorList = (STEP_FIELDS[current.key as Exclude<StepKey, "review">] || []).filter((f) => touched[f] && errors[f]);
   const shown = (f: DraftField) => (touched[f] ? errors[f] : undefined);
@@ -359,18 +359,8 @@ export function CreatePresaleForm() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-        <Link href="/launchpad" className="hover:text-foreground">
-          Launchpad
-        </Link>
-        <span aria-hidden="true">/</span>
-        <Link href="/launchpad/presales" className="hover:text-foreground">
-          Presales
-        </Link>
-        <span aria-hidden="true">/</span>
-        <span className="text-foreground">Create</span>
-      </nav>
+    <div className="launchpad-page mx-auto w-full max-w-none px-4 py-8 sm:px-6 lg:px-10 xl:px-12 2xl:px-16">
+      <LaunchpadWorkspaceHeader items={[{ label: "Launchpad", to: "/launchpad" }, { label: "Presales", to: "/launchpad/presales" }, { label: "Create presale" }]} />
 
       <header className="mt-6 max-w-3xl">
         <Eyebrow>Presale setup</Eyebrow>
@@ -507,20 +497,20 @@ export function CreatePresaleForm() {
               <div className="mt-6 flex flex-wrap gap-3">
                 {createdSessionId && (
                   <Link
-                    href={`/launchpad/presales/${createdSessionId}`}
+                    to={`/launchpad/presales/${createdSessionId}`}
                     className="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90"
                   >
                     View Created Presale →
                   </Link>
                 )}
                 <Link
-                  href="/launchpad/my"
+                  to="/launchpad/my"
                   className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-secondary/40 px-4 text-sm font-medium text-foreground hover:bg-secondary"
                 >
                   Go to My Launches
                 </Link>
                 <Link
-                  href="/launchpad/presales"
+                  to="/launchpad/presales"
                   className="inline-flex h-9 items-center justify-center rounded-md border border-border px-4 text-sm font-medium text-muted-foreground hover:text-foreground"
                 >
                   Browse All Presales
@@ -628,7 +618,7 @@ export function CreatePresaleForm() {
                           className="mt-1.5 w-full rounded-lg border border-border bg-secondary/30 px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                         >
                           <option value="">None / Independent Launch</option>
-                          {MOCK_PROJECTS.map((proj) => (
+                          {PROJECTS.map((proj) => (
                             <option key={proj.id} value={proj.id}>
                               {proj.name}
                             </option>
@@ -785,7 +775,7 @@ export function CreatePresaleForm() {
                     </ReviewRow>
                     {draft.projectId && (
                       <ReviewRow label="Parent Project">
-                        <span>{MOCK_PROJECTS.find((p) => p.id === draft.projectId)?.name || draft.projectId}</span>
+                        <span>{PROJECTS.find((p) => p.id === draft.projectId)?.name || draft.projectId}</span>
                       </ReviewRow>
                     )}
                   </ReviewGroup>
@@ -854,7 +844,7 @@ export function CreatePresaleForm() {
                     <ArrowLeft className="h-4 w-4" aria-hidden="true" /> Back
                   </Button>
                 ) : (
-                  <Link href="/launchpad/presales" className="text-sm text-muted-foreground hover:text-foreground">
+                  <Link to="/launchpad/presales" className="text-sm text-muted-foreground hover:text-foreground">
                     Cancel
                   </Link>
                 )}

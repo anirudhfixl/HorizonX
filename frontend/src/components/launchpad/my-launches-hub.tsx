@@ -1,7 +1,6 @@
-"use client";
-
+import "@/components/launchpad/launchpad.css";
+import { LaunchpadWorkspaceHeader } from "@/components/launchpad/launchpad-section-nav";
 import React, { useState, useMemo, useSyncExternalStore } from "react";
-import Link from "next/link";
 import { toast } from "sonner";
 import {
   Rocket,
@@ -21,7 +20,7 @@ import { NetworkChip } from "@/components/shared/network-chip";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { MOCK_PRESALES, MOCK_FAIR_LAUNCHES } from "@/lib/mock-data";
+import { PRESALES, FAIR_LAUNCHES, TOKENS } from "@/data";
 import {
   readSessionLaunchesRaw,
   subscribeSessionLaunches,
@@ -31,6 +30,25 @@ import {
   type SessionFairLaunch,
 } from "@/lib/launch-storage";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
+
+const tokenById = new Map(TOKENS.map((token) => [token.id, token]));
+
+function catalogOwnerMatchesWallet(ownerAddress: string, walletAddress: string): boolean {
+  const owner = ownerAddress.trim().toLowerCase();
+  const wallet = walletAddress.trim().toLowerCase();
+  if (!owner || !wallet) return false;
+  if (owner === wallet) return true;
+
+  // Seed catalog addresses may be abbreviated (0x1234...abcd).
+  // Require both visible ends to match; a short prefix match is not ownership proof.
+  const abbreviated = owner.match(/^(0x)?([a-f0-9]{4,})\.\.\.([a-f0-9]{4,})$/);
+  if (!abbreviated) return false;
+  const prefix = abbreviated[2];
+  const suffix = abbreviated[3];
+  const normalizedWallet = wallet.replace(/^0x/, "");
+  return normalizedWallet.startsWith(prefix) && normalizedWallet.endsWith(suffix);
+}
 
 export interface UnifiedCreatorLaunch {
   id: string;
@@ -83,8 +101,9 @@ export function MyLaunchesHub() {
     const lowerAddr = address?.toLowerCase() || "";
 
     // Presales
-    MOCK_PRESALES.forEach((ps) => {
-      const isOwner = lowerAddr && (ps.ownerAddress.toLowerCase() === lowerAddr || ps.ownerAddress.toLowerCase().includes(lowerAddr.slice(2, 6)));
+    PRESALES.forEach((ps) => {
+      const token = tokenById.get(ps.tokenId);
+      const isOwner = catalogOwnerMatchesWallet(ps.ownerAddress, lowerAddr);
       // In demo mode or if owner matches
       if (isDemoMode || isOwner) {
         list.push({
@@ -94,9 +113,9 @@ export function MyLaunchesHub() {
           description: ps.description,
           category: ps.category,
           tokenId: ps.tokenId,
-          tokenSymbol: ps.tokenId.toUpperCase(),
-          tokenName: ps.title.replace(/Presale.*/i, "").trim() || ps.tokenId,
-          tokenAddress: ps.contractAddress || "0x892a43b2f671b2691e9b24ee945c35d5d8c9a7d1",
+          tokenSymbol: token?.symbol || ps.tokenId.toUpperCase(),
+          tokenName: token?.name || ps.tokenId,
+          tokenAddress: ps.contractAddress || token?.contractAddress || "",
           status: ps.status,
           softCap: ps.softCap || "50 ETH",
           hardCap: ps.hardCap || "150 ETH",
@@ -113,8 +132,9 @@ export function MyLaunchesHub() {
     });
 
     // Fair Launches
-    MOCK_FAIR_LAUNCHES.forEach((fl) => {
-      const isOwner = lowerAddr && (fl.ownerAddress.toLowerCase() === lowerAddr || fl.ownerAddress.toLowerCase().includes(lowerAddr.slice(2, 6)));
+    FAIR_LAUNCHES.forEach((fl) => {
+      const token = tokenById.get(fl.tokenId);
+      const isOwner = catalogOwnerMatchesWallet(fl.ownerAddress, lowerAddr);
       if (isDemoMode || isOwner) {
         list.push({
           id: fl.id,
@@ -123,9 +143,9 @@ export function MyLaunchesHub() {
           description: fl.description,
           category: fl.category,
           tokenId: fl.tokenId,
-          tokenSymbol: fl.tokenId.toUpperCase(),
-          tokenName: fl.title.replace(/Fair Launch.*/i, "").trim() || fl.tokenId,
-          tokenAddress: fl.contractAddress || "0x892a43b2f671b2691e9b24ee945c35d5d8c9a7d1",
+          tokenSymbol: token?.symbol || fl.tokenId.toUpperCase(),
+          tokenName: token?.name || fl.tokenId,
+          tokenAddress: fl.contractAddress || token?.contractAddress || "",
           status: fl.status,
           softCap: fl.softCap || "20 ETH",
           totalSelling: fl.totalSelling,
@@ -225,15 +245,8 @@ export function MyLaunchesHub() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
-      {/* ── Breadcrumb & Eyebrow ────────────────────────────────────────── */}
-      <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-        <Link href="/launchpad" className="hover:text-foreground">
-          Launchpad
-        </Link>
-        <span aria-hidden="true">/</span>
-        <span className="text-foreground">My Launches</span>
-      </nav>
+    <div className="launchpad-page mx-auto w-full max-w-none px-4 py-8 sm:px-6 lg:px-10 xl:px-12 2xl:px-16">
+      <LaunchpadWorkspaceHeader items={[{ label: "Launchpad", to: "/launchpad" }, { label: "My launches" }]} />
 
       {/* ── Page Header ─────────────────────────────────────────────────── */}
       <div className="mt-4 flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -251,14 +264,14 @@ export function MyLaunchesHub() {
 
         <div className="flex flex-wrap items-center gap-2.5">
           <Link
-            href="/launchpad/presales/create"
+            to="/launchpad/presales/create"
             className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3.5 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
           >
             <Plus className="h-4 w-4" />
             Create Presale
           </Link>
           <Link
-            href="/launchpad/launches/create"
+            to="/launchpad/launches/create"
             className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 text-xs font-semibold text-foreground hover:bg-secondary/70 transition-colors"
           >
             <Rocket className="h-4 w-4 text-primary" />
@@ -438,13 +451,13 @@ export function MyLaunchesHub() {
                   action={
                     <div className="flex items-center gap-3">
                       <Link
-                        href="/launchpad/presales/create"
+                        to="/launchpad/presales/create"
                         className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
                       >
                         <Plus className="h-3.5 w-3.5" /> Create Presale
                       </Link>
                       <Link
-                        href="/launchpad/launches/create"
+                        to="/launchpad/launches/create"
                         className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-border bg-card px-3 text-xs font-semibold text-foreground hover:bg-secondary"
                       >
                         <Rocket className="h-3.5 w-3.5 text-primary" /> Create Fair Launch
@@ -534,7 +547,7 @@ export function MyLaunchesHub() {
                     {/* Actions */}
                     <div className="mt-5 flex items-center justify-between gap-2 border-t border-border/50 pt-3">
                       <Link
-                        href={detailHref}
+                        to={detailHref}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                       >
                         View Launch Details <ExternalLink className="h-3 w-3" />
@@ -586,13 +599,13 @@ export function MyLaunchesHub() {
 
           <div className="mt-8 flex justify-center gap-3">
             <Link
-              href="/launchpad/presales"
+              to="/launchpad/presales"
               className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
             >
               Browse Presales
             </Link>
             <Link
-              href="/launchpad/launches"
+              to="/launchpad/launches"
               className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-card px-4 text-xs font-semibold text-foreground hover:bg-secondary"
             >
               Browse Fair Launches

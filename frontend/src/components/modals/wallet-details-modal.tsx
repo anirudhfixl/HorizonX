@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useState } from "react";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
@@ -22,7 +20,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 export function WalletDetailsModal() {
   const {
@@ -203,7 +201,7 @@ export function WalletDetailsModal() {
         {/* Quick Links & Disconnect Action */}
         <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between gap-2">
           <Link
-            href="/account"
+            to="/account"
             onClick={closeModal}
             className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
           >

@@ -1,5 +1,5 @@
 import type { Presale, FairLaunch, PresaleStatus, Token, Project } from "@/types";
-import { MOCK_TOKENS, MOCK_PROJECTS, MOCK_PRESALES, MOCK_FAIR_LAUNCHES } from "@/lib/mock-data";
+import { TOKENS, PROJECTS, PRESALES, FAIR_LAUNCHES } from "@/data";
 import { SESSION_TOKENS_STORAGE_KEY } from "@/lib/data-provenance";
 import type { SimulatedTokenReceipt } from "@/components/tokens/token-creation-wizard";
 
@@ -268,7 +268,7 @@ export function resolveLaunchContext(
   launch: { tokenId: string; projectId?: string; id: string }
 ): ResolvedLaunchContext {
   // 1. Try to find catalog token
-  let token: Token | undefined = MOCK_TOKENS.find(
+  let token: Token | undefined = TOKENS.find(
     (t) =>
       t.id.toLowerCase() === launch.tokenId.toLowerCase() ||
       t.contractAddress?.toLowerCase() === launch.tokenId.toLowerCase()
@@ -328,14 +328,14 @@ export function resolveLaunchContext(
   }
 
   const project = launch.projectId
-    ? MOCK_PROJECTS.find((p) => p.id === launch.projectId)
+    ? PROJECTS.find((p) => p.id === launch.projectId)
     : undefined;
 
-  const siblingPresales = MOCK_PRESALES.filter(
+  const siblingPresales = PRESALES.filter(
     (p) => p.tokenId.toLowerCase() === launch.tokenId.toLowerCase() && p.id !== launch.id
   );
 
-  const siblingFairLaunches = MOCK_FAIR_LAUNCHES.filter(
+  const siblingFairLaunches = FAIR_LAUNCHES.filter(
     (f) => f.tokenId.toLowerCase() === launch.tokenId.toLowerCase() && f.id !== launch.id
   );
 

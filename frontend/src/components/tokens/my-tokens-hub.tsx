@@ -1,7 +1,5 @@
-"use client";
-
+import { TokenBreadcrumb, TokenSectionNav } from "@/components/tokens/token-section-nav";
 import React, { useState, useMemo, useSyncExternalStore } from "react";
-import Link from "next/link";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { MOCK_TOKENS, MOCK_PROJECTS } from "@/lib/mock-data";
+import { TOKENS, PROJECTS } from "@/data";
 import { Token, TokenMarketData, Project } from "@/types";
 import { SimulatedTokenReceipt, calculateBaseUnits } from "./token-creation-wizard";
 import { formatNumber } from "./token-detail-hub";
@@ -42,6 +40,7 @@ import {
   RotateCcw,
   ExternalLink,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 // Explicit literal ensures static analysis tests strictly pass:
 // "prominers_session_tokens"
@@ -237,7 +236,7 @@ export function MyTokensHub() {
   // Project map for quick lookup
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
-    for (const p of MOCK_PROJECTS) {
+    for (const p of PROJECTS) {
       map.set(p.id, p);
     }
     return map;
@@ -245,7 +244,7 @@ export function MyTokensHub() {
 
   // Filter creator tokens based on active connected/demo address
   const catalogMatches = useMemo(() => {
-    return resolveCreatorTokens(MOCK_TOKENS, address);
+    return resolveCreatorTokens(TOKENS, address);
   }, [address]);
 
   const sessionMatches = useMemo(() => {
@@ -438,14 +437,11 @@ export function MyTokensHub() {
   const walletPending = !isConnected && (isConnecting || isReconnecting);
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="tk-page tk-page--workspace space-y-8">
+      <TokenSectionNav />
       {/* ─── 1. Header Toolbar & Context ─────────────────────────────────── */}
+      <TokenBreadcrumb current="My Tokens" />
       <header className="space-y-6">
-        <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Link href="/tokens" className="transition-colors hover:text-foreground">Tokens</Link>
-          <span aria-hidden>/</span>
-          <span aria-current="page" className="text-foreground">My Tokens</span>
-        </nav>
 
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl space-y-2">
@@ -463,13 +459,13 @@ export function MyTokensHub() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Button asChild size="sm" className="h-10 gap-2 bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90">
-              <Link href="/tokens/create">
+              <Link to="/tokens/create">
                 <Plus className="h-4 w-4" aria-hidden />
                 <span>Deploy New Token</span>
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="h-10 border-border/60 text-xs font-medium text-foreground hover:bg-secondary/40">
-              <Link href="/tokens">
+              <Link to="/tokens">
                 <span>Token Directory</span>
                 <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
               </Link>
@@ -620,12 +616,12 @@ export function MyTokensHub() {
 
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Button asChild size="sm" className="h-10 bg-primary px-5 text-xs font-semibold text-primary-foreground hover:bg-primary/90">
-                  <Link href="/tokens/create">
+                  <Link to="/tokens/create">
                     <Plus className="mr-1.5 h-4 w-4" /> Deploy Your First Token
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="sm" className="h-10 border-border/60 text-xs font-medium text-foreground hover:bg-secondary/40">
-                  <Link href="/tokens">
+                  <Link to="/tokens">
                     <span>Browse Token Directory</span>
                   </Link>
                 </Button>
@@ -944,7 +940,7 @@ export function MyTokensHub() {
                                       variant="ghost"
                                       className="h-8 text-xs font-medium text-muted-foreground hover:text-foreground"
                                     >
-                                      <Link href={`/tokens/${item.token.id}`}>
+                                      <Link to={`/tokens/${item.token.id}`}>
                                         <span>Hub</span>
                                         <ArrowRight className="ml-1 h-3 w-3" />
                                       </Link>
@@ -1056,7 +1052,7 @@ export function MyTokensHub() {
                           </Button>
                           {item.token && (
                             <Button asChild size="sm" variant="ghost" className="h-9 text-xs">
-                              <Link href={`/tokens/${item.token.id}`}>
+                              <Link to={`/tokens/${item.token.id}`}>
                                 <span>Hub</span>
                                 <ArrowRight className="ml-1 h-3 w-3" />
                               </Link>
@@ -1154,7 +1150,7 @@ export function MyTokensHub() {
                 <div className="rounded-xl border border-border/40 bg-secondary/20 p-4 space-y-1">
                   <span className="text-xs text-muted-foreground block">Linked Ecosystem Project</span>
                   <Link
-                    href={`/projects/${inspectedItem.token.projectId}`}
+                    to={`/projects/${inspectedItem.token.projectId}`}
                     className="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
                   >
                     <span>{projectMap.get(inspectedItem.token.projectId)?.name || inspectedItem.token.projectId}</span>
@@ -1216,17 +1212,17 @@ export function MyTokensHub() {
               {inspectedItem.token && (
                 <div className="flex flex-wrap items-center gap-3 pt-2">
                   <Button asChild size="sm" className="bg-primary text-xs font-semibold text-primary-foreground">
-                    <Link href={`/tokens/${inspectedItem.token.id}`}>
+                    <Link to={`/tokens/${inspectedItem.token.id}`}>
                       View Token Hub <ArrowRight className="ml-1.5 h-3 w-3" />
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm" className="border-border/60 text-xs">
-                    <Link href={`/tokens/${inspectedItem.token.id}/contract`}>
+                    <Link to={`/tokens/${inspectedItem.token.id}/contract`}>
                       Contract Source
                     </Link>
                   </Button>
                   <Button asChild variant="outline" size="sm" className="border-border/60 text-xs">
-                    <Link href={`/tokens/${inspectedItem.token.id}/activity`}>
+                    <Link to={`/tokens/${inspectedItem.token.id}/activity`}>
                       Activity Log
                     </Link>
                   </Button>

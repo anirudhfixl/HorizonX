@@ -1,5 +1,3 @@
-"use client";
-
 // Halftone Wordmark Footer - a site footer whose wordmark is set enormous and
 // cropped by the bottom edge, printed as a field of halftone dots. Each dot is
 // sized by how much of the letter covers its cell, so the type keeps its edges
@@ -9,7 +7,7 @@
 // a back-to-top, separated by a hairline, all over a fine print grain.
 
 import * as React from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 export interface HalftonePalette {
   /** The footer background. */
@@ -131,6 +129,19 @@ export function hwfHex(hex: string): [number, number, number] | null {
   ];
 }
 
+/** Parses hex or rgb/rgba color string to [r, g, b] tuple. */
+export function hwfColorToRgb(color: string): [number, number, number] | null {
+  if (!color) return null;
+  const c = color.trim();
+  const hex = hwfHex(c);
+  if (hex) return hex;
+  const m = /^rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i.exec(c);
+  if (m) {
+    return [parseInt(m[1], 10), parseInt(m[2], 10), parseInt(m[3], 10)];
+  }
+  return null;
+}
+
 /** Dot radius for a cell coverage in [0, 1]: area-true, so tone stays even. */
 export function hwfRadius(coverage: number, gap: number): number {
   const c = coverage < 0 ? 0 : coverage > 1 ? 1 : coverage;
@@ -186,7 +197,11 @@ export function hwfFitSize(measured: number, width: number): number {
 const HWF_CSS = `
 .hwf-root {
   position: relative; width: 100%; overflow: hidden; isolation: isolate;
-  background: var(--hwf-bg); color: var(--hwf-ink); transition: background-color 420ms ease, color 420ms ease; -webkit-font-smoothing: antialiased;
+  background: var(--hwf-bg, var(--footer-bg, var(--page-bg, var(--background))));
+  color: var(--hwf-ink, var(--footer-text, var(--text-primary, var(--foreground))));
+  border-top: 1px solid var(--footer-divider, var(--border-subtle, var(--border)));
+  transition: background-color 420ms ease, color 420ms ease, border-color 420ms ease;
+  -webkit-font-smoothing: antialiased;
 }
 .hwf-root canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; }
 .hwf-top {
@@ -194,22 +209,22 @@ const HWF_CSS = `
   gap: 24px; padding: clamp(22px, 3.4vw, 40px) clamp(20px, 3.4vw, 44px) 0;
   font-family: var(--hwf-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; line-height: 1.75;
 }
-.hwf-brand strong { display: block; font-weight: 600; letter-spacing: .2em; color: var(--hwf-ink); }
-.hwf-brand span { opacity: .5; font-size: 9.5px; }
-.hwf-col h3 { margin: 0; font: inherit; opacity: .45; font-weight: 600; }
+.hwf-brand strong { display: block; font-weight: 600; letter-spacing: .2em; color: var(--hwf-ink, var(--footer-text, currentColor)); }
+.hwf-brand span { opacity: .55; font-size: 9.5px; color: var(--footer-text-muted, inherit); }
+.hwf-col h3 { margin: 0; font: inherit; opacity: .55; font-weight: 600; color: var(--footer-text-muted, var(--hwf-ink, currentColor)); }
 .hwf-col ul { list-style: none; margin: 0; padding: 0; }
 .hwf-col a, .hwf-up {
-  color: inherit; text-decoration: none; opacity: .78; background: none; border: 0; padding: 0;
+  color: var(--hwf-ink, var(--footer-text, currentColor)); text-decoration: none; opacity: .82; background: none; border: 0; padding: 0;
   font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer;
   background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px;
-  background-repeat: no-repeat; background-position: 0 100%; transition: opacity .25s ease, background-size .35s cubic-bezier(.2,.7,.1,1);
+  background-repeat: no-repeat; background-position: 0 100%; transition: opacity .25s ease, background-size .35s cubic-bezier(.2,.7,.1,1), color .25s ease;
 }
-.hwf-col a:hover, .hwf-up:hover { opacity: 1; background-size: 100% 1px; color: var(--hwf-warm); }
-.hwf-col a:focus-visible, .hwf-up:focus-visible { outline: 1px solid var(--hwf-warm); outline-offset: 3px; opacity: 1; }
+.hwf-col a:hover, .hwf-up:hover { opacity: 1; background-size: 100% 1px; color: var(--hwf-warm, var(--footer-warm, var(--primary))); }
+.hwf-col a:focus-visible, .hwf-up:focus-visible { outline: 1px solid var(--hwf-warm, var(--footer-warm, var(--primary))); outline-offset: 3px; opacity: 1; }
 .hwf-rule {
   position: relative; z-index: 1; display: flex; justify-content: flex-end; align-items: center; gap: 16px;
   margin: clamp(12px, 1.8vw, 22px) clamp(12px, 1.5vw, 20px) 0; padding-top: 10px;
-  border-top: 0.5px solid color-mix(in srgb, var(--hwf-ink) 16%, transparent);
+  border-top: 1px solid var(--footer-divider, color-mix(in srgb, var(--hwf-ink, currentColor) 16%, transparent));
   font-family: var(--hwf-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase;
 }
 .hwf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -303,11 +318,19 @@ export default function HalftoneWordmarkFooter({
     let dots = new Float32Array(0);
     let count = 0;
     let grainTile: HTMLCanvasElement | null = null;
-    const ink = hwfHex(opts.current.colors.ink) || [233, 228, 218];
-    const warm = hwfHex(opts.current.colors.warm) || [233, 118, 43];
+    let ink = hwfColorToRgb(opts.current.colors.ink) || [233, 228, 218];
+    let warm = hwfColorToRgb(opts.current.colors.warm) || [169, 154, 255];
+    let activeInk: string = opts.current.colors.ink;
 
     const layout = () => {
       const o = opts.current;
+      const comp = window.getComputedStyle(root);
+      const cssInk = (palette?.ink || comp.getPropertyValue("--footer-text").trim() || comp.getPropertyValue("--hwf-ink").trim() || o.colors.ink).trim();
+      const cssWarm = (palette?.warm || comp.getPropertyValue("--footer-warm").trim() || comp.getPropertyValue("--hwf-warm").trim() || o.colors.warm).trim();
+      ink = hwfColorToRgb(cssInk) || [233, 228, 218];
+      warm = hwfColorToRgb(cssWarm) || [169, 154, 255];
+      activeInk = cssInk;
+
       const rect = root.getBoundingClientRect();
       w = Math.max(1, Math.round(rect.width));
       h = Math.max(1, Math.round(rect.height));
@@ -383,8 +406,7 @@ export default function HalftoneWordmarkFooter({
     const draw = (now: number) => {
       const o = opts.current;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = o.colors.background;
-      ctx.fillRect(0, 0, w, h);
+      ctx.clearRect(0, 0, w, h);
 
       const r = o.interactive && !reduced ? Math.max(0, o.radius) : 0;
       const ringAge = ring.t < 0 ? 1e9 : now - ring.t;
@@ -441,7 +463,7 @@ export default function HalftoneWordmarkFooter({
               "," +
               Math.round(ink[2] + (warm[2] - ink[2]) * k) +
               ")"
-            : o.colors.ink;
+            : activeInk;
         ctx.beginPath();
         ctx.arc(x, y, dots[j + 6], 0, 6.2832);
         ctx.fill();
@@ -515,6 +537,13 @@ export default function HalftoneWordmarkFooter({
     });
     io.observe(root);
 
+    const themeTarget = root.closest("[data-theme]") || document.documentElement;
+    const mo = new MutationObserver(() => {
+      layout();
+      wake();
+    });
+    mo.observe(themeTarget, { attributes: true, attributeFilter: ["data-theme", "class"] });
+
     let alive = true;
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(() => {
@@ -529,6 +558,7 @@ export default function HalftoneWordmarkFooter({
       cancelAnimationFrame(raf);
       ro.disconnect();
       io.disconnect();
+      mo.disconnect();
       root.removeEventListener("pointermove", onMove);
       root.removeEventListener("pointerleave", onLeave);
       root.removeEventListener("pointerdown", onDown);
@@ -547,9 +577,9 @@ export default function HalftoneWordmarkFooter({
       style={
         {
           height,
-          "--hwf-bg": colors.background,
-          "--hwf-ink": colors.ink,
-          "--hwf-warm": colors.warm,
+          ...(palette?.background ? { "--hwf-bg": palette.background } : {}),
+          ...(palette?.ink ? { "--hwf-ink": palette.ink } : {}),
+          ...(palette?.warm ? { "--hwf-warm": palette.warm } : {}),
           "--hwf-mono": monoFamily,
         } as React.CSSProperties
       }
@@ -569,7 +599,7 @@ export default function HalftoneWordmarkFooter({
               {col.links.map((l) => (
                 <li key={l.label}>
                   {l.href?.startsWith("/") ? (
-                    <Link href={l.href}>{l.label}</Link>
+                    <Link to={l.href}>{l.label}</Link>
                   ) : (
                     <a
                       href={l.href || "#"}

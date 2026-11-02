@@ -6,7 +6,7 @@ import {
   getFeaturedTokens,
   formatCurrency,
   TokenWithMarket,
-} from "../app/tokens/page";
+} from "../lib/tokens/dashboard-metrics";
 
 function assert(condition: boolean, message: string) {
   if (!condition) {

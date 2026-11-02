@@ -1,7 +1,5 @@
-"use client";
-
+import NotFoundPage from "@/pages/not-found/page";
 import React, { useSyncExternalStore } from "react";
-import { notFound } from "next/navigation";
 import { PresaleDetail } from "@/components/launchpad/presale-detail";
 import { FairLaunchDetail } from "@/components/launchpad/fair-launch-detail";
 import {
@@ -30,7 +28,7 @@ export function SessionPresaleDetailClientWrapper({ id, initialTab }: { id: stri
 
   const sessionRecord = findSessionPresaleById(id);
   if (!sessionRecord) {
-    notFound();
+    return <NotFoundPage />;
   }
 
   const presale = sessionPresaleToPresale(sessionRecord);
@@ -62,7 +60,7 @@ export function SessionFairLaunchDetailClientWrapper({ id, initialTab }: { id: s
 
   const sessionRecord = findSessionFairLaunchById(id);
   if (!sessionRecord) {
-    notFound();
+    return <NotFoundPage />;
   }
 
   const launch = sessionFairLaunchToFairLaunch(sessionRecord);

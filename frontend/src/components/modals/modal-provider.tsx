@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import { ConnectWalletModal } from "./connect-wallet-modal";
 import { WalletDetailsModal } from "./wallet-details-modal";

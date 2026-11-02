@@ -1,6 +1,4 @@
-"use client";
-
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { TopNav } from "./top-nav";
 import { Footer } from "./footer";
 import { GlobalModalRenderer } from "@/components/modals/modal-provider";
@@ -8,21 +6,37 @@ import { Toaster } from "sonner";
 import { Web3Provider } from "@/components/providers/web3-provider";
 import { WalletProvider } from "@/contexts/wallet-context";
 import { ModalProvider } from "@/contexts/modal-context";
+import { getRouteTheme } from "@/config/theme-tokens";
+import { ScrollToTop } from "./scroll-to-top";
+import { Outlet, useLocation } from "react-router-dom";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell() {
+  const pathname = useLocation().pathname;
+  const isHomeRoute = pathname === "/";
+  const theme = getRouteTheme(pathname);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
+
   return (
     <Web3Provider>
       <WalletProvider>
         <ModalProvider>
-          <div className="relative min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/25 selection:text-primary-foreground">
+          <div
+            data-theme={theme}
+            className={`route-shell relative min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/25 selection:text-primary-foreground transition-colors duration-300${isHomeRoute ? " home-route" : ""}`}
+          >
+
+            <ScrollToTop />
 
             <Suspense fallback={<div className="h-[68px]" />}>
               <TopNav />
             </Suspense>
 
-            <main className="flex-1 pt-24 sm:pt-28 pb-0">
+            <main className="flex-1 pt-[84px] sm:pt-[84px] pb-0">
               <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading...</div>}>
-                {children}
+                <Outlet />
               </Suspense>
             </main>
 

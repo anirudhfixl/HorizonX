@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useRef } from "react";
 
 interface TokenShaderHeroProps {
@@ -192,43 +190,39 @@ void main(void) {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(90deg, rgba(8,5,3,.34) 0%, rgba(8,5,3,.12) 28%, rgba(8,5,3,.14) 72%, rgba(8,5,3,.38) 100%), linear-gradient(180deg, rgba(8,5,3,.08) 0%, rgba(8,5,3,.12) 68%, #0c0c0b 100%)",
+            "linear-gradient(90deg, rgba(8,5,3,.34) 0%, rgba(8,5,3,.12) 28%, rgba(8,5,3,.14) 72%, rgba(8,5,3,.38) 100%), linear-gradient(180deg, rgba(8,5,3,.08) 0%, rgba(8,5,3,.10) 68%, #0b0704 100%)",
         }}
       />
 
       <div className="relative z-10 mx-auto flex h-full max-w-6xl flex-col items-center justify-center px-5 pb-12 pt-6 text-center sm:px-8">
-        <div className="max-w-4xl space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            <span>Phase 3-D • Token Creation & Deployment Simulation</span>
-          </div>
-
+        <div className="max-w-4xl space-y-5">
           <h1 className="text-4xl font-bold leading-[1.06] tracking-[-0.04em] sm:text-5xl md:text-6xl lg:text-7xl">
             <span className="block bg-gradient-to-r from-orange-200 via-yellow-300 to-amber-200 bg-clip-text text-transparent">
-              Launch Your
+              Discover the tokens
             </span>
             <span className="mt-1 block bg-gradient-to-r from-yellow-300 via-orange-400 to-red-400 bg-clip-text text-transparent">
-              Token Into Orbit
+              powering the ecosystem.
             </span>
           </h1>
 
           <p className="mx-auto max-w-2xl text-sm font-light leading-relaxed text-orange-50/80 sm:text-base md:text-lg">
-            Configure your token specifications, review OpenZeppelin-based contract previews, and simulate the complete deployment lifecycle on Ethereum Sepolia.
+            Explore the ProMiners token directory, compare projects across networks, and review token details and transparent market snapshots in one place.
           </p>
 
-          <div className="pt-2 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
+          <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row sm:gap-4">
             <button
               type="button"
               onClick={onScrollToWizard}
-              className="rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-3 text-xs sm:text-sm font-semibold text-[#160b04] shadow-lg shadow-orange-500/20 transition duration-300 hover:scale-[1.02] hover:from-orange-400 hover:to-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
+              className="rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-3 text-xs font-semibold text-[#160b04] shadow-lg shadow-orange-500/20 transition duration-300 hover:scale-[1.02] hover:from-orange-400 hover:to-yellow-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200 sm:text-sm"
             >
-              Configure Token
+              Create a token
             </button>
             <button
               type="button"
               onClick={onExploreSetup}
-              className="rounded-full border border-orange-200/30 bg-orange-500/10 px-6 py-3 text-xs sm:text-sm font-semibold text-orange-50 backdrop-blur-sm transition duration-300 hover:scale-[1.02] hover:border-orange-200/55 hover:bg-orange-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200"
+              className="rounded-full border border-orange-200/30 bg-orange-500/10 px-6 py-3 text-xs font-semibold text-orange-50 backdrop-blur-sm transition duration-300 hover:scale-[1.02] hover:border-orange-200/55 hover:bg-orange-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-200 sm:text-sm"
             >
-              Explore Wizard Steps
+              Explore token directory
             </button>
           </div>
         </div>

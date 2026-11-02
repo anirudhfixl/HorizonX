@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useRef } from "react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 const VIDEO_URL =
   "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260912_104036_bd6924f6-3c8e-417e-8465-6d03c8c2e9e6.mp4";
@@ -111,10 +109,10 @@ export function EarthHero() {
           <br className="earth-hero__desktop-break" /> from your first idea to a thriving ecosystem.
         </p>
         <div className="earth-hero__actions">
-          <Link href="/explore" style={primaryButton} className="earth-hero__button">
+          <Link to="/explore" style={primaryButton} className="earth-hero__button">
             Explore HorizonX <Arrow />
           </Link>
-          <Link href="/tokens/create" style={secondaryButton} className="earth-hero__button">
+          <Link to="/tokens/create" style={secondaryButton} className="earth-hero__button">
             Create a token <Arrow />
           </Link>
         </div>

@@ -101,7 +101,6 @@ assert(derived.tokensAtSoftCap === 50 * 1000, "tokensAtSoftCap correctly compute
 assert(Math.abs((derived.softPctOfHard ?? 0) - (50 / 150) * 100) < 1e-9, "softPctOfHard correctly computed (33.33%)");
 assert(derived.minWalletsToFill === Math.ceil(150 / 3.0), "minWalletsToFill correctly computed (50 wallets)");
 
-
 // ─── 2. Fair Launch Creation Validation & Supply Comparison ──────────────
 console.log("\n--- 2. Fair Launch Creation Validation & Supply Comparison ---");
 
@@ -148,7 +147,6 @@ assert(supplyComp!.exceeds === false, "5,000,000 does not exceed 100,000,000 sup
 const excessComp = compareToSupply("150000000", catalogToken);
 assert(excessComp !== null && excessComp.exceeds === true, "150,000,000 exceeds 100,000,000 supply flagged");
 
-
 // ─── 3. Token Picker Catalog / Session / Custom Resolution ──────────────
 console.log("\n--- 3. Token Picker Catalog / Session / Custom Resolution ---");
 
@@ -168,7 +166,6 @@ assert(isValidHex, "Custom 0x address passes 40-character hex pattern");
 
 const isInvalidHex = /^0x[0-9a-fA-F]{40}$/.test("0xInvalidHex");
 assert(!isInvalidHex, "Malformed custom address rejected by hex pattern");
-
 
 // ─── 4. Session Launch Persistence & Operations ─────────────────────────
 console.log("\n--- 4. Session Launch Persistence & Operations ---");
@@ -262,7 +259,6 @@ mockSessionStorage.setItem(SESSION_LAUNCHES_STORAGE_KEY, JSON.stringify(afterRem
 const readAfterRemove = JSON.parse(mockSessionStorage.getItem(SESSION_LAUNCHES_STORAGE_KEY)!);
 assert(readAfterRemove.length === 1 && readAfterRemove[0].id === sampleFairLaunch.id, "Remove session launch succeeds");
 
-
 // ─── 5. Malformed Storage Handling ───────────────────────────────────────
 console.log("\n--- 5. Malformed Storage Handling ---");
 
@@ -288,7 +284,6 @@ try {
   parsedNonArray = [];
 }
 assert(Array.isArray(parsedNonArray) && parsedNonArray.length === 0, "Non-array JSON in storage safely defaults to empty array");
-
 
 // ─── 6. Type Mapping & Route Resolution ──────────────────────────────────
 console.log("\n--- 6. Type Mapping & Route Resolution ---");
@@ -323,7 +318,6 @@ const customContext = resolveLaunchContext(customPresale);
 assert(customContext.token !== undefined, "Fallback synthetic token resolved for custom unlisted contract address");
 assert(customContext.token?.contractAddress === "0x1111222233334444555566667777888899990000", "Synthetic token has expected address");
 
-
 // ─── 7. Directory & Workspace Visibility ─────────────────────────────────
 console.log("\n--- 7. Directory & Workspace Visibility ---");
 
@@ -349,7 +343,6 @@ assert(fairOnly.length === 1 && fairOnly[0].id === sampleFairLaunch.id, "Workspa
 
 const scheduledOnly = workspaceItems.filter((i) => i.status === "scheduled");
 assert(scheduledOnly.length === 2, "Workspace filters by status 'scheduled'");
-
 
 // ─── 8. Network & D-04 Scope Enforcement ─────────────────────────────────
 console.log("\n--- 8. Network & D-04 Scope Enforcement ---");
