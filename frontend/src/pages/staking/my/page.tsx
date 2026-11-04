@@ -1,4 +1,5 @@
 import React from "react";
+import { StakingWorkspaceHeader } from "@/components/staking/staking-section-nav";
 import { PageHeader } from "@/components/shared/page-header";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
@@ -12,14 +13,11 @@ export default function MyStakingPositionsPage() {
   const { openModal } = useModal();
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main className="staking-page space-y-8">
+      <StakingWorkspaceHeader items={[{ label: "Staking", to: "/staking" }, { label: "My positions" }]} />
       <PageHeader
         title="My Staking Positions"
         description="Monitor your active staked assets, accumulated rewards, and harvest history."
-        breadcrumbs={[
-          { label: "Staking", href: "/staking" },
-          { label: "My Positions" },
-        ]}
       />
 
       {!isConnected ? (
@@ -49,6 +47,6 @@ export default function MyStakingPositionsPage() {
           }
         />
       )}
-    </div>
+    </main>
   );
 }

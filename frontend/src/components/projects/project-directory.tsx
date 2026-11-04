@@ -281,7 +281,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
   const sepoliaCount = PROJECTS.filter(isSepoliaProject).length;
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] space-y-8 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="project-directory-page mx-0 min-w-0 w-full max-w-none space-y-8 px-[clamp(1rem,2.25vw,2.5rem)] pb-20 pt-0">
       {mode === "canonical" && (
         <div className="project-directory-context">
           <ProjectSectionNav />
@@ -308,8 +308,8 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
               {mode === "canonical"
-                ? "Browse and discover verified decentralized protocols, developer DAOs, and crypto ecosystem projects on ProMiners."
-                : "Explore verified decentralized protocols, developer DAOs, and crypto ecosystem projects across ProMiners."}
+                ? "Browse and discover verified decentralized protocols, developer DAOs, and crypto ecosystem projects on HorizonX."
+                : "Explore verified decentralized protocols, developer DAOs, and crypto ecosystem projects across HorizonX."}
             </p>
           </div>
           <dl className="flex items-end gap-8 font-mono">

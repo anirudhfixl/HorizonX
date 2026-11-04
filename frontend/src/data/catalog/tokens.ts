@@ -1,12 +1,12 @@
 /** Central catalog records. Current entries are illustrative seed data, not live feeds. */
 import type { Token, TokenMarketData } from "@/types";
 
-export const TOKENS: (Token & { market: TokenMarketData })[] = [
+export const TOKENS: (Token & { market: TokenMarketData; image: string; bannerImage: string; coverImage: string; galleryImages: string[] })[] = [
   {
     id: "prominers",
-    name: "ProMiners Governance",
+    name: "HorizonX Governance",
     symbol: "PMIN",
-    description: "Native platform governance and utility token of the ProMiners Protocol.",
+    description: "Native platform governance and utility token of the HorizonX Protocol.",
     network: "Ethereum Sepolia",
     category: "Governance",
     contractAddress: "0x892a43b2f671b2691e9b24ee945c35d5d8c9a7d1",
@@ -18,6 +18,10 @@ export const TOKENS: (Token & { market: TokenMarketData })[] = [
     projectId: "prominers-dao",
     creatorAddress: "0x71C9561E873f324A3B4323E56d3935a8286C4e39",
     features: ["Burnable (Illustrative)", "Permit (Illustrative)"],
+    image: "/images/Tokens_new/Token1.avif",
+    bannerImage: "/artwork/aether-frames-banner.svg",
+    coverImage: "/artwork/aether-frames.svg",
+    galleryImages: ["/artwork/aether-frames-1.svg", "/artwork/aether-frames-2.svg", "/artwork/aether-frames-3.svg", "/artwork/aether-frames-4.svg"],
     createdAt: "2026-10-01",
     updatedAt: "2026-10-30",
     market: {
@@ -46,6 +50,10 @@ export const TOKENS: (Token & { market: TokenMarketData })[] = [
     projectId: "aurora-labs",
     creatorAddress: "0x34291849a0293847291038472910482910293847",
     features: ["Mintable (Illustrative)"],
+    image: "/images/Tokens_new/Token2.avif",
+    bannerImage: "/artwork/copper-signal-banner.svg",
+    coverImage: "/artwork/copper-signal.svg",
+    galleryImages: ["/artwork/copper-signal-1.svg", "/artwork/copper-signal-2.svg", "/artwork/copper-signal-3.svg", "/artwork/copper-signal-4.svg"],
     createdAt: "2026-10-15",
     updatedAt: "2026-10-30",
     market: {
@@ -74,6 +82,10 @@ export const TOKENS: (Token & { market: TokenMarketData })[] = [
     projectId: "hyper-liquidity-labs",
     creatorAddress: "0x5829304918293847291048291029482019482910",
     features: ["Burnable (Illustrative)"],
+    image: "/images/Tokens_new/Token3.avif",
+    bannerImage: "/artwork/drift-avatars-banner.svg",
+    coverImage: "/artwork/drift-avatars.svg",
+    galleryImages: ["/artwork/drift-avatars-1.svg", "/artwork/drift-avatars-2.svg", "/artwork/drift-avatars-3.svg", "/artwork/drift-avatars-4.svg"],
     createdAt: "2026-10-20",
     updatedAt: "2026-10-30",
     market: {
@@ -102,6 +114,10 @@ export const TOKENS: (Token & { market: TokenMarketData })[] = [
     projectId: "solargrid-network",
     creatorAddress: "0x9182049182938472910482910294820194829102",
     features: ["Standard ERC-20"],
+    image: "/images/Tokens_new/Token4.avif",
+    bannerImage: "/artwork/ember-archive-banner.svg",
+    coverImage: "/artwork/ember-archive.svg",
+    galleryImages: ["/artwork/ember-archive-1.svg", "/artwork/ember-archive-2.svg", "/artwork/ember-archive-3.svg", "/artwork/ember-archive-4.svg"],
     createdAt: "2026-09-10",
     updatedAt: "2026-10-30",
     market: {
@@ -130,6 +146,10 @@ export const TOKENS: (Token & { market: TokenMarketData })[] = [
     projectId: "quantum-net",
     creatorAddress: "0x7492a91038472910293847291048291029384712",
     features: ["Burnable (Illustrative)", "Permit (Illustrative)"],
+    image: "/images/Tokens_new/Token5.avif",
+    bannerImage: "/artwork/glasswardens-banner.svg",
+    coverImage: "/artwork/glasswardens.svg",
+    galleryImages: ["/artwork/glasswardens-1.svg", "/artwork/glasswardens-2.svg", "/artwork/glasswardens-3.svg", "/artwork/glasswardens-4.svg"],
     createdAt: "2026-10-22",
     updatedAt: "2026-10-30",
     market: {
@@ -158,6 +178,10 @@ export const TOKENS: (Token & { market: TokenMarketData })[] = [
     projectId: "nexus-defi",
     creatorAddress: "0x1294829104829102948201948291029482019482",
     features: ["Pausable (Illustrative)"],
+    image: "/images/Tokens_new/Token6.avif",
+    bannerImage: "/artwork/helix-garden-banner.svg",
+    coverImage: "/artwork/helix-garden.svg",
+    galleryImages: ["/artwork/helix-garden-1.svg", "/artwork/helix-garden-2.svg", "/artwork/helix-garden-3.svg", "/artwork/helix-garden-4.svg"],
     createdAt: "2026-10-25",
     updatedAt: "2026-10-30",
     market: {
@@ -186,6 +210,10 @@ export const TOKENS: (Token & { market: TokenMarketData })[] = [
     projectId: "zk-privacy-labs",
     creatorAddress: "0x4810293847291048291029384729104829102938",
     features: ["Permit (Illustrative)"],
+    image: "/images/Tokens_new/Token7.avif",
+    bannerImage: "/artwork/lumen-relics-banner.svg",
+    coverImage: "/artwork/lumen-relics.svg",
+    galleryImages: ["/artwork/lumen-relics-1.svg", "/artwork/lumen-relics-2.svg", "/artwork/lumen-relics-3.svg", "/artwork/lumen-relics-4.svg"],
     createdAt: "2026-10-05",
     updatedAt: "2026-10-30",
     market: {
@@ -214,6 +242,10 @@ export const TOKENS: (Token & { market: TokenMarketData })[] = [
     projectId: "cybercat-dao",
     creatorAddress: "0x8291048291029482019482910294820194829104",
     features: ["Burnable (Illustrative)"],
+    image: "/images/Tokens_new/Token8.avif",
+    bannerImage: "/artwork/nadir-studio-banner.svg",
+    coverImage: "/artwork/nadir-studio.svg",
+    galleryImages: ["/artwork/nadir-studio-1.svg", "/artwork/nadir-studio-2.svg", "/artwork/nadir-studio-3.svg", "/artwork/nadir-studio-4.svg"],
     createdAt: "2026-10-27",
     updatedAt: "2026-10-30",
     market: {
@@ -242,6 +274,10 @@ export const TOKENS: (Token & { market: TokenMarketData })[] = [
     projectId: "matrix-governance",
     creatorAddress: "0x3918492019482910482910294820194829102938",
     features: ["Standard ERC-20"],
+    image: "/images/Tokens_new/Token9.avif",
+    bannerImage: "/artwork/night-market-banner.svg",
+    coverImage: "/artwork/night-market.svg",
+    galleryImages: ["/artwork/night-market-1.svg", "/artwork/night-market-2.svg", "/artwork/night-market-3.svg", "/artwork/night-market-4.svg"],
     createdAt: "2026-10-29",
     updatedAt: "2026-10-30",
     market: {

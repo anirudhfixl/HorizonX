@@ -1,31 +1,19 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
+import { StakingWorkspaceHeader } from "@/components/staking/staking-section-nav";
 import { PageHeader } from "@/components/shared/page-header";
 import { MetricCard } from "@/components/shared/metric-card";
-import { StatusBadge } from "@/components/shared/status-badge";
-import { Button } from "@/components/ui/button";
 import { STAKING_POOLS } from "@/data";
-import { Layers, Plus, ShieldCheck, ArrowRight } from "lucide-react";
+import { Layers, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function StakingDashboardPage() {
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <main className="staking-page space-y-10">
+      <StakingWorkspaceHeader items={[{ label: "Staking", to: "/staking" }, { label: "Overview" }]} />
       <PageHeader
         title="Staking Protocol"
         description="Non-custodial smart vaults for high-yield token staking, LP incentives, and community governance locks."
-        breadcrumbs={[{ label: "Staking" }]}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm" className="text-xs border-border/60">
-              <Link to="/staking/my">My Positions</Link>
-            </Button>
-            <Button asChild size="sm" className="bg-primary text-primary-foreground text-xs gap-1.5 font-semibold">
-              <Link to="/staking/pools/create">
-                <Plus className="h-3.5 w-3.5" /> Deploy Staking Pool
-              </Link>
-            </Button>
-          </div>
-        }
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -108,6 +96,6 @@ export default function StakingDashboardPage() {
           ))}
         </div>
       </section>
-    </div>
+    </main>
   );
 }

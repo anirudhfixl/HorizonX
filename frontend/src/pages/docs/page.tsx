@@ -1,4 +1,5 @@
 import React from "react";
+import { AccountSectionNav } from "@/components/account/account-section-nav";
 import { PageHeader } from "@/components/shared/page-header";
 import { FileText, ShieldAlert, HelpCircle, Code, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -38,10 +39,11 @@ export default function DocsHomePage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="mx-0 w-full max-w-none px-[clamp(1rem,2.25vw,2.5rem)] pt-0 pb-8 space-y-10">
+      <AccountSectionNav />
       <PageHeader
         title="Documentation & Protocol Knowledge"
-        description="Comprehensive guides, architecture overviews, developer references, and legal disclosures for ProMiners."
+        description="Comprehensive guides, architecture overviews, developer references, and legal disclosures for HorizonX."
         breadcrumbs={[{ label: "Docs" }]}
       />
 

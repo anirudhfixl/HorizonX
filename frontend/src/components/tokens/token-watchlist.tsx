@@ -65,8 +65,8 @@ export function TokenWatchlist({ base = "/tokens" }: { base?: "/tokens" | "/exch
 
   return (
     <div className="tk-page">
-      <TokenSectionNav />
-      <TokenBreadcrumb current="Watchlist" />
+      {base === "/tokens" && <TokenSectionNav />}
+      {base === "/tokens" && <TokenBreadcrumb current="Watchlist" />}
       <header className="tk-head">
         <div>
           <h1 className="tk-title">Watchlist</h1>

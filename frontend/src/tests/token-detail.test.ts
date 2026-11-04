@@ -1,5 +1,5 @@
 /**
- * ProMiners — Phase 3-C: Token Detail Hub Tests
+ * HorizonX — Phase 3-C: Token Detail Hub Tests
  *
  * Verifies:
  * 1. Dynamic route static params & unknown-ID lookup handling
@@ -31,7 +31,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================");
-console.log("PROMINERS — PHASE 3-C TOKEN DETAIL HUB TESTS");
+console.log("HORIZONX — PHASE 3-C TOKEN DETAIL HUB TESTS");
 console.log("==========================================\n");
 
 // --- 1. Dynamic Route Static Params & Lookup ---

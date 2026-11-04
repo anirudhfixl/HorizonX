@@ -121,7 +121,7 @@ export function EarthHero() {
       <style jsx>{`
         .earth-hero {
           position:relative; isolation:isolate; width:100vw; height:min(850px,100svh); min-height:690px;
-          margin:-5.5rem calc(50% - 50vw) 0; overflow:hidden; display:grid; place-items:center;
+          margin:-.5rem calc(50% - 50vw) 0; overflow:hidden; display:grid; place-items:center;
           background:#05040b; color:#fff;
         }
         .earth-hero__media { position:absolute; z-index:-1; inset:0; overflow:hidden; background:#05040b; }
@@ -165,7 +165,7 @@ export function EarthHero() {
         .earth-hero__button:hover { transform:translateY(-2px); }
         @keyframes hero-in { from { opacity:0; transform:translateY(22px); filter:blur(5px); } to { opacity:1; transform:translateY(0); filter:blur(0); } }
         @media(max-width:640px) {
-          .earth-hero { height:min(780px,100svh); min-height:680px; margin-top:-4.5rem; }
+          .earth-hero { height:min(780px,100svh); min-height:680px; margin-top:.5rem; }
           .earth-hero__video { object-position:52% 48%; }
           .earth-hero__content { width:calc(100% - 34px); margin-top:1.8rem; }
           .earth-hero__eyebrow { margin-bottom:19px; font-size:9px; letter-spacing:.15em; }

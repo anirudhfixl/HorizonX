@@ -1,5 +1,6 @@
 import NotFoundPage from "@/pages/not-found/page";
 import React from "react";
+import { AccountSectionNav } from "@/components/account/account-section-nav";
 import { PageHeader } from "@/components/shared/page-header";
 import { ArrowLeft, Shield, FileText } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -19,7 +20,7 @@ const DOCS_DATA: Record<string, DocContent> = {
     sections: [
       {
         heading: "1. Token Contract Standards",
-        body: "All tokens generated through the ProMiners Factory utilize OpenZeppelin v5 contract libraries compiled with Solidity 0.8.24. Standard ERC-20 implementations support optional burn, mint, and pausable extensions.",
+        body: "All tokens generated through the HorizonX Factory utilize OpenZeppelin v5 contract libraries compiled with Solidity 0.8.24. Standard ERC-20 implementations support optional burn, mint, and pausable extensions.",
       },
       {
         heading: "2. Presale Escrow Security",
@@ -37,8 +38,8 @@ const DOCS_DATA: Record<string, DocContent> = {
     lastUpdated: "2026-10-30",
     sections: [
       {
-        heading: "What networks does ProMiners support?",
-        body: "ProMiners supports major EVM networks including Ethereum Mainnet, BNB Chain, Polygon, Arbitrum One, Base, and Sepolia Testnet for zero-cost developer sandboxing.",
+        heading: "What networks does HorizonX support?",
+        body: "HorizonX supports major EVM networks including Ethereum Mainnet, BNB Chain, Polygon, Arbitrum One, Base, and Sepolia Testnet for zero-cost developer sandboxing.",
       },
       {
         heading: "How are initial DEX liquidity pools locked?",
@@ -61,7 +62,7 @@ const DOCS_DATA: Record<string, DocContent> = {
       },
       {
         heading: "Permissionless Smart Contracts",
-        body: "ProMiners provides decentralized software tooling. Tokens, fair launches, and staking vaults are deployed permissionlessly by third-party creators. ProMiners does not endorse, guarantee, or custody project tokens.",
+        body: "HorizonX provides decentralized software tooling. Tokens, fair launches, and staking vaults are deployed permissionlessly by third-party creators. HorizonX does not endorse, guarantee, or custody project tokens.",
       },
       {
         heading: "Smart Contract Risk",
@@ -76,7 +77,7 @@ const DOCS_DATA: Record<string, DocContent> = {
     sections: [
       {
         heading: "1. Acceptance of Terms",
-        body: "By connecting your Web3 wallet and interacting with ProMiners smart contracts or graphical user interfaces, you agree to comply with all applicable laws and these Terms of Service.",
+        body: "By connecting your Web3 wallet and interacting with HorizonX smart contracts or graphical user interfaces, you agree to comply with all applicable laws and these Terms of Service.",
       },
       {
         heading: "2. Prohibited Jurisdictions",
@@ -84,7 +85,7 @@ const DOCS_DATA: Record<string, DocContent> = {
       },
       {
         heading: "3. Non-Custodial Architecture",
-        body: "ProMiners at no point takes custody, possession, or control of your private keys, seed phrases, or cryptocurrency assets.",
+        body: "HorizonX at no point takes custody, possession, or control of your private keys, seed phrases, or cryptocurrency assets.",
       },
     ],
   },
@@ -95,7 +96,7 @@ const DOCS_DATA: Record<string, DocContent> = {
     sections: [
       {
         heading: "No Personally Identifiable Information",
-        body: "ProMiners does not require email addresses, physical addresses, or passwords to access the core protocol. Your public blockchain address serves as your pseudonymous identifier.",
+        body: "HorizonX does not require email addresses, physical addresses, or passwords to access the core protocol. Your public blockchain address serves as your pseudonymous identifier.",
       },
       {
         heading: "Local Storage & Client Cache",
@@ -117,7 +118,8 @@ export default function DocSlugPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-0 w-full max-w-none px-[clamp(1rem,2.25vw,2.5rem)] pt-0 pb-8 space-y-8">
+      <AccountSectionNav />
       <PageHeader
         title={doc.title}
         description={doc.subtitle}
@@ -150,7 +152,7 @@ export default function DocSlugPage() {
           <Link to="/docs" className="text-primary hover:underline flex items-center gap-1 font-medium">
             <ArrowLeft className="h-3.5 w-3.5" /> Return to Documentation Hub
           </Link>
-          <span className="text-muted-foreground">ProMiners Knowledge Base</span>
+          <span className="text-muted-foreground">HorizonX Knowledge Base</span>
         </div>
       </div>
     </div>

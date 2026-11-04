@@ -18,3 +18,15 @@
 6. When a backend is introduced, implement a repository/provider that satisfies the same domain types and replace the catalog source at the data boundary. UI components should not need to know whether records came from local seed data or an API.
 
 `src/lib/mock-data.ts` and `src/config/navigation.ts` remain as deprecated re-export shims so older imports and tests do not break. New code should import from `@/data`.
+
+
+## Local image fields
+
+Catalog records now include local, same-origin image paths:
+
+- `image`: primary card/list thumbnail.
+- `bannerImage`: wide project/campaign visual.
+- `galleryImages`: four unique detail-page artwork variants.
+- Token records additionally include `coverImage`; their `image` uses a distinct bundled token artwork.
+
+Homepage capability records in `platform.ts` include `image` and `galleryImages` too. These paths resolve from the app's `public/` directory (for example, `/artwork/aether-frames.svg`). Keep the accompanying image bundle's `public/` directory at the project root. The assets are locally bundled SVG/AVIF/JPG/PNG demo artwork and do not require third-party image hosts. All market, holder, launch and reward figures remain illustrative seed data, not live chain data.

@@ -11,7 +11,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================");
-console.log("PROMINERS — MILESTONE 2-D PRESALES DISCOVERY TESTS");
+console.log("HORIZONX — MILESTONE 2-D PRESALES DISCOVERY TESTS");
 console.log("==========================================");
 
 // --- 1. Data Integrity & Schema ---

@@ -14,8 +14,8 @@ export function AirdropSectionNav() {
   const { pathname } = useLocation();
   const createActive = pathname === "/airdrops/campaigns/create";
   return (
-    <nav className="ad-section-nav" aria-label="Airdrop workspace">
-      <div className="ad-section-nav__links">
+    <nav className="ad-section-nav hx-workspace-nav" aria-label="Airdrop workspace">
+      <div className="ad-section-nav__links hx-workspace-nav__links">
         {sections.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end}
             className={({ isActive }) => `ad-section-nav__link${isActive || (item.to === "/airdrops/campaigns" && pathname.startsWith("/airdrops/campaigns/")) ? " is-active" : ""}`}>
@@ -23,7 +23,7 @@ export function AirdropSectionNav() {
           </NavLink>
         ))}
       </div>
-      <div className="ad-section-nav__actions">
+      <div className="ad-section-nav__actions hx-workspace-nav__actions">
         <Link to="/tokens/explore" className="ad-section-nav__crosslink">Tokens</Link>
         <Link to="/launchpad" className="ad-section-nav__crosslink">Launchpad</Link>
         <Link to="/airdrops/campaigns/create" className={`ad-section-nav__create${createActive ? " is-active" : ""}`}>

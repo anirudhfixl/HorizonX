@@ -114,3 +114,12 @@
 @media (max-width: 640px) {
   .ad-section-nav__crosslink { display: none; }
 }
+
+/* Extend the airdrop workspace navigation rules to the viewport edges while
+   keeping its labels and action aligned with the page content grid. */
+.ad-section-nav {
+  position: relative;
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+}
+.ad-section-nav::before, .ad-section-nav::after { content: none !important; display: none !important; }

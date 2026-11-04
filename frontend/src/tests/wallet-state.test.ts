@@ -21,7 +21,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================");
-console.log("PROMINERS — MILESTONE 1-B WALLET & WEB3 TESTS");
+console.log("HORIZONX — MILESTONE 1-B WALLET & WEB3 TESTS");
 console.log("==========================================\n");
 
 // Test 1: Centralized Chain Configuration

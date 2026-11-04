@@ -1,0 +1,435 @@
+/* HorizonX Account — editorial workspace, distinct from ecosystem dashboards. */
+.account-workspace {
+  --account-line: color-mix(in srgb, var(--border) 88%, transparent);
+  display: grid;
+  grid-template-columns: 238px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  column-gap: clamp(1.35rem, 2.4vw, 2.5rem);
+  row-gap: 1.1rem;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  padding: 1.25rem clamp(1rem, 2.6vw, 2.75rem) 1.35rem;
+  margin: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  background:
+    radial-gradient(ellipse at 78% 0%, color-mix(in srgb, var(--primary) 5%, transparent), transparent 38%),
+    var(--background);
+}
+
+/* Full-width identity strip */
+.account-masthead {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  padding: .2rem 0 1rem;
+  border-bottom: 1px solid var(--account-line);
+}
+.account-masthead__identity {
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  min-width: 0;
+}
+.account-masthead__avatar {
+  display: grid;
+  place-items: center;
+  width: 2.9rem;
+  height: 2.9rem;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--primary) 42%, var(--border));
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--primary) 12%, var(--card));
+  color: var(--primary);
+}
+.account-masthead__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .14rem;
+}
+.account-masthead__copy > span {
+  color: var(--muted-foreground);
+  font-size: .58rem;
+  font-weight: 750;
+  letter-spacing: .14em;
+}
+.account-masthead__copy strong {
+  color: var(--foreground);
+  font-size: .9rem;
+  font-weight: 680;
+}
+.account-masthead__copy small {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .67rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-masthead__connection {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .48rem .75rem;
+  border: 1px solid var(--account-line);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  font-size: .68rem;
+  white-space: nowrap;
+}
+.account-masthead__connection > span {
+  width: .42rem;
+  height: .42rem;
+  border-radius: 50%;
+  background: var(--muted-foreground);
+}
+.account-masthead__connection.is-connected > span {
+  background: #22c55e;
+  box-shadow: 0 0 0 3px rgb(34 197 94 / 12%);
+}
+
+/* Navigation is a clean rail, not a boxed settings card. */
+.account-rail {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  padding: .35rem 0;
+  overflow: hidden;
+}
+.account-rail__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .3rem .55rem .85rem;
+}
+.account-rail__heading > span {
+  color: var(--muted-foreground);
+  font-size: .6rem;
+  font-weight: 750;
+  letter-spacing: .13em;
+}
+.account-rail__heading small {
+  color: var(--muted-foreground);
+  font-size: .62rem;
+}
+.account-rail__nav {
+  display: flex;
+  flex-direction: column;
+  gap: .28rem;
+}
+.account-rail__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  min-width: 0;
+  padding: .72rem .65rem;
+  border: 1px solid transparent;
+  border-radius: .7rem;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color .16s ease, background .16s ease, border-color .16s ease;
+}
+.account-rail__link:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--card) 62%, transparent);
+}
+.account-rail__link.is-active {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: linear-gradient(100deg, color-mix(in srgb, var(--primary) 13%, var(--card)), color-mix(in srgb, var(--card) 74%, transparent));
+  color: var(--foreground);
+}
+.account-rail__link.is-active::before {
+  position: absolute;
+  top: .55rem;
+  bottom: .55rem;
+  left: -1px;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: var(--primary);
+  content: "";
+}
+.account-rail__icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border-radius: .55rem;
+  background: color-mix(in srgb, var(--secondary) 75%, transparent);
+  color: var(--muted-foreground);
+}
+.account-rail__link.is-active .account-rail__icon {
+  background: color-mix(in srgb, var(--primary) 17%, transparent);
+  color: var(--primary);
+}
+.account-rail__link-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: .16rem;
+}
+.account-rail__link-copy strong {
+  color: inherit;
+  font-size: .75rem;
+  font-weight: 650;
+}
+.account-rail__link-copy small {
+  color: var(--muted-foreground);
+  font-size: .62rem;
+}
+.account-rail__chevron {
+  flex: 0 0 auto;
+  opacity: .32;
+}
+.account-rail__link.is-active .account-rail__chevron {
+  color: var(--primary);
+  opacity: 1;
+}
+.account-rail__support {
+  display: flex;
+  gap: .7rem;
+  margin-top: auto;
+  padding: .9rem .55rem .15rem;
+  border-top: 1px solid var(--account-line);
+}
+.account-rail__support-icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  border-radius: .55rem;
+  background: color-mix(in srgb, var(--secondary) 75%, transparent);
+  color: var(--muted-foreground);
+}
+.account-rail__support strong {
+  color: var(--foreground);
+  font-size: .7rem;
+  font-weight: 650;
+}
+.account-rail__support p {
+  margin: .25rem 0 .45rem;
+  color: var(--muted-foreground);
+  font-size: .62rem;
+  line-height: 1.5;
+}
+.account-rail__support a {
+  display: inline-flex;
+  align-items: center;
+  gap: .2rem;
+  color: var(--primary);
+  font-size: .64rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+/* Right-hand workspace. This is the ONLY vertically scrollable region. */
+.account-stage {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--account-line);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--card) 35%, transparent);
+}
+.account-stage__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .9rem 1.25rem .7rem;
+}
+.account-stage__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  color: var(--muted-foreground);
+  font-size: .66rem;
+}
+.account-stage__breadcrumb a {
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+.account-stage__breadcrumb a:hover { color: var(--foreground); }
+.account-stage__breadcrumb strong {
+  color: var(--foreground);
+  font-weight: 650;
+}
+.account-stage__index {
+  color: var(--muted-foreground);
+  font-size: .56rem;
+  font-weight: 750;
+  letter-spacing: .12em;
+}
+.account-stage__heading {
+  padding: .1rem 1.25rem 1.1rem;
+  border-bottom: 1px solid var(--account-line);
+}
+.account-stage__heading h1 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  font-weight: 720;
+  line-height: 1.12;
+  letter-spacing: -.045em;
+}
+.account-stage__heading p {
+  max-width: 50rem;
+  margin: .45rem 0 0;
+  color: var(--muted-foreground);
+  font-size: .76rem;
+  line-height: 1.55;
+}
+.account-stage__scroll {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted-foreground) 40%, transparent) transparent;
+}
+.account-stage__content {
+  min-width: 0;
+  padding: 1.15rem 1.25rem 1.5rem;
+}
+.account-stage__content > * { min-width: 0; }
+
+/* Existing account forms/cards are normalized to this new surface. */
+.account-overview-identity,
+.account-panel,
+.account-overview-card {
+  box-shadow: none;
+}
+.account-overview-grid { gap: .65rem; }
+.account-overview-card {
+  border-radius: .75rem;
+  background: color-mix(in srgb, var(--card) 68%, transparent);
+}
+.account-panel {
+  border-radius: .8rem;
+  background: color-mix(in srgb, var(--card) 65%, transparent);
+}
+.account-overview-identity {
+  border-radius: .8rem;
+}
+.account-form__footer { margin-top: 1.1rem; }
+
+@media (max-width: 900px) {
+  .account-workspace {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: .7rem;
+    padding: .8rem .85rem 1rem;
+  }
+  .account-masthead { padding-bottom: .7rem; }
+  .account-rail {
+    padding: 0;
+    overflow: visible;
+  }
+  .account-rail__heading,
+  .account-rail__support { display: none; }
+  .account-rail__nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .3rem;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+  .account-rail__link {
+    justify-content: center;
+    gap: .35rem;
+    min-width: 0;
+    padding: .45rem .25rem;
+  }
+  .account-rail__link-copy {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+  .account-rail__link-copy strong {
+    overflow: hidden;
+    font-size: .62rem;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .account-rail__link-copy small,
+  .account-rail__chevron { display: none; }
+  .account-rail__icon { width: 1.5rem; height: 1.5rem; }
+  .account-stage { min-height: 0; }
+}
+@media (max-width: 560px) {
+  .account-workspace { gap: .55rem; padding: .55rem .6rem .7rem; }
+  .account-masthead__avatar { width: 2.45rem; height: 2.45rem; }
+  .account-masthead__copy > span { font-size: .52rem; }
+  .account-masthead__copy strong { font-size: .8rem; }
+  .account-masthead__copy small { max-width: 12rem; font-size: .6rem; }
+  .account-masthead__connection { padding: .4rem .55rem; font-size: .58rem; }
+  .account-rail__link { gap: .4rem; padding: .4rem .48rem; }
+  .account-rail__link-copy strong { font-size: .65rem; }
+  .account-stage__topline { padding: .7rem .8rem .5rem; }
+  .account-stage__heading { padding: .1rem .8rem .8rem; }
+  .account-stage__heading h1 { font-size: 1.45rem; }
+  .account-stage__heading p { font-size: .69rem; }
+  .account-stage__content { padding: .8rem .8rem 1rem; }
+}
+
+
+/* Account route viewport frame: only .account-stage__scroll may scroll vertically. */
+html:has(.route-shell.account-route),
+body:has(.route-shell.account-route) {
+  height: 100%;
+  overflow: hidden !important;
+}
+.route-shell.account-route {
+  width: 100%;
+  height: 100dvh;
+  min-height: 0 !important;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+.route-shell.account-route .account-route-main {
+  display: flex;
+  flex: 1 1 0%;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+  padding-top: 84px;
+  padding-bottom: 0;
+  box-sizing: border-box;
+}
+.route-shell.account-route .account-route-transition {
+  display: flex;
+  flex: 1 1 0%;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  .route-shell.account-route .account-route-main {
+    height: 100%;
+    max-height: 100%;
+    padding-top: 76px;
+  }
+}
+@media (max-width: 560px) {
+  .route-shell.account-route .account-route-main {
+    height: 100%;
+    max-height: 100%;
+    padding-top: 70px;
+  }
+}

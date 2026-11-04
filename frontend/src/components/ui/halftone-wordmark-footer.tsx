@@ -3,11 +3,12 @@
 // sized by how much of the letter covers its cell, so the type keeps its edges
 // at any scale. Move across it and the dots part around the pointer on springs,
 // warming in colour as they are pushed off their place; click and a shock ring
-// runs through the word. Above it sit the studio line, tracked link columns and
-// a back-to-top, separated by a hairline, all over a fine print grain.
+// runs through the word. Above it sit the studio line and link columns; a
+// floating circular back-to-top control appears after the page is scrolled.
 
 import * as React from "react";
 import { Link } from "react-router-dom";
+import { ArrowUp } from "lucide-react";
 
 export interface HalftonePalette {
   /** The footer background. */
@@ -39,8 +40,6 @@ export interface HalftoneWordmarkFooterProps {
   meta?: string;
   /** Link columns along the top. */
   columns?: FooterColumn[];
-  /** Show the back-to-top link. It scrolls the window to 0. Defaults to true. */
-  backToTop?: boolean;
   /** Starting colours. Defaults to "night". */
   preset?: HalftonePreset;
   /** Colour overrides, merged over the preset. */
@@ -106,10 +105,8 @@ const DEFAULT_COLUMNS: FooterColumn[] = [
   },
 ];
 
-const SANS_STACK =
-  '"Space Grotesk", "Inter Tight", "Inter", "Helvetica Neue", Arial, system-ui, sans-serif';
-const MONO_STACK =
-  '"DM Mono", "JetBrains Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospace';
+const SANS_STACK = '"Outfit", "Helvetica Neue", Arial, system-ui, sans-serif';
+const MONO_STACK = '"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
 
 /** Hex -> [r, g, b] in 0-255, or null for anything that isn't #rgb / #rrggbb. */
 export function hwfHex(hex: string): [number, number, number] | null {
@@ -207,25 +204,39 @@ const HWF_CSS = `
 .hwf-top {
   position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.25fr) repeat(3, minmax(0, 1fr));
   gap: 24px; padding: clamp(22px, 3.4vw, 40px) clamp(20px, 3.4vw, 44px) 0;
-  font-family: var(--hwf-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase; line-height: 1.75;
+  font-family: var(--font-sans, var(--font-outfit)); font-size: 12px; letter-spacing: .015em; text-transform: none; line-height: 1.8;
 }
-.hwf-brand strong { display: block; font-weight: 600; letter-spacing: .2em; color: var(--hwf-ink, var(--footer-text, currentColor)); }
-.hwf-brand span { opacity: .55; font-size: 9.5px; color: var(--footer-text-muted, inherit); }
-.hwf-col h3 { margin: 0; font: inherit; opacity: .55; font-weight: 600; color: var(--footer-text-muted, var(--hwf-ink, currentColor)); }
+.hwf-brand strong { display: block; font-family: var(--font-sans, var(--font-outfit)); font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--hwf-ink, var(--footer-text, currentColor)); }
+.hwf-brand span { display: block; margin-top: 3px; opacity: .62; font: 9px/1.6 var(--hwf-mono); letter-spacing: .08em; color: var(--footer-text-muted, inherit); }
+.hwf-col h3 { margin: 0 0 3px; font: 600 9px/1.6 var(--hwf-mono); letter-spacing: .12em; text-transform: uppercase; opacity: .68; color: var(--footer-text-muted, var(--hwf-ink, currentColor)); }
 .hwf-col ul { list-style: none; margin: 0; padding: 0; }
-.hwf-col a, .hwf-up {
+.hwf-col a {
   color: var(--hwf-ink, var(--footer-text, currentColor)); text-decoration: none; opacity: .82; background: none; border: 0; padding: 0;
   font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer;
   background-image: linear-gradient(currentColor, currentColor); background-size: 0% 1px;
   background-repeat: no-repeat; background-position: 0 100%; transition: opacity .25s ease, background-size .35s cubic-bezier(.2,.7,.1,1), color .25s ease;
 }
-.hwf-col a:hover, .hwf-up:hover { opacity: 1; background-size: 100% 1px; color: var(--hwf-warm, var(--footer-warm, var(--primary))); }
-.hwf-col a:focus-visible, .hwf-up:focus-visible { outline: 1px solid var(--hwf-warm, var(--footer-warm, var(--primary))); outline-offset: 3px; opacity: 1; }
-.hwf-rule {
-  position: relative; z-index: 1; display: flex; justify-content: flex-end; align-items: center; gap: 16px;
-  margin: clamp(12px, 1.8vw, 22px) clamp(12px, 1.5vw, 20px) 0; padding-top: 10px;
-  border-top: 1px solid var(--footer-divider, color-mix(in srgb, var(--hwf-ink, currentColor) 16%, transparent));
-  font-family: var(--hwf-mono); font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase;
+.hwf-col a:hover { opacity: 1; background-size: 100% 1px; color: var(--hwf-warm, var(--footer-warm, var(--primary))); }
+.hwf-col a:focus-visible { outline: 1px solid var(--hwf-warm, var(--footer-warm, var(--primary))); outline-offset: 3px; opacity: 1; }
+.hwf-floating-up {
+  position: fixed; right: 26px; bottom: 26px; z-index: 1200;
+  display: grid; place-items: center; width: 68px; height: 68px;
+  border: 1px solid rgba(17, 24, 39, .12); border-radius: 9999px;
+  background: #E7E9EE; color: #111827;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .24);
+  cursor: pointer; opacity: 1; transform: translateY(0);
+  transition: opacity 180ms ease, transform 180ms ease, background-color 180ms ease;
+}
+.hwf-floating-up:hover { background: #FFFFFF; transform: translateY(-3px); }
+.hwf-floating-up:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.hwf-floating-up svg { width: 29px; height: 29px; stroke-width: 2.6; }
+.hwf-floating-up[hidden] { display: none; }
+@media (max-width: 640px) {
+  .hwf-floating-up { right: 17px; bottom: 18px; width: 56px; height: 56px; }
+  .hwf-floating-up svg { width: 25px; height: 25px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hwf-floating-up { transition: none; }
 }
 .hwf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 720px) {
@@ -233,7 +244,7 @@ const HWF_CSS = `
   .hwf-brand { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hwf-col a, .hwf-up { transition: none; }
+  .hwf-col a { transition: none; }
 }
 `;
 
@@ -241,10 +252,9 @@ type PointerEv = PointerEvent;
 
 export default function HalftoneWordmarkFooter({
   wordmark = "Horizon X",
-  label = "PROMINERS",
+  label = "HORIZONX",
   meta = "© 2026 • BUILDING THE OPEN WEB",
   columns = DEFAULT_COLUMNS,
-  backToTop = true,
   preset = "night",
   palette,
   dotGap = 6,
@@ -259,6 +269,7 @@ export default function HalftoneWordmarkFooter({
   className = "",
 }: HalftoneWordmarkFooterProps) {
   const colors = { ...(PRESETS[preset] || PRESETS.night), ...(palette || {}) };
+  const [showBackToTop, setShowBackToTop] = React.useState(false);
   const rootRef = React.useRef<HTMLElement | null>(null);
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
   const opts = React.useRef({
@@ -283,6 +294,13 @@ export default function HalftoneWordmarkFooter({
     colors.ink,
     colors.warm,
   ].join("|");
+
+  React.useEffect(() => {
+    const updateVisibility = () => setShowBackToTop(window.scrollY > 320);
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    return () => window.removeEventListener("scroll", updateVisibility);
+  }, []);
 
   React.useEffect(() => {
     opts.current = {
@@ -619,13 +637,16 @@ export default function HalftoneWordmarkFooter({
           </nav>
         ))}
       </div>
-      <div className="hwf-rule">
-        {backToTop ? (
-          <button type="button" className="hwf-up" onClick={toTop}>
-            Back to top ↑
-          </button>
-        ) : null}
-      </div>
+      <button
+        type="button"
+        className="hwf-floating-up"
+        onClick={toTop}
+        aria-label="Back to top"
+        title="Back to top"
+        hidden={!showBackToTop}
+      >
+        <ArrowUp aria-hidden="true" />
+      </button>
     </footer>
   );
 }

@@ -11,7 +11,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================");
-console.log("PROMINERS — MILESTONE 2-F AIRDROP DISCOVERY TESTS");
+console.log("HORIZONX — MILESTONE 2-F AIRDROP DISCOVERY TESTS");
 console.log("==========================================");
 
 // --- 1. Data Integrity & Schema ---
@@ -103,7 +103,7 @@ const searchByTokenSymbol = (symbolQuery: string) => {
 const searchPMIN = searchByTokenSymbol("PMIN");
 assert(
   searchPMIN.length === 1 && searchPMIN[0].id === "air-pmin-genesis",
-  "Search by token symbol 'PMIN' returns ProMiners genesis airdrop"
+  "Search by token symbol 'PMIN' returns HorizonX genesis airdrop"
 );
 
 const searchAURA = searchByTokenSymbol("AURA");

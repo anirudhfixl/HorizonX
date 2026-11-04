@@ -35,7 +35,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Zap className="h-4 w-4" />
               </div>
-              <span className="font-bold text-foreground">ProMiners</span>
+              <span className="font-bold text-foreground">HorizonX</span>
             </div>
             <button
               onClick={onClose}
@@ -167,14 +167,8 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
 
         {/* Footer info in drawer */}
         <div className="pt-6 border-t border-border/40 text-[11px] text-muted-foreground flex items-center justify-between">
-          <span>ProMiners Protocol</span>
-          <Link
-            to="/docs"
-            onClick={onClose}
-            className="flex items-center gap-1 text-primary hover:underline"
-          >
-            Docs <ExternalLink className="h-3 w-3" />
-          </Link>
+          <span>HorizonX Protocol</span>
+          
         </div>
       </div>
     </div>

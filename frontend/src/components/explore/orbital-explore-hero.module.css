@@ -9,7 +9,7 @@
           width: 100%;
           min-width: 0;
           overflow: hidden;
-          background: #020305;
+          background: var(--page-bg);
         }
 
         .overlay {
@@ -27,7 +27,7 @@
           inset: auto 0 0;
           height: 130px;
           pointer-events: none;
-          background: linear-gradient(180deg, transparent, #090909);
+          background: linear-gradient(180deg, transparent, var(--page-bg));
         }
 
         .copy {

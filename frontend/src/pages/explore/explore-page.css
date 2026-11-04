@@ -4,7 +4,7 @@
   max-width: 100%;
   min-width: 0;
   overflow-x: clip;
-  background: #050505;
+  background: var(--page-bg);
 }
 
 .explore-page .explore-hero {
@@ -15,7 +15,7 @@
   min-height: 620px;
   max-width: 100%;
   overflow: hidden;
-  background: #020305;
+  background: var(--page-bg);
 }
 
 .explore-page .explore-hero-scene {
@@ -25,7 +25,7 @@
   height: 100%;
   min-width: 0;
   overflow: hidden;
-  background: #020305;
+  background: var(--page-bg);
 }
 
 .explore-page .explore-hero-overlay {
@@ -44,7 +44,7 @@
   inset: auto 0 0;
   height: 130px;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent 0%, rgba(5,5,5,.72) 72%, #050505 100%);
+  background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--page-bg) 72%, transparent) 72%, var(--page-bg) 100%);
 }
 
 .explore-page .explore-hero-copy {
@@ -171,7 +171,7 @@
   left: 0;
   height: 140px;
   pointer-events: none;
-  background: linear-gradient(180deg, transparent 0%, rgba(5,5,5,.65) 70%, #050505 100%);
+  background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--page-bg) 65%, transparent) 70%, var(--page-bg) 100%);
 }
 
 @media (max-width: 1050px) and (min-width: 768px) {
@@ -348,6 +348,9 @@
   padding:2.75rem clamp(1.5rem,4vw,4rem);
 }
 .explore-page .hx-project-spotlight__projects { min-width:0; width:100%; max-width:760px; justify-self:center; }
+.explore-page .hx-project-spotlight__wheel { height:clamp(420px, 38vw, 540px); min-height:420px; }
+.explore-page .hx-project-spotlight__wheel > .ab-export { height:100%; min-height:0; }
+.explore-page .hx-project-spotlight__wheel .ab-frame { min-width:0; }
 .explore-page .hx-project-spotlight__intro {
   position:relative; max-width:590px; justify-self:end; padding-block:1.5rem;
   text-shadow:0 1px 12px rgba(7,9,18,.35);
@@ -455,6 +458,7 @@
   }
   .explore-page .hx-project-spotlight__intro { order:-1; max-width:680px; justify-self:start; padding-block:0; }
   .explore-page .hx-project-spotlight__projects { max-width:none; }
+  .explore-page .hx-project-spotlight__wheel { height:clamp(400px, 70vw, 520px); }
 }
 @media (max-width:640px) {
   .explore-page .hx-discover-showcase { gap:1rem; margin-inline:-1rem; }
@@ -470,6 +474,7 @@
   .explore-page .hx-project-spotlight { width:calc(100% + 2rem); margin-left:-1rem; }
   .explore-page .hx-project-spotlight__inner { gap:1.25rem; padding:2rem 1rem; }
   .explore-page .hx-project-spotlight__intro h2 { font-size:clamp(2rem,9vw,2.7rem); }
+  .explore-page .hx-project-spotlight__wheel { height:clamp(360px, 112vw, 460px); min-height:360px; }
   .explore-page .hx-project-spotlight__description { font-size:13px; line-height:1.7; }
   .explore-page .hx-project-list { grid-template-columns:1fr; }
   .explore-page .hx-project-list > li:nth-child(odd) { border-right:0; }
@@ -938,12 +943,11 @@ main:has(> .explore-page) {
   padding-top: 68px !important;
 }
 
-/* Explore-only canvas correction: remove the navy/purple AppShell bleed above
-   the hero and keep the complete route canvas true black. */
+/* Explore keeps its own hero artwork, but the page canvas inherits the shared graphite theme. */
 .relative.min-h-screen:has(.explore-page),
 main:has(> .explore-page),
 .explore-page {
-  background-color: #000 !important;
+  background-color: var(--page-bg) !important;
 }
 
 /* Token rail cards — compact horizontal market-ticker treatment. */
@@ -975,4 +979,15 @@ main:has(> .explore-page),
   .explore-page .hx-token-rail__card { aspect-ratio:1 / .94; min-height:124px; gap:.55rem; padding:.7rem; }
   .explore-page .hx-token-rail__glyph { width:32px; height:32px; flex-basis:32px; }
   .explore-page .hx-token-rail__spark { width:43px; flex-basis:43px; height:25px; }
+}
+
+/* Match only the fixed-navbar clearance above the Explore hero to the
+   orbital scene. The Explore page itself keeps its existing graphite canvas. */
+main:has(.explore-page) {
+  background-color: #000;
+}
+
+
+.route-shell.home-route > .route-main .home-page > .earth-hero {
+  margin-top: -84px !important;
 }

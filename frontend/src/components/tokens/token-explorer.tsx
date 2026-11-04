@@ -515,7 +515,7 @@ export function TokenExplorer({ mode = "canonical" }: TokenExplorerProps) {
               Token Directory
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Explore, filter, and inspect verified smart contracts and catalog tokens across the ProMiners
+              Explore, filter, and inspect verified smart contracts and catalog tokens across the HorizonX
               ecosystem. Track simulated market telemetry and create new ERC-20 assets.
             </p>
           </div>

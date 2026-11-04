@@ -24,7 +24,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================");
-console.log("PROMINERS — PHASE 5 BATCH 2 MERKLE & CREATION TESTS");
+console.log("HORIZONX — PHASE 5 BATCH 2 MERKLE & CREATION TESTS");
 console.log("==========================================");
 
 // --- Setup In-Memory Storage for Headless Node Test ---

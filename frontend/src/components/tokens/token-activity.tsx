@@ -281,7 +281,7 @@ export function TokenActivity({
                   No Live On-Chain Event Indexer Connected
                 </h2>
                 <p className="text-xs leading-relaxed text-muted-foreground max-w-3xl">
-                  ProMiners does not run a dedicated historical RPC block indexer for {token.symbol}. Live transfer history, real-time token holders, block confirmations, and transaction receipts are not queried on this page. The timeline below represents platform catalog milestones recorded in metadata.
+                  HorizonX does not run a dedicated historical RPC block indexer for {token.symbol}. Live transfer history, real-time token holders, block confirmations, and transaction receipts are not queried on this page. The timeline below represents platform catalog milestones recorded in metadata.
                 </p>
                 {!sepolia && (
                   <p className="text-[11px] text-muted-foreground">

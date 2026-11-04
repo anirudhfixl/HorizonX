@@ -39,6 +39,8 @@ export const HOME_PRINCIPLES = [
 export const HOME_CAPABILITIES = [
   {
     number: "01",
+    image: "/artwork/aether-frames-banner.svg",
+    galleryImages: ["/artwork/aether-frames-1.svg", "/artwork/aether-frames-2.svg", "/artwork/aether-frames-3.svg"],
     eyebrow: "TOKEN STUDIO",
     icon: "coins",
     title: "Bring your token to life.",
@@ -52,6 +54,8 @@ export const HOME_CAPABILITIES = [
   },
   {
     number: "02",
+    image: "/artwork/copper-signal-banner.svg",
+    galleryImages: ["/artwork/copper-signal-1.svg", "/artwork/copper-signal-2.svg", "/artwork/copper-signal-3.svg"],
     eyebrow: "LAUNCHPAD",
     icon: "rocket",
     title: "Take your project to market.",
@@ -65,6 +69,8 @@ export const HOME_CAPABILITIES = [
   },
   {
     number: "03",
+    image: "/artwork/nadir-studio-banner.svg",
+    galleryImages: ["/artwork/nadir-studio-1.svg", "/artwork/nadir-studio-2.svg", "/artwork/nadir-studio-3.svg"],
     eyebrow: "COMMUNITY CAMPAIGNS",
     icon: "gift",
     title: "Turn attention into participation.",
@@ -78,6 +84,8 @@ export const HOME_CAPABILITIES = [
   },
   {
     number: "04",
+    image: "/artwork/helix-garden-banner.svg",
+    galleryImages: ["/artwork/helix-garden-1.svg", "/artwork/helix-garden-2.svg", "/artwork/helix-garden-3.svg"],
     eyebrow: "STAKING",
     icon: "layers3",
     title: "Give holders a reason to stay.",
@@ -91,6 +99,8 @@ export const HOME_CAPABILITIES = [
   },
   {
     number: "05",
+    image: "/artwork/lumen-relics-banner.svg",
+    galleryImages: ["/artwork/lumen-relics-1.svg", "/artwork/lumen-relics-2.svg", "/artwork/lumen-relics-3.svg"],
     eyebrow: "WALLET & ASSETS",
     icon: "wallet",
     title: "Keep your assets in view.",
@@ -104,6 +114,8 @@ export const HOME_CAPABILITIES = [
   },
   {
     number: "06",
+    image: "/artwork/night-market-banner.svg",
+    galleryImages: ["/artwork/night-market-1.svg", "/artwork/night-market-2.svg", "/artwork/night-market-3.svg"],
     eyebrow: "MARKET DISCOVERY",
     icon: "blocks",
     title: "Find what is moving.",

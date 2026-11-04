@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -18,6 +18,20 @@ export function CapabilityShowcase() {
   const railRef = useRef<HTMLDivElement>(null);
   const cycleWidthRef = useRef(0);
   const resettingRef = useRef(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const move = useCallback((direction: "left" | "right") => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const card = rail.querySelector<HTMLElement>("[data-capability-card]");
+    const styles = window.getComputedStyle(rail);
+    const gap = Number.parseFloat(styles.columnGap || styles.gap || "0") || 0;
+    const distance = card ? card.offsetWidth + gap : 360;
+    rail.scrollBy({
+      left: direction === "left" ? -distance : distance,
+      behavior: "smooth",
+    });
+  }, []);
 
   useEffect(() => {
     const rail = railRef.current;
@@ -37,6 +51,18 @@ export function CapabilityShowcase() {
     return () => window.removeEventListener("resize", measureAndCenter);
   }, []);
 
+  // Advance exactly one card per interval; never use a continuous marquee.
+  // Pause while the visitor is interacting with the rail or the tab is hidden.
+  useEffect(() => {
+    if (isPaused || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") move("right");
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [isPaused, move]);
+
   const handleRailScroll = () => {
     const rail = railRef.current;
     const cycle = cycleWidthRef.current;
@@ -51,19 +77,6 @@ export function CapabilityShowcase() {
       rail.scrollLeft -= cycle;
       requestAnimationFrame(() => { resettingRef.current = false; });
     }
-  };
-
-  const move = (direction: "left" | "right") => {
-    const rail = railRef.current;
-    if (!rail) return;
-    const card = rail.querySelector<HTMLElement>("[data-capability-card]");
-    const styles = window.getComputedStyle(rail);
-    const gap = Number.parseFloat(styles.columnGap || styles.gap || "0") || 0;
-    const distance = card ? card.offsetWidth + gap : 360;
-    rail.scrollBy({
-      left: direction === "left" ? -distance : distance,
-      behavior: "smooth",
-    });
   };
 
   return (
@@ -110,6 +123,14 @@ export function CapabilityShowcase() {
         <div
           ref={railRef}
           onScroll={handleRailScroll}
+          onPointerEnter={() => setIsPaused(true)}
+          onPointerLeave={() => setIsPaused(false)}
+          onFocusCapture={() => setIsPaused(true)}
+          onBlurCapture={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setIsPaused(false);
+            }
+          }}
           className="capability-rail -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-8 sm:gap-4 sm:px-8 lg:-mx-12 lg:px-12"
           aria-label="HorizonX platform capabilities"
         >

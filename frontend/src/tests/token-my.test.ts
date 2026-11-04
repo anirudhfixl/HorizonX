@@ -1,5 +1,5 @@
 /**
- * ProMiners — Phase 3-E: Token Management Hub Tests
+ * HorizonX — Phase 3-E: Token Management Hub Tests
  *
  * Verifies:
  * 1. Normalized creatorAddress ownership filtering (case-insensitive)
@@ -30,7 +30,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==================================================");
-console.log("PROMINERS — PHASE 3-E TOKEN MANAGEMENT HUB TESTS");
+console.log("HORIZONX — PHASE 3-E TOKEN MANAGEMENT HUB TESTS");
 console.log("==================================================\n");
 
 const DEMO_ADDRESS = "0x71C9561E873f324A3B4323E56d3935a8286C4e39";

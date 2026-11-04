@@ -18,23 +18,23 @@ export const wagmiConfig = createConfig({
     }),
     metaMask({
       dappMetadata: {
-        name: "ProMiners",
-        url: typeof window !== "undefined" ? window.location.origin : "https://prominers.io",
+        name: "HorizonX",
+        url: typeof window !== "undefined" ? window.location.origin : "",
       },
     }),
     walletConnect({
       projectId: walletConnectProjectId,
       showQrModal: true,
       metadata: {
-        name: "ProMiners",
+        name: "HorizonX",
         description: "Token creation, presale launchpad, and staking protocol",
-        url: typeof window !== "undefined" ? window.location.origin : "https://prominers.io",
-        icons: ["https://prominers.io/favicon.ico"],
+        url: typeof window !== "undefined" ? window.location.origin : "",
+        icons: typeof window !== "undefined" ? [`${window.location.origin}/favicon.ico`] : [],
       },
     }),
     coinbaseWallet({
-      appName: "ProMiners",
-      appLogoUrl: "https://prominers.io/favicon.ico",
+      appName: "HorizonX",
+      appLogoUrl: typeof window !== "undefined" ? `${window.location.origin}/favicon.ico` : undefined,
     }),
   ],
   transports: {

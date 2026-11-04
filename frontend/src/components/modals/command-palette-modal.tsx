@@ -199,7 +199,7 @@ export function CommandPaletteModal() {
             <kbd className="rounded border border-border/40 bg-card px-1.5 py-0.5 text-[10px]">↑↓</kbd>
             <kbd className="rounded border border-border/40 bg-card px-1.5 py-0.5 text-[10px]">↵ Select</kbd>
           </div>
-          <span>ProMiners Command</span>
+          <span>HorizonX Command</span>
         </div>
       </DialogContent>
     </Dialog>

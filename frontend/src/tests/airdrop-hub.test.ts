@@ -29,7 +29,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================");
-console.log("PROMINERS — PHASE 5 BATCH 1 AIRDROP HUB & STORAGE TESTS");
+console.log("HORIZONX — PHASE 5 BATCH 1 AIRDROP HUB & STORAGE TESTS");
 console.log("==========================================");
 
 // --- Setup In-Memory Storage & Event Target for Headless Node Environment ---

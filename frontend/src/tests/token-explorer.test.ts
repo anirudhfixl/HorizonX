@@ -18,7 +18,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================");
-console.log("PROMINERS — MILESTONE 2-B TOKEN EXPLORER TESTS");
+console.log("HORIZONX — MILESTONE 2-B TOKEN EXPLORER TESTS");
 console.log("==========================================\n");
 
 // --- 1. Data Integrity & Schema ---
@@ -46,8 +46,8 @@ function filterBySearch(tokens: TokenWithMarket[], query: string): TokenWithMark
   );
 }
 
-const searchByName = filterBySearch(MOCK_TOKENS, "ProMiners");
-assert(searchByName.length === 1 && searchByName[0].id === "prominers", "Search by full name 'ProMiners' returns PMIN");
+const searchByName = filterBySearch(MOCK_TOKENS, "HorizonX");
+assert(searchByName.length === 1 && searchByName[0].id === "prominers", "Search by full name 'HorizonX' returns PMIN");
 
 const searchByPartial = filterBySearch(MOCK_TOKENS, "aur");
 assert(searchByPartial.some((t) => t.symbol === "AURA"), "Partial search 'aur' matches AURA");
@@ -93,7 +93,7 @@ const defiTokens = MOCK_TOKENS.filter((t) => (t.category || "").toLowerCase() ==
 assert(defiTokens.length >= 1, "Category filter 'DeFi' returns expected tokens");
 
 const govTokens = MOCK_TOKENS.filter((t) => (t.category || "").toLowerCase() === "governance");
-assert(govTokens.some((t) => t.id === "prominers"), "Category filter 'Governance' includes ProMiners");
+assert(govTokens.some((t) => t.id === "prominers"), "Category filter 'Governance' includes HorizonX");
 
 // Status filtering
 const activeTokens = MOCK_TOKENS.filter((t) => t.status === "active");

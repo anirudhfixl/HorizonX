@@ -1,9 +1,11 @@
 import { TokenWatchlist } from "@/components/tokens/token-watchlist";
+import { MarketWorkspaceHeader } from "@/components/market/market-section-nav";
 
-/**
- * Markets watchlist (/exchange/watchlist). Shows the same followed-token list as
- * /tokens/watchlist, so a token starred anywhere appears everywhere.
- */
 export default function WatchlistPage() {
-  return <TokenWatchlist base="/exchange" />;
+  return (
+    <main className="mk-page-shell">
+      <MarketWorkspaceHeader items={[{ label: "Markets", to: "/exchange" }, { label: "Watchlist" }]} />
+      <TokenWatchlist base="/exchange" />
+    </main>
+  );
 }

@@ -3,17 +3,15 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { TOKENS } from "@/data";
 import { Link } from "react-router-dom";
+import { MarketWorkspaceHeader } from "@/components/market/market-section-nav";
 
 export default function MarketsOverviewPage() {
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mk-page-shell space-y-8 pt-0">
+      <MarketWorkspaceHeader items={[{ label: "Markets", to: "/exchange" }, { label: "All markets" }]} />
       <PageHeader
-        title="Market Overview"
-        description="Demonstration directory of simulated trading pairs and liquidity metrics (Phase 1 preview)."
-        breadcrumbs={[
-          { label: "Markets", href: "/exchange" },
-          { label: "Overview" },
-        ]}
+        title="All markets"
+        description="Browse simulated trading pairs, compare prices and liquidity, and open an asset market."
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

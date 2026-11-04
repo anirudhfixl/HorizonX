@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PROJECTS, TOKENS } from "@/data";
 import { ArrowDownUp, ExternalLink, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { MarketWorkspaceHeader } from "@/components/market/market-section-nav";
 
 export default function TokenExchangePage() {
   const { id = "" } = useParams<{ id: string }>();
@@ -19,9 +20,7 @@ export default function TokenExchangePage() {
 
   return (
     <main className="entity-detail-page w-full max-w-none space-y-7 px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <nav aria-label="Breadcrumb" className="entity-detail-breadcrumb">
-        <Link to="/exchange">Markets</Link><span>/</span><Link to="/exchange/markets">Exchange</Link><span>/</span><span aria-current="page">{token.symbol}</span>
-      </nav>
+      <MarketWorkspaceHeader items={[{ label: "Markets", to: "/exchange" }, { label: "All markets", to: "/exchange/markets" }, { label: token.symbol }]} />
 
       <header className="entity-detail-header entity-detail-market-header">
         <div className="entity-detail-identity">

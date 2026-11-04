@@ -1,5 +1,5 @@
 /**
- * ProMiners — Phase 3-D: Token Creation Wizard & Deployment Simulation Tests
+ * HorizonX — Phase 3-D: Token Creation Wizard & Deployment Simulation Tests
  *
  * Verifies:
  * 1. Base units & supply mathematics (decimals 18, 6, 9; limits; zero/negative bounds)
@@ -33,7 +33,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n=======================================================");
-console.log("PROMINERS — PHASE 3-D TOKEN CREATION & SIMULATION TESTS");
+console.log("HORIZONX — PHASE 3-D TOKEN CREATION & SIMULATION TESTS");
 console.log("=======================================================\n");
 
 // --- 1. Supply Calculation & BigInt Base-Units Logic ---

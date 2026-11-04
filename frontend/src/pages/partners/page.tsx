@@ -1,27 +1,17 @@
 import React from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { MetricCard } from "@/components/shared/metric-card";
-import { Button } from "@/components/ui/button";
-import { useWallet } from "@/contexts/wallet-context";
-import { useModal } from "@/contexts/modal-context";
-import { Handshake, Share2, Award, Wallet } from "lucide-react";
+import { Share2, Award } from "lucide-react";
 import { Link } from "react-router-dom";
+import { PartnersWorkspaceHeader } from "@/components/partners/partners-section-nav";
 
 export default function PartnersPage() {
-  const { isConnected } = useWallet();
-  const { openModal } = useModal();
-
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <main className="pt-page-shell space-y-10">
+      <PartnersWorkspaceHeader items={[{ label: "Partners" }, { label: "Overview" }]} />
       <PageHeader
         title="Partner Portal"
-        description="Collaborate with ProMiners to incubate projects, onboard developers, and earn protocol revenue share."
-        breadcrumbs={[{ label: "Partners" }]}
-        actions={
-          <Button asChild size="sm" className="bg-primary text-primary-foreground text-xs gap-1.5 font-semibold">
-            <Link to="/partners/referrals">Referral Links & Attribution</Link>
-          </Button>
-        }
+        description="Collaborate with HorizonX to incubate projects, onboard developers, and earn protocol revenue share."
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -68,11 +58,11 @@ export default function PartnersPage() {
           <div className="rounded-xl border border-border/40 bg-secondary/20 p-4 space-y-1.5">
             <span className="font-semibold text-foreground">Dedicated Technical Support</span>
             <p className="text-muted-foreground leading-relaxed">
-              Direct developer channels with core ProMiners engineers for smart contract customization.
+              Direct developer channels with core HorizonX engineers for smart contract customization.
             </p>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

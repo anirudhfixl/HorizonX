@@ -583,7 +583,7 @@ export function MyLaunchesHub() {
             On-Chain Participation Ledger Planned
           </h3>
           <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-            Under Architecture Decision D-04, ProMiners currently operates in client demonstration mode. Because no live smart contracts or custodial funds are deployed, there are no simulated contribution receipts or claim distributions.
+            Under Architecture Decision D-04, HorizonX currently operates in client demonstration mode. Because no live smart contracts or custodial funds are deployed, there are no simulated contribution receipts or claim distributions.
           </p>
 
           <div className="mx-auto mt-6 max-w-md rounded-xl border border-border bg-secondary/30 p-4 text-left text-xs text-muted-foreground space-y-2">

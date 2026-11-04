@@ -29,7 +29,7 @@ export const SEPOLIA_CONFIG: NetworkConfig = {
 };
 
 /**
- * Active EVM chains supported by the ProMiners protocol.
+ * Active EVM chains supported by the HorizonX protocol.
  * For Milestone 1-B, this list contains ONLY Sepolia.
  */
 export const ACTIVE_CHAINS = [sepolia] as const;

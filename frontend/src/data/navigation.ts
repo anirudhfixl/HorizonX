@@ -1,4 +1,4 @@
-// Centralized navigation for every currently implemented ProMiners route.
+// Centralized navigation for every currently implemented HorizonX route.
 // Keep dashboard/section landing pages first in each dropdown so every module
 // has a predictable entry point, followed by its related testing routes.
 export interface NavItem {
@@ -14,7 +14,7 @@ export const TOP_NAV_ITEMS: NavItem[] = [
   {
     label: "Explore",
     href: "/explore",
-    description: "Discover the ProMiners ecosystem",
+    description: "Discover the HorizonX ecosystem",
   },
   {
     label: "Projects",
@@ -40,57 +40,21 @@ export const TOP_NAV_ITEMS: NavItem[] = [
     label: "Staking",
     href: "/staking",
     description: "Staking pools and positions",
-    children: [
-      { label: "Staking Dashboard", href: "/staking", description: "Staking overview" },
-      { label: "All Pools", href: "/staking/pools", description: "Browse staking pools" },
-      { label: "Create Pool", href: "/staking/pools/create", description: "Create a staking pool" },
-      { label: "My Positions", href: "/staking/my", description: "View your staking positions", requiresWallet: true },
-    ],
   },
   {
     label: "Markets",
     href: "/exchange",
     description: "Exchange markets and watchlists",
-    children: [
-      { label: "Markets Dashboard", href: "/exchange", description: "Exchange overview" },
-      { label: "Market Directory", href: "/exchange/markets", description: "Browse market data" },
-      { label: "Watchlist", href: "/exchange/watchlist", description: "Your watched tokens" },
-      { label: "Token Market Details", href: "/exchange/markets", description: "Open a market to view its token details" },
-    ],
   },
   {
     label: "Partners",
     href: "/partners",
     description: "Partner and referral portal",
-    children: [
-      { label: "Partner Dashboard", href: "/partners", description: "Partner overview" },
-      { label: "Referrals", href: "/partners/referrals", description: "Referral activity and tracking" },
-    ],
   },
   {
     label: "Account",
     href: "/account",
     description: "Profile and account settings",
-    children: [
-      { label: "Account Dashboard", href: "/account", description: "Account overview" },
-      { label: "Edit Profile", href: "/account/edit", description: "Update profile information" },
-      { label: "Wallets", href: "/account/wallets", description: "Manage connected wallets" },
-      { label: "Verification", href: "/account/verification", description: "Account verification" },
-      { label: "Security", href: "/account/security", description: "Security settings" },
-      { label: "Preferences", href: "/account/preferences", description: "Application preferences" },
-    ],
-  },
-  {
-    label: "Docs",
-    href: "/docs",
-    description: "Documentation and platform guides",
-    children: [
-      { label: "Documentation Home", href: "/docs", description: "Browse documentation" },
-      { label: "Guides", href: "/docs/guides", description: "Platform guides and FAQs" },
-      { label: "Risk Disclosure", href: "/docs/risk", description: "Understand platform risks" },
-      { label: "Terms of Service", href: "/docs/terms", description: "Platform terms" },
-      { label: "Privacy Policy", href: "/docs/privacy", description: "Privacy information" },
-    ],
   },
 ];
 

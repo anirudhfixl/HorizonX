@@ -164,7 +164,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 /**
  * @title ${token.name} (${token.symbol})
  * @dev Implementation of ${token.name} on ${token.network}.
- * Verified via ProMiners Protocol Registry.
+ * Verified via HorizonX Protocol Registry.
  */
 contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
     uint8 private immutable _customDecimals;
@@ -674,7 +674,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
                     </div>
 
                     <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-                      {project.description || "Decentralized protocol within the ProMiners Web3 network."}
+                      {project.description || "Decentralized protocol within the HorizonX Web3 network."}
                     </p>
 
                     <div className="pt-2 border-t border-border/40 flex items-center justify-between">

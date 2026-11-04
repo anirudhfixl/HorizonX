@@ -430,3 +430,7 @@
   .tk-pagination__controls { width: 100%; }
   .tk-page-btn { flex: 1; }
 }
+
+/* Shared workspace navigation owns the bounded divider. */
+.tk-section-nav { border-top-color: var(--border); border-bottom-color: var(--border); }
+.tk-section-nav::before, .tk-section-nav::after { content: none !important; display: none !important; }

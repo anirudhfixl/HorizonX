@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { AccountSectionNav } from "@/components/account/account-section-nav";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -6,7 +7,7 @@ import { toast } from "sonner";
 export default function EditProfilePage() {
   const [displayName, setDisplayName] = useState("Web3 Contributor");
   const [bio, setBio] = useState("DeFi liquidity provider and early adopter.");
-  const [website, setWebsite] = useState("https://prominers.org");
+  const [website, setWebsite] = useState("");
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,7 +17,8 @@ export default function EditProfilePage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-0 w-full max-w-none px-[clamp(1rem,2.25vw,2.5rem)] pt-0 pb-8 space-y-8">
+      <AccountSectionNav />
       <PageHeader
         title="Edit Profile"
         description="Customize your public display name, avatar, and linked social profiles."

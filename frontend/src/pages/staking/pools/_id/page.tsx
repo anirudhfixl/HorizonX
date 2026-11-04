@@ -1,6 +1,7 @@
 import "@/components/shared/entity-detail.css";
 import NotFoundPage from "@/pages/not-found/page";
 import React from "react";
+import { StakingWorkspaceHeader } from "@/components/staking/staking-section-nav";
 import { MetricCard } from "@/components/shared/metric-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -18,10 +19,8 @@ export default function StakingPoolDetailPage() {
   const mark = token?.symbol?.slice(0, 4) || pool.tokenId.slice(0, 4).toUpperCase();
 
   return (
-    <main className="entity-detail-page w-full max-w-none space-y-7 px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
-      <nav aria-label="Breadcrumb" className="entity-detail-breadcrumb">
-        <Link to="/staking">Staking</Link><span>/</span><Link to="/staking/pools">Pools</Link><span>/</span><span aria-current="page">{pool.name}</span>
-      </nav>
+    <main className="staking-page entity-detail-page w-full max-w-none space-y-7">
+      <StakingWorkspaceHeader items={[{ label: "Staking", to: "/staking" }, { label: "Pools", to: "/staking/pools" }, { label: pool.name }]} />
 
       <header className="entity-detail-header">
         <div className="entity-detail-identity">

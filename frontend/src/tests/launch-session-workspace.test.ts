@@ -41,7 +41,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("==========================================================");
-console.log("PROMINERS — PHASE 4, BATCH 2 LAUNCHPAD INTEGRATION TESTS");
+console.log("HORIZONX — PHASE 4, BATCH 2 LAUNCHPAD INTEGRATION TESTS");
 console.log("==========================================================\n");
 
 // ─── 1. Presale Creation Validation & Draft Derivation ───────────────────

@@ -18,7 +18,7 @@ export default function NotFound() {
           Page Not Found
         </h1>
         <p className="mx-auto max-w-md text-sm text-muted-foreground">
-          The requested route does not exist or has been relocated within the ProMiners ecosystem.
+          The requested route does not exist or has been relocated within the HorizonX ecosystem.
         </p>
       </div>
 

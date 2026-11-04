@@ -289,7 +289,7 @@ export function CreatePresaleForm() {
       id: newId,
       kind: "presale",
       title: draft.title?.trim() || `${effectiveTokenName} Presale`,
-      description: draft.description?.trim() || `Community presale offering for ${effectiveTokenName} ($${effectiveSymbol}) simulated via ProMiners.`,
+      description: draft.description?.trim() || `Community presale offering for ${effectiveTokenName} ($${effectiveSymbol}) simulated via HorizonX.`,
       category: effectiveCategory,
       tokenId: selectedTokenInfo?.tokenId || catalog?.id || draft.tokenAddress.toLowerCase(),
       tokenSymbol: effectiveSymbol,

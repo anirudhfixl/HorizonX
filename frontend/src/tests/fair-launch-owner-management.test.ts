@@ -28,7 +28,7 @@ function assert(condition: boolean, message: string) {
 const near = (a: number, b: number, epsilon = 1e-4) => Math.abs(a - b) < epsilon;
 
 console.log("==========================================================");
-console.log("PROMINERS — PHASE 4, BATCH 4 FAIR LAUNCH DETAIL & OWNER TESTS");
+console.log("HORIZONX — PHASE 4, BATCH 4 FAIR LAUNCH DETAIL & OWNER TESTS");
 console.log("==========================================================");
 
 console.log("\n--- 1. Status Normalization ('canceled' vs 'cancelled') ---");

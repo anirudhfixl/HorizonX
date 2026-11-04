@@ -17,7 +17,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================");
-console.log("PROMINERS — MILESTONE 2-G STAKING POOL DISCOVERY TESTS");
+console.log("HORIZONX — MILESTONE 2-G STAKING POOL DISCOVERY TESTS");
 console.log("==========================================");
 
 // --- 1. Data Integrity & Schema ---
@@ -142,8 +142,8 @@ const searchByProjectName = (projName: string) => {
   });
 };
 assert(
-  searchByProjectName("ProMiners Foundation").length >= 1,
-  "Search by project name 'ProMiners Foundation' finds matching pools"
+  searchByProjectName("HorizonX Foundation").length >= 1,
+  "Search by project name 'HorizonX Foundation' finds matching pools"
 );
 assert(
   searchByProjectName("QuantumNet").length >= 1,

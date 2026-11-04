@@ -630,7 +630,7 @@ export function MyTokensHub() {
 
             <div className="space-y-4 rounded-2xl border border-border/40 bg-secondary/20 p-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                How Token Deployment Works on ProMiners
+                How Token Deployment Works on HorizonX
               </h3>
               <ol className="space-y-4">
                 {[

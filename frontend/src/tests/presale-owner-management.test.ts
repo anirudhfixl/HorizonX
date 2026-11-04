@@ -29,7 +29,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("==========================================================");
-console.log("PROMINERS — PHASE 4, BATCH 3 PRESALE DETAIL & OWNER TESTS");
+console.log("HORIZONX — PHASE 4, BATCH 3 PRESALE DETAIL & OWNER TESTS");
 console.log("==========================================================");
 
 console.log("\n--- 1. Status Normalization ('canceled' vs 'cancelled') ---");

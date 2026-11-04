@@ -6,7 +6,7 @@
  * figures, browser-session records and blockchain-verified data are never
  * mistaken for one another.
  *
- * - catalog   Stored ProMiners catalog metadata (name, symbol, description,
+ * - catalog   Stored HorizonX catalog metadata (name, symbol, description,
  *             recorded contract address, category, status). It has not been
  *             checked against a blockchain.
  * - simulated Illustrative values produced by the application: mock market
@@ -32,7 +32,7 @@ export const PROVENANCE_META: Record<DataProvenance, ProvenanceMeta> = {
   catalog: {
     label: "Catalog",
     description:
-      "Stored ProMiners catalog record. It has not been verified against a blockchain.",
+      "Stored HorizonX catalog record. It has not been verified against a blockchain.",
   },
   simulated: {
     label: "Simulated",

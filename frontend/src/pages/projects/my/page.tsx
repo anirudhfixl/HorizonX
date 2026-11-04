@@ -55,7 +55,7 @@ export default function MyProjectsPage() {
   const owned = useMemo(() => resolveOwnedProjects(PROJECTS, address), [address]);
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] space-y-7 px-4 pb-20 pt-0 sm:px-6 lg:px-8">
+    <div className="project-workspace-page mx-0 min-w-0 w-full max-w-none space-y-7 overflow-x-clip px-[clamp(1rem,2.25vw,2.5rem)] pb-20 pt-0">
       <ProjectSectionNav />
       <ProjectBreadcrumb current="My Projects" />
       <header className="space-y-5">

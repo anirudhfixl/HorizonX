@@ -12,8 +12,8 @@ export function ProjectSectionNav() {
   const isProjectDetail = pathname.startsWith("/projects/") && pathname !== "/projects/my";
 
   return (
-    <nav className="tk-section-nav" aria-label="Projects workspace">
-      <div className="tk-section-nav__links">
+    <nav className="tk-section-nav hx-workspace-nav" aria-label="Projects workspace">
+      <div className="tk-section-nav__links hx-workspace-nav__links">
         {destinations.map((item) => (
           <NavLink
             key={item.to}
@@ -27,7 +27,7 @@ export function ProjectSectionNav() {
           </NavLink>
         ))}
       </div>
-      <div className="pr-section-nav__quick">
+      <div className="hx-workspace-nav__actions">
         <Link to="/tokens">Tokens</Link>
         <Link to="/airdrops">Airdrops</Link>
         <Link to="/launchpad">Launchpad</Link>

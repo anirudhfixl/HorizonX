@@ -42,10 +42,10 @@ export function RiskWarningModal() {
             </div>
           </div>
           <p>
-            • <strong>Permissionless Contracts:</strong> ProMiners facilitates decentralized tooling. Tokens and presales can be created by any third party without custodial endorsement.
+            • <strong>Permissionless Contracts:</strong> HorizonX facilitates decentralized tooling. Tokens and presales can be created by any third party without custodial endorsement.
           </p>
           <p>
-            • <strong>No Financial Advice:</strong> Content, metrics, and analytics displayed across ProMiners do not constitute investment or financial advisory.
+            • <strong>No Financial Advice:</strong> Content, metrics, and analytics displayed across HorizonX do not constitute investment or financial advisory.
           </p>
           <p>
             • <strong>Smart Contract Risk:</strong> While contracts are audited and verified where noted, blockchain protocols are subject to inherent technological risks.

@@ -6,7 +6,7 @@ HorizonX brings token discovery, project directories, presale and fair-launch ex
 
 > **Project status:** Frontend prototype / implementation baseline — not a production Web3 protocol.
 >
-> **Branding note:** The repository is referred to as **HorizonX**, while parts of the current application metadata, wallet connector metadata and sample catalog still use **ProMiners**. The canonical public brand has not yet been normalized in the source.
+> **Branding:** HorizonX is the canonical product brand across the application. Internal storage keys and stable catalog identifiers retain their historical values for backward compatibility.
 
 ## What is in this repository?
 

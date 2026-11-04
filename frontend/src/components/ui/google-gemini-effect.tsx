@@ -44,9 +44,12 @@ export function GoogleGeminiEffect({
   className,
 }: GoogleGeminiEffectProps) {
   return (
-    <div className={cn("sticky top-24 mx-auto w-full", className)}>
+    <div className={cn("sticky top-24 mx-auto w-full translate-y-4 sm:translate-y-6", className)}>
       <div className="relative z-10 px-5 pt-8 text-center sm:pt-12">
-        <p className="bg-gradient-to-b from-white via-white to-violet-200 bg-clip-text pb-3 text-4xl font-medium tracking-[-.055em] text-transparent sm:text-5xl md:text-7xl">
+        <p
+          className="bg-gradient-to-b from-white via-white to-violet-200 bg-clip-text pb-3 font-semibold tracking-[-.055em] text-transparent"
+          style={{ fontSize: "clamp(2.75rem, 5vw, 4.5rem)", lineHeight: 1.08 }}
+        >
           {title}
         </p>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-violet-100/60 sm:text-base md:text-lg">
@@ -54,7 +57,7 @@ export function GoogleGeminiEffect({
         </p>
       </div>
 
-      <div className="pointer-events-none absolute inset-x-0 z-20 flex justify-center top-[clamp(13rem,18vw,17rem)]">
+      <div className="pointer-events-none absolute left-1/2 z-20 flex -translate-x-1/2 justify-center top-[clamp(17rem,20vw,21rem)]">
         <span className="rounded-full border border-white/15 bg-[#f5f2ff] px-5 py-2.5 text-xs font-bold tracking-wide text-[#171126] shadow-[0_8px_36px_rgba(139,92,246,.16)] sm:text-sm">
           HORIZONX NETWORK
         </span>
@@ -65,7 +68,7 @@ export function GoogleGeminiEffect({
         height="400"
         viewBox="0 300 1440 400"
         xmlns="http://www.w3.org/2000/svg"
-        className="pointer-events-none absolute top-28 left-1/2 h-auto w-full max-w-[1440px] -translate-x-1/2 overflow-visible"
+        className="pointer-events-none absolute top-28 left-1/2 h-auto w-full max-w-none -translate-x-1/2 overflow-visible"
         preserveAspectRatio="xMidYMid meet"
         aria-hidden="true"
       >

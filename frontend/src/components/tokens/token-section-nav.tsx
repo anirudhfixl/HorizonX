@@ -17,8 +17,8 @@ export function TokenSectionNav() {
   const { pathname } = useLocation();
   const isTokenDetail = /^\/tokens\/[^/]+(?:\/(?:contract|activity))?$/.test(pathname) && !["/tokens/create", "/tokens/my", "/tokens/watchlist", "/tokens/explore"].includes(pathname);
   return (
-    <nav className="tk-section-nav" aria-label="Token workspace">
-      <div className="tk-section-nav__links">
+    <nav className="tk-section-nav hx-workspace-nav" aria-label="Token workspace">
+      <div className="tk-section-nav__links hx-workspace-nav__links">
         {destinations.map((item) => (
           <NavLink
             key={item.to}
@@ -30,9 +30,11 @@ export function TokenSectionNav() {
           </NavLink>
         ))}
       </div>
-      <NavLink to="/tokens/create" className={({ isActive }) => `tk-section-nav__create${isActive ? " is-active" : ""}`}>
-        Create token <span aria-hidden="true">＋</span>
-      </NavLink>
+      <div className="hx-workspace-nav__actions">
+        <NavLink to="/tokens/create" className={({ isActive }) => `tk-section-nav__create${isActive ? " is-active" : ""}`}>
+          Create token <span aria-hidden="true">＋</span>
+        </NavLink>
+      </div>
     </nav>
   );
 }

@@ -5,7 +5,7 @@ import { PageMeta } from "@/components/seo/page-meta";
 export default function MyLaunchesPage() {
   return (
     <>
-      <PageMeta title="My Launches | ProMiners Launchpad" description="Creator and investor workspace for managing user-created presales, fair launches, and tracked contributions on ProMiners." />
+      <PageMeta title="My Launches | HorizonX Launchpad" description="Creator and investor workspace for managing user-created presales, fair launches, and tracked contributions on HorizonX." />
       <MyLaunchesHub />
     </>
   );

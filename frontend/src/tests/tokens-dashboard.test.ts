@@ -17,7 +17,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================");
-console.log("PROMINERS — PHASE 3-B TOKEN DASHBOARD TESTS");
+console.log("HORIZONX — PHASE 3-B TOKEN DASHBOARD TESTS");
 console.log("==========================================");
 
 // --- 1. Centralized Catalog Integrity & Project Relationships ---

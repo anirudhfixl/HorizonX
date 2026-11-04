@@ -93,7 +93,7 @@ const VERIF_LABEL: Partial<Record<VerificationStatus, string>> = {
 const VERIF_DETAIL: Partial<Record<VerificationStatus, string>> = {
   not_reviewed: "No review is recorded for this token in the catalog.",
   project_reviewed: "The project behind this token has a catalog review. This is not a contract audit or source verification.",
-  contract_source_verified: "The catalog records that the contract source was verified. The source itself is not stored by ProMiners; open the explorer to read it.",
+  contract_source_verified: "The catalog records that the contract source was verified. The source itself is not stored by HorizonX; open the explorer to read it.",
   audit_available: "The catalog records that an audit exists. The report is not stored or shown here.",
 };
 
@@ -225,7 +225,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
       label: "Verification tier",
       value: VERIF_LABEL[tier],
       source: "catalog",
-      note: "Stored on the record. Does not represent a bytecode match check by ProMiners.",
+      note: "Stored on the record. Does not represent a bytecode match check by HorizonX.",
     },
     {
       label: "Declared features",
@@ -331,7 +331,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
           </dl>
           <p className="text-[11px] leading-relaxed text-muted-foreground">
             <strong className="font-semibold text-foreground">Data Provenance: </strong>
-            Catalog values originate from stored ProMiners platform records. Raw units are mathematically derived from declared supply and decimals. Neither represents an active on-chain RPC state query.
+            Catalog values originate from stored HorizonX platform records. Raw units are mathematically derived from declared supply and decimals. Neither represents an active on-chain RPC state query.
           </p>
         </section>
 
@@ -349,7 +349,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
           </p>
           <div className="rounded-xl border border-border/30 bg-secondary/20 p-3.5 text-xs leading-relaxed text-muted-foreground">
             <strong className="font-semibold text-foreground">Verification Boundary: </strong>
-            ProMiners does not independently compile or re-verify smart contract bytecode on this page. To review compiler output and audit reports, visit the contract code tab on the block explorer.
+            HorizonX does not independently compile or re-verify smart contract bytecode on this page. To review compiler output and audit reports, visit the contract code tab on the block explorer.
           </div>
         </section>
 
@@ -449,7 +449,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
             Build Artifacts Not Cached
           </h2>
           <p className="text-xs leading-relaxed text-muted-foreground max-w-2xl">
-            ProMiners does not store raw compiler ASTs, bytecodes, or constructor proofs in platform databases. To inspect these exact build outputs, use the official Sepolia Etherscan explorer.
+            HorizonX does not store raw compiler ASTs, bytecodes, or constructor proofs in platform databases. To inspect these exact build outputs, use the official Sepolia Etherscan explorer.
           </p>
 
           <ul className="grid gap-x-10 border-y border-border/40 sm:grid-cols-2 text-xs">

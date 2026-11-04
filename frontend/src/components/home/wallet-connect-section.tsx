@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 import {
-  ArrowRight,
+  AlertTriangle,
+  ArrowUpRight,
   Check,
+  ExternalLink,
+  Fingerprint,
   ShieldCheck,
   Wallet,
-  ExternalLink,
+  Zap,
 } from "lucide-react";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
@@ -15,174 +18,330 @@ export function WalletConnectSection() {
     isConnected,
     isConnecting,
     shortAddress,
+    address,
+    balance,
     network,
+    chainId,
     isDemoMode,
+    isUnsupportedNetwork,
+    walletProvider,
   } = useWallet();
   const { openModal } = useModal();
   const [mounted, setMounted] = useState(false);
+  const walletCardRef = useRef<HTMLDivElement>(null);
+
+  const handleWalletCardPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    // Keep touch interaction native; the 3D effect is intended for a mouse/trackpad.
+    if (event.pointerType !== "mouse") return;
+
+    const card = walletCardRef.current;
+    if (!card) return;
+
+    const rect = card.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const rotateY = ((x / rect.width) - 0.5) * 18;
+    const rotateX = (0.5 - (y / rect.height)) * 18;
+
+    card.style.transition = "transform 80ms ease-out";
+    card.style.transform = `perspective(1100px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.015, 1.015, 1.015)`;
+  };
+
+  const resetWalletCardTransform = () => {
+    const card = walletCardRef.current;
+    if (!card) return;
+
+    card.style.transition = "transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1)";
+    card.style.transform = "perspective(1100px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)";
+  };
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Wallet state is intentionally read only after hydration to keep SSR markup stable.
+  // Delay wallet-specific markup until hydration to avoid server/client mismatch.
   const connected = mounted && isConnected;
-
-  const handleWalletAction = () => {
+  const walletAction = () => {
     openModal(connected ? "WALLET_DETAILS" : "CONNECT_WALLET");
   };
 
   return (
     <section
       aria-labelledby="wallet-connect-heading"
-      className="relative isolate mx-auto w-full max-w-[1440px] overflow-hidden px-5 py-16 sm:px-8 sm:py-20 lg:px-12 lg:py-24"
+      className="relative isolate mx-0 w-full max-w-none overflow-hidden rounded-none border-0 bg-transparent px-5 py-20 shadow-none sm:px-8 sm:py-24 lg:px-12 lg:py-28"
     >
+      {/* Soft ambient lighting stays inside this section; the page theme is unchanged. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -left-40 top-1/2 -z-10 h-[420px] w-[420px] -translate-y-1/2 rounded-full bg-violet-500/[.09] blur-[130px]"
+        className="pointer-events-none absolute -left-40 top-1/2 -z-10 h-[440px] w-[440px] -translate-y-1/2 rounded-full bg-violet-500/[.10] blur-[140px]"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -right-36 top-0 -z-10 h-[360px] w-[360px] rounded-full bg-indigo-500/[.07] blur-[130px]"
+        className="pointer-events-none absolute -right-40 top-0 -z-10 h-[400px] w-[400px] rounded-full bg-indigo-500/[.08] blur-[140px]"
       />
 
-      <div className="grid items-center gap-14 lg:grid-cols-[.82fr_1.18fr] lg:gap-20">
-        <div className="relative mx-auto flex w-full max-w-[440px] flex-col items-center text-center lg:mx-0 lg:max-w-none">
-          <div className="mb-8 flex items-center gap-3 self-start">
-            <span className="h-px w-7 bg-violet-300/65" />
-            <span className="text-[10px] font-semibold uppercase tracking-[.24em] text-violet-200/65">
-              Wallet access
-            </span>
-          </div>
+      <div className="mx-auto grid w-full max-w-[1400px] items-center gap-8 lg:grid-cols-[minmax(0,470px)_minmax(0,1fr)] lg:gap-14 xl:gap-20">
+        {/* Wallet session panel */}
+        <div className="relative mx-auto w-full max-w-[470px] lg:mx-0">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-5 rounded-[2.2rem] bg-[radial-gradient(ellipse_at_50%_45%,rgba(139,92,246,.13),transparent_72%)] blur-2xl"
+          />
+          <div
+            ref={walletCardRef}
+            onPointerMove={handleWalletCardPointerMove}
+            onPointerLeave={resetWalletCardTransform}
+            className="relative overflow-hidden rounded-[14px] border border-white/[.10] bg-[linear-gradient(145deg,rgba(19,17,35,.96),rgba(8,9,20,.98)_62%)] p-4 shadow-[0_24px_80px_rgba(0,0,0,.28),inset_0_1px_0_rgba(255,255,255,.045)] [transform-style:preserve-3d] will-change-transform sm:p-5"
+          >
+            <div className="flex items-center justify-between border-b border-white/[.07] pb-3">
+              <div className="flex items-center gap-2.5">
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    connected
+                      ? isUnsupportedNetwork
+                        ? "bg-amber-400"
+                        : "bg-emerald-400"
+                      : "bg-violet-300"
+                  }`}
+                />
+                <span className="text-[9px] font-semibold uppercase tracking-[.22em] text-white/50">
+                  {connected ? "Active session" : "Wallet access"}
+                </span>
+              </div>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-semibold ${
+                  connected
+                    ? isUnsupportedNetwork
+                      ? "border-amber-400/20 bg-amber-400/[.08] text-amber-300"
+                      : "border-emerald-400/20 bg-emerald-400/[.08] text-emerald-300"
+                    : "border-violet-300/20 bg-violet-300/[.07] text-violet-200/80"
+                }`}
+              >
+                {connected ? (
+                  isUnsupportedNetwork ? (
+                    <AlertTriangle className="h-3 w-3" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )
+                ) : (
+                  <ShieldCheck className="h-3 w-3" />
+                )}
+                {connected
+                  ? isUnsupportedNetwork
+                    ? "Check network"
+                    : "Verified session"
+                  : "Self-custody"}
+              </span>
+            </div>
 
-          <div className="relative mb-7 grid h-24 w-24 place-items-center text-violet-100">
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 rounded-[30px] border border-violet-200/20 bg-[linear-gradient(145deg,rgba(196,181,253,.14),rgba(139,92,246,.025))] shadow-[0_0_65px_rgba(139,92,246,.13),inset_0_1px_0_rgba(255,255,255,.08)]"
-            />
-            <div
-              aria-hidden="true"
-              className="absolute -inset-3 rounded-[38px] border border-violet-200/[.07]"
-            />
-            {connected ? (
-              <Check className="relative h-10 w-10" strokeWidth={1.45} />
-            ) : (
-              <Wallet className="relative h-10 w-10" strokeWidth={1.35} />
-            )}
-            <span className="absolute -bottom-1 -right-1 grid h-8 w-8 place-items-center rounded-xl border border-[#0b0913] bg-violet-200 text-[#100c1c] shadow-[0_4px_18px_rgba(167,139,250,.2)]">
-              <ShieldCheck className="h-4 w-4" />
-            </span>
-          </div>
+            <div className="flex min-h-[180px] flex-col items-center justify-center py-4 text-center sm:min-h-[190px]">
+              <div className="relative mb-4 grid h-[72px] w-[72px] place-items-center rounded-[22px] border border-violet-200/[.20] bg-[linear-gradient(145deg,rgba(196,181,253,.13),rgba(139,92,246,.035))] text-violet-100 shadow-[0_0_55px_rgba(139,92,246,.12),inset_0_1px_0_rgba(255,255,255,.08)]">
+                {connected ? (
+                  <Check className="h-9 w-9" strokeWidth={1.5} />
+                ) : (
+                  <Wallet className="h-9 w-9" strokeWidth={1.35} />
+                )}
+                <span className="absolute -bottom-2 -right-2 grid h-7 w-7 place-items-center rounded-lg border border-[#100d1b] bg-[#e7ddff] text-[#171126] shadow-[0_5px_18px_rgba(167,139,250,.22)]">
+                  {connected ? (
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                  ) : (
+                    <Fingerprint className="h-3.5 w-3.5" />
+                  )}
+                </span>
+              </div>
 
-          {connected ? (
-            <>
-              <p className="text-[10px] font-semibold uppercase tracking-[.2em] text-emerald-300/80">
-                Wallet connected
-              </p>
-              <p className="mt-3 font-mono text-xl font-medium tracking-tight text-white">
-                {shortAddress ?? "Connected wallet"}
-              </p>
-              <p className="mt-2 text-[12px] leading-6 text-[#aaa6bd]">
-                {isDemoMode
-                  ? "Demo wallet session is active."
-                  : `Connected to ${network?.name ?? "your selected network"}.`}
-              </p>
-            </>
-          ) : (
-            <>
-              <h3 className="text-[25px] font-medium tracking-[-.045em] text-white sm:text-[28px]">
-                Your wallet. Your choice.
-              </h3>
-              <p className="mt-3 max-w-[330px] text-[13px] leading-7 text-[#aaa6bd]">
-                Connect when you are ready. Your wallet stays in your control,
-                and every approval remains your decision.
-              </p>
-            </>
-          )}
+              {!connected && (
+                <p className="text-[11px] font-semibold uppercase tracking-[.16em] text-white/75">
+                  {isConnecting ? "Waiting for wallet" : "Your wallet is not connected"}
+                </p>
+              )}
 
-          <div className="mt-9 w-full max-w-[360px]">
-            <StatefulButton
-              onClick={handleWalletAction}
-              disabled={!mounted || isConnecting}
-              className="min-h-[58px] w-full justify-center gap-3 rounded-xl border border-violet-100/20 bg-[#e9e2ff] px-6 text-[13px] font-semibold tracking-[.01em] text-[#100c1c] shadow-[0_10px_34px_rgba(139,92,246,.14)] hover:border-violet-100/45 hover:bg-white hover:shadow-[0_14px_42px_rgba(139,92,246,.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-4 focus-visible:ring-offset-[#080711] disabled:cursor-wait disabled:opacity-60"
-            >
-              {isConnecting
-                ? "Connecting wallet"
-                : connected
-                  ? "View connected wallet"
-                  : "Connect wallet"}
-            </StatefulButton>
+              {connected ? (
+                <>
+                  <p className="mt-1 font-mono text-[15px] font-medium tracking-tight text-white sm:text-base">
+                    {shortAddress ?? "Connected wallet"}
+                  </p>
+                  <p className="mt-1 text-[10px] text-[#aaa6bd]">
+                    {isDemoMode
+                      ? "Demo wallet session is active."
+                      : `${walletProvider ?? "Web3 wallet"} · ${network?.name ?? "Network detected"}`}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mt-2 max-w-[290px] text-[12px] leading-5 text-[#aaa6bd]">
+                    Connect a wallet to manage your assets and interact with HorizonX.
+                  </p>
+                  <p className="mt-1.5 text-[9px] text-white/35">
+                    Your private keys never leave your wallet.
+                  </p>
+                </>
+              )}
+            </div>
 
             {connected && (
-              <button
-                type="button"
-                onClick={() => openModal("WALLET_DETAILS")}
-                className="mt-4 inline-flex min-h-10 items-center gap-2 text-[11px] font-medium text-violet-200/75 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200"
-              >
-                View wallet details
-                <ExternalLink className="h-3.5 w-3.5" />
-              </button>
+              <div className="mb-4 grid grid-cols-2 gap-3 border-y border-white/[.07] py-3.5">
+                <div className="min-w-0">
+                  <p className="text-[8px] font-semibold uppercase tracking-[.2em] text-white/40">
+                    Native balance
+                  </p>
+                  <p className="mt-1.5 truncate font-mono text-[17px] font-semibold tracking-tight text-white">
+                    {balance}
+                    <span className="ml-1.5 text-[10px] font-medium text-violet-200/70">
+                      {network?.symbol ?? "ETH"}
+                    </span>
+                  </p>
+                </div>
+                <div className="min-w-0 text-right">
+                  <p className="text-[8px] font-semibold uppercase tracking-[.2em] text-white/40">
+                    Network
+                  </p>
+                  <p className="mt-1.5 truncate text-[11px] font-medium text-white">
+                    {network?.name ?? "Unknown network"}
+                  </p>
+                  <p className="mt-1 font-mono text-[9px] text-white/40">
+                    Chain ID: {chainId ?? "—"}
+                  </p>
+                </div>
+              </div>
             )}
+
+            <StatefulButton
+              onClick={walletAction}
+              disabled={!mounted || isConnecting}
+              className="min-h-[46px] w-full justify-center gap-2.5 rounded-xl border border-violet-100/20 bg-[#e9e2ff] px-5 text-[12px] font-semibold text-[#100c1c] shadow-[0_10px_32px_rgba(139,92,246,.13)] transition-all hover:-translate-y-0.5 hover:border-violet-100/45 hover:bg-white hover:shadow-[0_14px_38px_rgba(139,92,246,.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-4 focus-visible:ring-offset-[#080711] disabled:cursor-wait disabled:opacity-60"
+            >
+              <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
+                {isConnecting
+                  ? "Connecting wallet..."
+                  : connected
+                    ? "Manage connected wallet"
+                    : "Connect wallet"}
+                <ArrowUpRight className="h-4 w-4 shrink-0" />
+              </span>
+            </StatefulButton>
+
+            {connected && address && network?.explorerUrl ? (
+              <div className="mt-2.5 flex items-center justify-between gap-3 text-[9px]">
+                <a
+                  href={`${network.explorerUrl}/address/${address}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-8 items-center gap-1.5 text-white/45 transition-colors hover:text-violet-200"
+                >
+                  View on block explorer
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => openModal("WALLET_DETAILS")}
+                  className="min-h-8 text-white/45 transition-colors hover:text-white"
+                >
+                  Wallet details
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
 
-        <div className="mx-auto flex w-full max-w-[700px] flex-col items-center text-center">
-          <div className="mb-6 flex items-center justify-center gap-3">
-            <span className="h-px w-7 bg-violet-300/65" />
-            <p className="text-[10px] font-semibold uppercase tracking-[.25em] text-violet-200/70">
-              Start with your wallet
+        {/* Context and trust information */}
+        <div className="mx-auto flex w-full max-w-[760px] flex-col items-start text-left lg:mx-0">
+          <div className="mb-4 flex w-full items-center justify-start gap-3 text-left">
+            <span className="h-px w-7 bg-violet-300/70" />
+            <p className="text-[10px] font-semibold uppercase tracking-[.25em] text-violet-200/75">
+              {connected ? "Web3 authentication" : "Start with your wallet"}
             </p>
-            <span className="h-px w-7 bg-violet-300/65" />
+            <span className="h-px w-7 bg-violet-300/70" />
           </div>
 
           <h2
             id="wallet-connect-heading"
-            className="max-w-[680px] text-balance text-[clamp(2.5rem,4.8vw,4.8rem)] font-medium leading-[1.03] tracking-[-.068em] text-white"
+            className="flex w-full max-w-[760px] flex-col items-start text-left text-[clamp(2.15rem,3.8vw,3.8rem)] font-medium leading-[1.04] tracking-[-.067em] text-white"
           >
-            Connect your wallet.
-            <span className="mt-1 block bg-gradient-to-r from-violet-100 via-violet-200 to-indigo-200 bg-clip-text text-transparent">
-              Step into HorizonX.
-            </span>
+            {connected ? (
+              <>
+                <span className="block w-full text-left">Wallet connected.</span>
+                <span className="mt-1 block w-full text-left bg-gradient-to-r from-violet-100 via-violet-200 to-indigo-200 bg-clip-text text-transparent">
+                  Your portal to HorizonX.
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="block w-full text-left">Connect your wallet.</span>
+                <span className="mt-1 block w-full text-left bg-gradient-to-r from-violet-100 via-violet-200 to-indigo-200 bg-clip-text text-transparent">
+                  Step into HorizonX.
+                </span>
+              </>
+            )}
           </h2>
 
-          <p className="mt-7 max-w-[570px] text-[14px] leading-[1.95] text-[#aaa6bd] sm:text-[15px]">
-            Your wallet gives you access to the tools and experiences across
-            HorizonX. Explore the platform first, then connect when you are
-            ready to create, manage or participate.
+          <p className="!ml-0 !pl-0 mt-4 block w-full max-w-[650px] self-start text-left text-[13px] leading-[1.65] text-[#aaa6bd] sm:text-[14px]">
+            {connected
+              ? "Seamlessly interact with HorizonX tools and on-chain experiences. Your wallet remains in your control, and every transaction requires your approval."
+              : "Your wallet gives you access to the tools and experiences across HorizonX. Explore the platform first, then connect when you are ready to create, manage or participate."}
           </p>
 
-          <div className="mt-10 grid w-full max-w-[570px] gap-6 border-t border-white/[.09] pt-7 sm:grid-cols-2 sm:gap-8">
-            <div className="flex flex-col items-center">
-              <span className="mb-3 grid h-10 w-10 place-items-center rounded-xl border border-violet-200/15 bg-violet-200/[.06] text-violet-100">
+          <div className="mt-4 grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+            <article className="group flex min-h-[104px] items-center gap-3 rounded-lg border border-white/[.08] bg-white/[.025] px-3 py-3 transition-colors duration-300 hover:border-violet-200/20 hover:bg-white/[.04]">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-emerald-300/15 bg-emerald-300/[.06] text-emerald-200">
                 <ShieldCheck className="h-[18px] w-[18px]" strokeWidth={1.6} />
               </span>
-              <p className="text-[13px] font-semibold text-white">
-                You stay in control
-              </p>
-              <p className="mt-1.5 max-w-[220px] text-[11px] leading-5 text-[#9691a8]">
-                Review wallet requests carefully before approving them.
-              </p>
-            </div>
+              <div className="min-w-0 flex-1 text-left">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-[10px] font-semibold leading-[1.3] text-white">
+                    {connected ? "You stay in control" : "Your keys stay yours"}
+                  </h3>
+                  <span className="shrink-0 font-mono text-[8px] leading-3 text-emerald-300/70">
+                    {connected ? "Approval required" : "Self-custody"}
+                  </span>
+                </div>
+                <p className="mt-1 text-[9px] leading-[1.4] text-left text-[#9691a8]">
+                  Review every transaction in your wallet. HorizonX cannot move funds or approve requests on your behalf.
+                </p>
+              </div>
+            </article>
 
-            <div className="flex flex-col items-center">
-              <span className="mb-3 grid h-10 w-10 place-items-center rounded-xl border border-violet-200/15 bg-violet-200/[.06] text-violet-100">
-                <Wallet className="h-[18px] w-[18px]" strokeWidth={1.6} />
+            <article className="group flex min-h-[104px] items-center gap-3 rounded-lg border border-white/[.08] bg-white/[.025] px-3 py-3 transition-colors duration-300 hover:border-violet-200/20 hover:bg-white/[.04]">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-violet-200/15 bg-violet-200/[.06] text-violet-100">
+                {connected ? (
+                  <Zap className="h-[18px] w-[18px]" strokeWidth={1.6} />
+                ) : (
+                  <Wallet className="h-[18px] w-[18px]" strokeWidth={1.6} />
+                )}
               </span>
-              <p className="text-[13px] font-semibold text-white">
-                Browse at your pace
-              </p>
-              <p className="mt-1.5 max-w-[220px] text-[11px] leading-5 text-[#9691a8]">
-                You can explore HorizonX without connecting a wallet.
-              </p>
-            </div>
+              <div className="min-w-0 flex-1 text-left">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-[10px] font-semibold leading-[1.3] text-white">
+                    {connected ? "Explore the HorizonX ecosystem" : "Browse before connecting"}
+                  </h3>
+                  <span className="shrink-0 font-mono text-[8px] leading-3 text-violet-200/65">
+                    {connected ? "Access enabled" : "No wallet needed"}
+                  </span>
+                </div>
+                <p className="mt-1 text-[9px] leading-[1.4] text-left text-[#9691a8]">
+                  {connected
+                    ? "Move between projects, tokens and launch experiences while keeping transaction approvals in your hands."
+                    : "Explore projects, tokens and launch opportunities without connecting a wallet. Connect only when an action requires it."}
+                </p>
+              </div>
+            </article>
+
+            {connected && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/[.06] bg-black/10 px-4 py-3 font-mono text-[9px] text-white/45">
+                <span className="inline-flex items-center gap-2">
+                  <span className={`h-1.5 w-1.5 rounded-full ${isUnsupportedNetwork ? "bg-amber-400" : "bg-emerald-400"}`} />
+                  {isUnsupportedNetwork ? "Network check required" : "Wallet session active"}
+                </span>
+                <span>Chain ID: {chainId ?? "—"}</span>
+              </div>
+            )}
           </div>
+
+          <p className="mt-4 w-full text-left text-[10px] leading-5 text-[#858096]">
+            Always verify the network, destination address and transaction details before approving a wallet request.
+          </p>
         </div>
       </div>
-
-      <p className="mx-auto mt-12 max-w-3xl text-center text-[10px] leading-5 text-[#777187]">
-        Always review transaction details and network information before
-        approving wallet requests.
-      </p>
     </section>
   );
 }

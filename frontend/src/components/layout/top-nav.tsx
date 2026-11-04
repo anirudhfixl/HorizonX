@@ -5,7 +5,7 @@ import { useModal } from "@/contexts/modal-context";
 import { Loader2, AlertTriangle, Wallet } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
-const PRIMARY_ENTRY_LABELS = new Set(["Explore", "Projects", "Tokens", "Launchpad", "Airdrops"]);
+const PRIMARY_ENTRY_LABELS = new Set(["Explore", "Projects", "Tokens", "Launchpad", "Airdrops", "Staking", "Markets", "Partners", "Account"]);
 
 function Chevron({ open = false }: { open?: boolean }) {
   return (
@@ -33,6 +33,7 @@ export function TopNav() {
   const {
     isConnected,
     isConnecting,
+    isReconnecting,
     isUnsupportedNetwork,
     shortAddress,
     balance,
@@ -46,6 +47,42 @@ export function TopNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [navTheme, setNavTheme] = useState<"light" | "dark">("dark");
   const navRef = useRef<HTMLElement>(null);
+
+  // Retain the last confirmed wallet display during short Wagmi reconnects.
+  // Route navigation must never make a connected wallet flash "Connect Wallet"
+  // or reset its displayed balance while the provider refreshes.
+  const lastConnectedWallet = useRef<{ address: string; balance: string } | null>(null);
+  const [confirmedDisconnected, setConfirmedDisconnected] = useState(true);
+
+  useEffect(() => {
+    if (isConnected && shortAddress) {
+      lastConnectedWallet.current = {
+        address: shortAddress,
+        balance: balance !== "0.0000" || !lastConnectedWallet.current
+          ? balance
+          : lastConnectedWallet.current.balance,
+      };
+      setConfirmedDisconnected(false);
+      return;
+    }
+
+    if (isConnecting || isReconnecting) return;
+
+    // A brief grace period filters transient disconnect states while changing
+    // routes, without keeping a disconnected wallet visible indefinitely.
+    const timeout = window.setTimeout(() => {
+      lastConnectedWallet.current = null;
+      setConfirmedDisconnected(true);
+    }, 350);
+    return () => window.clearTimeout(timeout);
+  }, [isConnected, isConnecting, isReconnecting, shortAddress, balance]);
+
+  const retainedWallet = !confirmedDisconnected ? lastConnectedWallet.current : null;
+  const displayConnected = isConnected || Boolean(retainedWallet);
+  const displayAddress = isConnected ? shortAddress : retainedWallet?.address;
+  const displayBalance = isConnected
+    ? balance === "0.0000" && retainedWallet ? retainedWallet.balance : balance
+    : retainedWallet?.balance;
 
   // Keep wallet-dependent markup identical during SSR and the first client render.
   // Wagmi may restore a wallet session immediately on the client, so render its
@@ -229,7 +266,7 @@ export function TopNav() {
           </button>
 
           {/* Real ProMiners Connect Wallet Control (41px height) */}
-          {mounted ? (isConnecting ? (
+          {mounted ? (!isConnected && isConnecting ? (
             <button
               type="button"
               className="wallet-btn wallet-btn-loading"
@@ -239,7 +276,7 @@ export function TopNav() {
               <Loader2 className="h-4 w-4 animate-spin text-primary" />
               <span>Connecting...</span>
             </button>
-          ) : isUnsupportedNetwork ? (
+          ) : isUnsupportedNetwork && !displayConnected ? (
             <button
               type="button"
               className="wallet-btn wallet-btn-warning"
@@ -249,7 +286,7 @@ export function TopNav() {
               <AlertTriangle className="h-4 w-4" />
               <span>Switch to Sepolia</span>
             </button>
-          ) : isConnected ? (
+          ) : displayConnected ? (
             <button
               type="button"
               className="wallet-btn wallet-btn-connected"
@@ -257,8 +294,8 @@ export function TopNav() {
               title="View wallet details"
             >
               <span className="wallet-dot" />
-              <span className="wallet-balance">{balance} ETH</span>
-              <span className="wallet-address">{shortAddress}</span>
+              <span className="wallet-balance">{displayBalance} ETH</span>
+              <span className="wallet-address">{displayAddress}</span>
             </button>
           ) : (
             <button

@@ -1,5 +1,5 @@
 // src/types/index.ts
-// Shared TypeScript types for ProMiners
+// Shared TypeScript types for HorizonX
 
 // ─── Status types ─────────────────────────────────────────────────────────────
 

@@ -625,7 +625,7 @@ export function PresaleDetail({
                   <p className="text-muted-foreground leading-relaxed">
                     {provenance === "session"
                       ? "This presale was configured and simulated during your local browser session. Saved in client storage (pm_session_launches_v1), under Ethereum Sepolia scope (D-04)."
-                      : "This record is a pre-seeded demonstration launch from the ProMiners catalog. No real blockchain transactions or escrow deposits exist."}
+                      : "This record is a pre-seeded demonstration launch from the HorizonX catalog. No real blockchain transactions or escrow deposits exist."}
                   </p>
                 </div>
               </div>
@@ -914,7 +914,7 @@ export function PresaleDetail({
               aside={<span className="text-xs text-muted-foreground">Transparent disclosure under D-04</span>}
             />
             <p className="mt-2 text-sm text-muted-foreground">
-              ProMiners strictly preserves catalog integrity and never invents missing parameters. The following terms are not defined in the stored record:
+              HorizonX strictly preserves catalog integrity and never invents missing parameters. The following terms are not defined in the stored record:
             </p>
 
             <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -1087,7 +1087,7 @@ export function PresaleDetail({
                 </div>
                 <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
                   <p>
-                    Under standard ProMiners smart contracts, if a presale fails to reach its designated soft cap by the closing date, or is explicitly cancelled by the creator, all participants are entitled to claim a 100% refund of their contributed ETH without platform fees.
+                    Under standard HorizonX smart contracts, if a presale fails to reach its designated soft cap by the closing date, or is explicitly cancelled by the creator, all participants are entitled to claim a 100% refund of their contributed ETH without platform fees.
                   </p>
                   <p className="pt-1">
                     <strong className="text-foreground">Current State:</strong>{" "}

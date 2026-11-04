@@ -13,15 +13,15 @@ export function LaunchpadSectionNav() {
   const createPresale = pathname === "/launchpad/presales/create";
   const createFair = pathname === "/launchpad/launches/create";
   return (
-    <nav className="lp-section-nav" aria-label="Launchpad workspace">
-      <div className="lp-section-nav__links">
+    <nav className="lp-section-nav hx-workspace-nav" aria-label="Launchpad workspace">
+      <div className="lp-section-nav__links hx-workspace-nav__links">
         {sections.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `lp-section-nav__link${isActive ? " is-active" : ""}`}>
             {item.label}
           </NavLink>
         ))}
       </div>
-      <div className="lp-section-nav__actions">
+      <div className="lp-section-nav__actions hx-workspace-nav__actions">
         <Link to="/tokens/explore" className="lp-section-nav__crosslink">Tokens</Link>
         <Link to="/airdrops" className="lp-section-nav__crosslink">Airdrops</Link>
         <Link to="/launchpad/presales/create" className={`lp-section-nav__create${createPresale ? " is-active" : ""}`}>Create presale <span aria-hidden="true">＋</span></Link>

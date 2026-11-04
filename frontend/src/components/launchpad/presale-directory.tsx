@@ -418,8 +418,8 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
           </h1>
           <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
             {mode === "canonical"
-              ? "Browse and discover verified initial token presales with transparent caps and non-custodial lockups on ProMiners."
-              : "Explore live, scheduled, and past presales across the ProMiners ecosystem with non-custodial escrow."}
+              ? "Browse and discover verified initial token presales with transparent caps and non-custodial lockups on HorizonX."
+              : "Explore live, scheduled, and past presales across the HorizonX ecosystem with non-custodial escrow."}
           </p>
         </div>
         <Button

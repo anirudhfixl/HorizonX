@@ -11,8 +11,10 @@ import { ScrollToTop } from "./scroll-to-top";
 import { Outlet, useLocation } from "react-router-dom";
 
 export function AppShell() {
-  const pathname = useLocation().pathname;
+  const { pathname } = useLocation();
   const isHomeRoute = pathname === "/";
+  const isExploreRoute = pathname === "/explore" || pathname.startsWith("/explore/");
+  const isProjectsRoute = pathname === "/projects" || pathname.startsWith("/projects/");
   const theme = getRouteTheme(pathname);
 
   useEffect(() => {
@@ -25,7 +27,7 @@ export function AppShell() {
         <ModalProvider>
           <div
             data-theme={theme}
-            className={`route-shell relative min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/25 selection:text-primary-foreground transition-colors duration-300${isHomeRoute ? " home-route" : ""}`}
+            className={`route-shell relative min-h-screen flex flex-col bg-background text-foreground antialiased selection:bg-primary/25 selection:text-primary-foreground transition-colors duration-300${isHomeRoute ? " home-route" : ""}${isExploreRoute ? " explore-route" : ""}${isProjectsRoute ? " projects-route" : ""}`}
           >
 
             <ScrollToTop />
@@ -34,10 +36,24 @@ export function AppShell() {
               <TopNav />
             </Suspense>
 
-            <main className="flex-1 pt-[84px] sm:pt-[84px] pb-0">
-              <Suspense fallback={<div className="p-8 text-center text-xs text-muted-foreground">Loading...</div>}>
-                <Outlet />
-              </Suspense>
+            <main className={`route-main min-w-0 flex-1 ${isHomeRoute ? "pt-0" : "pt-[84px] sm:pt-[84px]"} pb-0`}>
+<div key={pathname} className="route-page-transition">
+                <Suspense
+                  fallback={
+                    <div className="route-suspense-fallback" aria-label="Loading page">
+                      <div className="route-skeleton route-skeleton-heading" />
+                      <div className="route-skeleton route-skeleton-copy" />
+                      <div className="route-skeleton-grid">
+                        <div className="route-skeleton route-skeleton-card" />
+                        <div className="route-skeleton route-skeleton-card" />
+                        <div className="route-skeleton route-skeleton-card" />
+                      </div>
+                    </div>
+                  }
+                >
+                  <Outlet />
+                </Suspense>
+              </div>
             </main>
 
             <Footer />

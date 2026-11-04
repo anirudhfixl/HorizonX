@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { StakingWorkspaceHeader } from "@/components/staking/staking-section-nav";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -290,7 +291,8 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className={mode === "canonical" ? "staking-page space-y-8" : "mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8"}>
+      {mode === "canonical" && <StakingWorkspaceHeader items={[{ label: "Staking", to: "/staking" }, { label: "Pools" }]} />}
       {/* 1. Page Header */}
       <PageHeader
         title={mode === "canonical" ? "All Staking Pools" : "Staking Pool Discovery"}
@@ -298,17 +300,6 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
           mode === "canonical"
             ? "Browse verified non-custodial staking vaults, single-asset reward pools, and ecosystem yield programs."
             : "Earn simulated yields by staking project tokens in verified, non-custodial reward vaults across the ecosystem."
-        }
-        breadcrumbs={
-          mode === "canonical"
-            ? [
-                { label: "Staking", href: "/staking" },
-                { label: "Pools" },
-              ]
-            : [
-                { label: "Explore", href: "/explore" },
-                { label: "Staking" },
-              ]
         }
         actions={
           <div className="flex items-center gap-2">

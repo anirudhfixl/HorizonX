@@ -418,7 +418,7 @@ export function TokenProfile({
               Where ${token.symbol} is Used
             </h2>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-              Presales, fair launches, airdrops, and staking pools registered in the ProMiners platform that reference this token or its parent project.
+              Presales, fair launches, airdrops, and staking pools registered in the HorizonX platform that reference this token or its parent project.
             </p>
           </div>
 

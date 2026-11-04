@@ -143,7 +143,7 @@ export function AirdropCreationWizard() {
   const [lotteryWinners, setLotteryWinners] = useState("25");
   const [referralBonus, setReferralBonus] = useState("50");
   const [questProvider, setQuestProvider] = useState("Galxe / On-chain Proof");
-  const [governanceProposal, setGovernanceProposal] = useState("ProMiners DAO Proposal #14");
+  const [governanceProposal, setGovernanceProposal] = useState("HorizonX DAO Proposal #14");
   const [recurringEpochs, setRecurringEpochs] = useState("4");
   const [legacyContract, setLegacyContract] = useState("0x3918...4920 (V1 Distributor)");
 
@@ -386,7 +386,7 @@ export function AirdropCreationWizard() {
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. ProMiners Genesis Early Adopters Airdrop"
+                  placeholder="e.g. HorizonX Genesis Early Adopters Airdrop"
                   className="bg-secondary/30 border-border/60 text-xs"
                 />
               </div>

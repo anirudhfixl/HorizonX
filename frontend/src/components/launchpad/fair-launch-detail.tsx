@@ -616,7 +616,7 @@ export function FairLaunchDetail({
                   <p className="text-muted-foreground leading-relaxed">
                     {provenance === "session"
                       ? "This fair launch was configured and simulated during your local browser session. Saved in client storage (pm_session_launches_v1), under Ethereum Sepolia scope (D-04)."
-                      : "This record is a pre-seeded demonstration launch from the ProMiners catalog. No real blockchain transactions or escrow deposits exist."}
+                      : "This record is a pre-seeded demonstration launch from the HorizonX catalog. No real blockchain transactions or escrow deposits exist."}
                   </p>
                 </div>
               </div>
@@ -943,7 +943,7 @@ export function FairLaunchDetail({
               </h3>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Unlike a fixed-price presale, a ProMiners Fair Launch has <strong className="text-foreground">no hard cap</strong> and <strong className="text-foreground">no fixed token price</strong>.
+              Unlike a fixed-price presale, a HorizonX Fair Launch has <strong className="text-foreground">no hard cap</strong> and <strong className="text-foreground">no fixed token price</strong>.
               All participants contribute into a unified pool during the live window. Once the launch concludes, the total selling allocation is distributed proportionally based on each participant&apos;s share of the final total raised:
             </p>
             <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5 font-mono text-xs sm:text-sm text-primary text-center">
@@ -963,7 +963,7 @@ export function FairLaunchDetail({
               aside={<span className="text-xs text-muted-foreground">Transparent disclosure under D-04</span>}
             />
             <p className="mt-2 text-sm text-muted-foreground">
-              ProMiners strictly preserves catalog integrity and never invents missing parameters. The following terms are not defined in the stored record:
+              HorizonX strictly preserves catalog integrity and never invents missing parameters. The following terms are not defined in the stored record:
             </p>
 
             <ul className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -1136,7 +1136,7 @@ export function FairLaunchDetail({
                 </div>
                 <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
                   <p>
-                    Under standard ProMiners fair launch pool contracts, if the launch concludes without reaching the soft cap threshold ({launch.softCap ?? "minimum cap"}), or if the creator cancels the simulation, all participants are entitled to claim 100% of their contributed funds without fees.
+                    Under standard HorizonX fair launch pool contracts, if the launch concludes without reaching the soft cap threshold ({launch.softCap ?? "minimum cap"}), or if the creator cancels the simulation, all participants are entitled to claim 100% of their contributed funds without fees.
                   </p>
                   <p className="pt-1">
                     <strong className="text-foreground">Current State:</strong>{" "}

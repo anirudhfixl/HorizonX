@@ -1,5 +1,5 @@
 /**
- * ProMiners — Phase 3-F: Token Administration & Sub-Routes Tests
+ * HorizonX — Phase 3-F: Token Administration & Sub-Routes Tests
  *
  * Verifies:
  * 1. Static parameter generation for /tokens/[id]/contract and /tokens/[id]/activity
@@ -30,7 +30,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================================");
-console.log("PROMINERS — PHASE 3-F TOKEN ADMINISTRATION & SUB-ROUTES TESTS");
+console.log("HORIZONX — PHASE 3-F TOKEN ADMINISTRATION & SUB-ROUTES TESTS");
 console.log("==========================================================\n");
 
 const D04_CHAIN_ID = 11155111;

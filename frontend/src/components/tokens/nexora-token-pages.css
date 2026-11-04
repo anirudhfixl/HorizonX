@@ -21,7 +21,7 @@
 @media(max-width:850px){.nxt-page{padding:16px 16px 36px}.nxt-market-head{align-items:flex-start;flex-direction:column}.nxt-head-meta{flex-wrap:wrap}.nxt-stat-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.nxt-stat-strip article:nth-child(2){border-right:0}.nxt-stat-strip article:nth-child(-n+2){border-bottom:1px solid var(--nxt-line)}.nxt-insights{grid-template-columns:1fr}.nxt-insights>.nxt-panel:last-child{grid-column:auto}.nxt-controls{grid-template-columns:minmax(0,1fr) 1fr}.nxt-search{grid-column:1/-1}.nxt-direction{grid-column:1/-1}.nxt-detail-grid{grid-template-columns:1fr}.nxt-detail-aside{display:grid;grid-template-columns:1fr 1fr}.nxt-detail-hero{align-items:flex-start;flex-direction:column}.nxt-detail-quote{align-items:flex-start}.nxt-detail-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.nxt-page{padding:12px 10px 28px}.nxt-market-head h1{font-size:25px}.nxt-head-meta{font-size:8px}.nxt-head-meta li{padding:0 7px}.nxt-tape{grid-template-columns:repeat(2,minmax(0,1fr))}.nxt-tape>a:nth-child(2n){border-right:0}.nxt-tape>a{padding:8px 6px;font-size:9px}.nxt-stat-strip strong{font-size:17px}.nxt-movers{grid-template-columns:1fr}.nxt-controls{grid-template-columns:1fr 1fr}.nxt-controls select{width:100%}.nxt-control-foot{flex-wrap:wrap}.nxt-layout{margin-left:0}.nxt-table-foot{font-size:7px}.nxt-detail-identity{align-items:flex-start}.nxt-detail-identity h1{font-size:23px}.nxt-detail-identity p{font-size:10px}.nxt-detail-quote>strong{font-size:23px}.nxt-detail-aside{grid-template-columns:1fr}.nxt-chart-foot span:nth-child(2){display:none}.nxt-profile-grid{grid-template-columns:90px minmax(0,1fr)}.nxt-detail-bottom{gap:10px;flex-direction:column}}
 
-/* Restored ProMiners actions and catalogue controls, styled to the NEXORA terminal. */
+/* Restored HorizonX actions and catalogue controls, styled to the NEXORA terminal. */
 .nxt-title-block{min-width:0}.nxt-header-actions{display:flex;gap:7px;margin-top:10px}.nxt-header-actions a{display:inline-flex;align-items:center;gap:6px;height:29px;padding:0 10px;border:1px solid #303b54;border-radius:5px;background:#17100a;color:#c5cde0;font-size:9px;font-weight:600}.nxt-header-actions a:last-child{background:#a99aff;color:#0b0d16;border-color:#a99aff}.nxt-header-actions svg{width:12px;height:12px}.nxt-controls{grid-template-columns:minmax(180px,1.7fr) repeat(4,minmax(105px,.7fr)) minmax(125px,.8fr) auto}.nxt-controls select{width:100%}.nxt-contract-cell{display:flex;align-items:center;gap:3px;color:#aab6ce;font:8px var(--font-mono)}.nxt-contract-cell>a{display:inline-flex;align-items:center;color:#8f9bb5;padding:3px}.nxt-contract-cell>a svg{width:10px;height:10px}.nxt-contract-cell .nxt-copy{width:20px;height:20px;padding:0}.nxt-contract-cell .nxt-copy svg{width:11px;height:11px}.nxt-muted-dash{color:#64718a}.nxt-status-badge{padding:2px 6px!important;font-size:8px!important;white-space:nowrap}.nxt-verification{display:inline-flex;align-items:center;gap:4px;color:#8c98b0;font:8px var(--font-mono);white-space:nowrap;text-transform:capitalize}.nxt-verification svg{width:10px;height:10px}.nxt-verification.verified{color:#70d8b1}.nxt-verification.source{color:#a99aff}.nxt-verification.reviewed{color:#79aef5}.nxt-page-size{display:inline-flex;align-items:center;gap:5px;color:var(--nxt-muted);font:9px var(--font-mono)}.nxt-page-size select{padding:4px 6px;border:1px solid #27324a;border-radius:4px;background:#17100a;color:var(--nxt-text);font:9px var(--font-mono)}.nxt-pagination{display:flex;justify-content:space-between;align-items:center;padding:9px 4px;color:var(--nxt-muted);font:9px var(--font-mono)}.nxt-pagination>div{display:flex;gap:5px}.nxt-pagination button{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border:1px solid #29344b;border-radius:5px;background:#17100a;color:#c1cbe0;font-size:9px}.nxt-pagination button:disabled{opacity:.35;cursor:not-allowed}.nxt-pagination svg{width:11px;height:11px}
 @media(max-width:1450px){.nxt-controls{grid-template-columns:minmax(180px,1fr) repeat(3,minmax(105px,.7fr))}.nxt-controls select[aria-label="Verification filter"],.nxt-controls select[aria-label="Sort tokens"]{grid-row:2}.nxt-direction{grid-row:2;grid-column:3/-1;justify-self:stretch;justify-content:flex-end}}
 @media(max-width:850px){.nxt-controls{grid-template-columns:1fr 1fr}.nxt-controls select[aria-label="Verification filter"],.nxt-controls select[aria-label="Sort tokens"]{grid-row:auto}.nxt-direction{grid-row:auto;grid-column:1/-1;justify-content:flex-start}.nxt-table{min-width:1380px}}
@@ -206,18 +206,6 @@
   border-color: #414a53;
 }
 
-/* The shared footer remains untouched; only its token-route presentation changes. */
-body:has(.nxt-page:not(.nxt-detail-page)) .route-themed-footer {
-  --hwf-bg: #0b0806 !important;
-  --hwf-ink: #e4ddd4 !important;
-  --hwf-warm: #f59e0b !important;
-  background: #0b0806 !important;
-  border-top: 1px solid rgba(245, 158, 11, 0.12);
-}
-
-body:has(.nxt-page:not(.nxt-detail-page)) .route-themed-footer canvas {
-  opacity: 0;
-}
 
 @media (max-width: 850px) {
   .nxt-page:not(.nxt-detail-page) {
@@ -300,18 +288,6 @@ body:has(.nxt-page:not(.nxt-detail-page)) .route-themed-footer canvas {
   border-color: #51402f;
 }
 
-/* Keep the shared footer's original copy, large halftone wordmark and pointer interaction visible. */
-body:has(.nxt-page:not(.nxt-detail-page)) .route-themed-footer {
-  --hwf-bg: #0b0806 !important;
-  --hwf-ink: #e8dfd4 !important;
-  --hwf-warm: #f08a3c !important;
-  background: #0b0806 !important;
-  border-top: 1px solid rgba(240, 138, 60, 0.14);
-}
-
-body:has(.nxt-page:not(.nxt-detail-page)) .route-themed-footer canvas {
-  opacity: 1 !important;
-}
 
 @media (max-width: 850px) {
   .nxt-page:not(.nxt-detail-page) {
@@ -486,4 +462,77 @@ body:has(.nxt-page:not(.nxt-detail-page)) .route-themed-footer canvas {
   .tk-section-nav__links { width: 100%; gap: 0.85rem; }
   .tk-section-nav__link { min-height: 2.9rem; font-size: 0.82rem; }
   .tk-section-nav__create { align-self: flex-start; }
+}
+
+
+/* HorizonX application theme alignment: token workspace inherits shared graphite surfaces. */
+.nxt-page {
+  --nxt-bg: var(--page-bg);
+  --nxt-panel: var(--surface-primary);
+  --nxt-panel2: var(--surface-elevated);
+  --nxt-line: var(--border-subtle);
+  --nxt-text: var(--text-primary);
+  --nxt-muted: var(--text-muted);
+  --nxt-violet: var(--primary);
+  background: var(--page-bg);
+}
+.nxt-page:not(.nxt-detail-page) .nxt-stat-strip,
+.nxt-page:not(.nxt-detail-page) .nxt-panel,
+.nxt-page:not(.nxt-detail-page) .nxt-directory {
+  background: var(--surface-primary);
+  border-color: var(--border-subtle);
+}
+.nxt-page:not(.nxt-detail-page) .nxt-tape,
+.nxt-page:not(.nxt-detail-page) .nxt-table thead th {
+  background: var(--surface-primary);
+  border-color: var(--border-subtle);
+}
+.nxt-page:not(.nxt-detail-page) .nxt-search,
+.nxt-page:not(.nxt-detail-page) .nxt-controls select,
+.nxt-page:not(.nxt-detail-page) .nxt-direction,
+.nxt-page:not(.nxt-detail-page) .nxt-page-size select,
+.nxt-page:not(.nxt-detail-page) .nxt-control-foot > button,
+.nxt-page:not(.nxt-detail-page) .nxt-layout button {
+  background: var(--surface-elevated);
+  border-color: var(--border-strong);
+}
+.nxt-page:not(.nxt-detail-page) .nxt-table td {
+  background: var(--surface-primary);
+  border-color: var(--border-subtle);
+}
+.nxt-page:not(.nxt-detail-page) .nxt-table tbody tr:hover td {
+  background: var(--surface-elevated);
+  border-color: var(--border-strong);
+}
+
+/* Detail and secondary token surfaces follow the same graphite tokens as the dashboard. */
+.nxt-page .nxt-detail-hero,
+.nxt-page .nxt-detail-metrics article {
+  background: var(--surface-primary);
+  border-color: var(--border-subtle);
+}
+.nxt-page .nxt-detail-quote button,
+.nxt-page .nxt-chart-top button,
+.nxt-page .nxt-header-actions a,
+.nxt-page .nxt-page-size select,
+.nxt-page .nxt-pagination button,
+.nxt-page .nxt-direction,
+.nxt-page .nxt-control-foot > button,
+.nxt-page .nxt-layout button {
+  background: var(--surface-elevated);
+  border-color: var(--border-strong);
+}
+.nxt-page .nxt-header-actions a:last-child {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
+.nxt-page .nxt-table thead th,
+.nxt-page .nxt-table td {
+  background: var(--surface-primary);
+  border-color: var(--border-subtle);
+}
+.nxt-page .nxt-table tbody tr:hover td {
+  background: var(--surface-elevated);
+  border-color: var(--border-strong);
 }

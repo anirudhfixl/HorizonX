@@ -206,7 +206,7 @@ void main(void) {
           </h1>
 
           <p className="mx-auto max-w-2xl text-sm font-light leading-relaxed text-orange-50/80 sm:text-base md:text-lg">
-            Explore the ProMiners token directory, compare projects across networks, and review token details and transparent market snapshots in one place.
+            Explore the HorizonX token directory, compare projects across networks, and review token details and transparent market snapshots in one place.
           </p>
 
           <div className="flex flex-col justify-center gap-3 pt-2 sm:flex-row sm:gap-4">

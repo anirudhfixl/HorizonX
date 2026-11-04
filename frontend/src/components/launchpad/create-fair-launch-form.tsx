@@ -234,7 +234,7 @@ export function CreateFairLaunchForm() {
       id: newId,
       kind: "fair",
       title: draft.title?.trim() || `${effectiveTokenName} Fair Launch`,
-      description: draft.description?.trim() || `Fair launch offering for ${effectiveTokenName} ($${effectiveSymbol}) simulated via ProMiners.`,
+      description: draft.description?.trim() || `Fair launch offering for ${effectiveTokenName} ($${effectiveSymbol}) simulated via HorizonX.`,
       category: effectiveCategory,
       tokenId: selectedTokenInfo?.tokenId || catalog?.id || draft.tokenAddress.toLowerCase(),
       tokenSymbol: effectiveSymbol,

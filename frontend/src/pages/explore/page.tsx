@@ -2,6 +2,7 @@ import "./explore-page.css";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ExploreOrbitalHero } from "@/components/explore/orbital-explore-hero";
+import AxleBloom from "@/components/explore/axle-bloom";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
@@ -368,15 +369,15 @@ export default function ExploreHubPage() {
                 <div className="hx-project-spotlight__fade-x" />
                 <div className="hx-project-spotlight__fade-y" />
                 <div className="hx-project-spotlight__inner">
-                  <div className="hx-project-spotlight__projects">
-                    <ProjectList projects={PROJECTS.slice(0, 6)} showTokens />
+                  <div className="hx-project-spotlight__projects hx-project-spotlight__wheel">
+                    <AxleBloom />
                   </div>
                   <div className="hx-project-spotlight__intro">
                     <p className="hx-project-spotlight__eyebrow">The network builders</p>
                     <h2>Projects &amp; <span>Protocols</span></h2>
                     <p className="hx-project-spotlight__description">
                       Discover the teams building the infrastructure, applications and protocols
-                      that connect the ProMiners ecosystem.
+                      that connect the HorizonX ecosystem.
                     </p>
                     <div className="hx-project-spotlight__facts">
                       <div><span>Projects</span><strong>{categoryCounts.projects}</strong></div>
@@ -434,7 +435,7 @@ export default function ExploreHubPage() {
             {/* E. Closing call to action: a single band, no nested boxes */}
             <section className="flex flex-col gap-6 border-t border-border/50 pt-10 md:flex-row md:items-center md:justify-between">
               <div className="max-w-xl space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Build on ProMiners</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Build on HorizonX</p>
                 <h2 className="text-xl font-bold text-foreground sm:text-2xl">
                   Ready to launch your token or list your protocol?
                 </h2>
@@ -543,20 +544,6 @@ function SectionHead({
         {linkLabel} <ArrowUpRight className="h-3 w-3" />
       </Link>
     </div>
-  );
-}
-
-function Monogram({ label, accent }: { label: string; accent: Accent }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-mono text-sm font-bold",
-        ACCENTS[accent].iconBox
-      )}
-    >
-      {label.charAt(0).toUpperCase()}
-    </span>
   );
 }
 
@@ -707,36 +694,6 @@ function ProjectSpotlightWaves() {
   }, []);
 
   return <canvas ref={canvasRef} className="hx-project-spotlight__canvas" aria-hidden="true" />;
-}
-
-function ProjectList({ projects, showTokens }: { projects: (typeof PROJECTS)[number][]; showTokens?: boolean }) {
-  return (
-    <ul className="hx-project-list">
-      {projects.map((proj, index) => (
-        <li key={proj.id}>
-          <Link to={`/projects/${proj.id}`} className="hx-project-row group">
-            <span className="hx-project-row__index">{String(index + 1).padStart(2, "0")}</span>
-            <Monogram label={proj.name} accent="cyan" />
-            <span className="hx-project-row__copy">
-              <span className="hx-project-row__title-line">
-                <span className="hx-project-row__title">{proj.name}</span>
-                {proj.verificationStatus === "audit_available" && (
-                  <span className="hx-project-row__audit"><ShieldCheck className="h-3.5 w-3.5" /> Audit available</span>
-                )}
-              </span>
-              <span className="hx-project-row__description">{proj.description}</span>
-              {showTokens && proj.tokenIds.length > 0 && (
-                <span className="hx-project-row__tokens">
-                  {proj.tokenIds.map((tokenId) => <span key={tokenId}>${tokenId.toUpperCase()}</span>)}
-                </span>
-              )}
-            </span>
-            <ArrowUpRight className="hx-project-row__arrow" aria-hidden="true" />
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 function FeaturedRaise({ ps }: { ps: (typeof PRESALES)[number] }) {

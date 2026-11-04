@@ -124,7 +124,7 @@ export function WalletDetailsModal() {
               <span>Unsupported Network Detected ({chainId || "Unknown Chain"})</span>
             </div>
             <p className="text-[11px] text-muted-foreground leading-relaxed">
-              ProMiners Milestone 1-B exclusively operates on the Ethereum Sepolia Testnet (Chain ID: 11155111). Please switch networks to proceed.
+              HorizonX Milestone 1-B exclusively operates on the Ethereum Sepolia Testnet (Chain ID: 11155111). Please switch networks to proceed.
             </p>
             <Button
               size="sm"

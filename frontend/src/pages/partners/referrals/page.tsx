@@ -1,17 +1,16 @@
 import React, { useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
-import { useWallet } from "@/contexts/wallet-context";
-import { useModal } from "@/contexts/modal-context";
 import { toast } from "sonner";
-import { Copy, Check, Share2, Wallet } from "lucide-react";
+import { useWallet } from "@/contexts/wallet-context";
+import { PartnersWorkspaceHeader } from "@/components/partners/partners-section-nav";
+import { Copy, Check } from "lucide-react";
 
 export default function PartnerReferralsPage() {
-  const { isConnected, shortAddress } = useWallet();
-  const { openModal } = useModal();
+  const { shortAddress } = useWallet();
   const [copied, setCopied] = useState(false);
 
-  const referralLink = `https://prominers.org/launchpad?ref=${shortAddress || "0xDEMO"}`;
+  const referralLink = `${window.location.origin}/launchpad?ref=${shortAddress}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralLink);
@@ -21,14 +20,11 @@ export default function PartnerReferralsPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <main className="pt-page-shell space-y-8">
+      <PartnersWorkspaceHeader items={[{ label: "Partners", to: "/partners" }, { label: "Referrals" }]} />
       <PageHeader
         title="Referral Links & Attribution"
         description="Share your unique on-chain partner link to earn automatic protocol commission on new presales."
-        breadcrumbs={[
-          { label: "Partners", href: "/partners" },
-          { label: "Referrals" },
-        ]}
       />
 
       <div className="rounded-2xl border border-border/60 bg-card/60 p-6 sm:p-8 backdrop-blur-md space-y-6">
@@ -58,6 +54,6 @@ export default function PartnerReferralsPage() {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

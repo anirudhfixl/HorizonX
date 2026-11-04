@@ -1,5 +1,5 @@
 /**
- * ProMiners — Token module data provenance tests.
+ * HorizonX — Token module data provenance tests.
  *
  * Verifies:
  * 1. All four provenance kinds are defined with a label and description.
@@ -29,7 +29,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================================");
-console.log("PROMINERS — TOKEN DATA PROVENANCE TESTS");
+console.log("HORIZONX — TOKEN DATA PROVENANCE TESTS");
 console.log("==========================================================\n");
 
 // --- 1. Metadata ---

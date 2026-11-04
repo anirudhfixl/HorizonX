@@ -1,23 +1,19 @@
 import React from "react";
 import { PageHeader } from "@/components/shared/page-header";
-import { MetricCard } from "@/components/shared/metric-card";
 import { Button } from "@/components/ui/button";
+import { MetricCard } from "@/components/shared/metric-card";
 import { TOKENS } from "@/data";
 import { LineChart, TrendingUp, Sparkles, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { MarketWorkspaceHeader } from "@/components/market/market-section-nav";
 
 export default function ExchangeDashboardPage() {
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+    <div className="mk-page-shell space-y-10">
+      <MarketWorkspaceHeader items={[{ label: "Markets" }, { label: "Overview" }]} />
       <PageHeader
         title="Markets & Analytics"
         description="Demonstration market telemetry, simulated liquidity analytics, price indices, and trading pairs."
-        breadcrumbs={[{ label: "Markets" }]}
-        actions={
-          <Button asChild variant="outline" size="sm" className="text-xs border-border/60">
-            <Link to="/exchange/watchlist">Watchlist</Link>
-          </Button>
-        }
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

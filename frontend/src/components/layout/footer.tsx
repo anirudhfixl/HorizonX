@@ -3,10 +3,8 @@ import HalftoneWordmarkFooter, {
   FooterColumn,
 } from "@/components/ui/halftone-wordmark-footer";
 import { FOOTER_NAV } from "@/data";
-import { useLocation } from "react-router-dom";
 
 export function Footer() {
-  const isHomeRoute = useLocation().pathname === "/";
   const columns: FooterColumn[] = Object.entries(FOOTER_NAV).map(
     ([title, links]) => ({
       title,
@@ -19,18 +17,16 @@ export function Footer() {
 
   return (
     <HalftoneWordmarkFooter
-      wordmark="Horizon X"
-      label="PROMINERS"
+      wordmark="HorizonX"
+      label="HORIZONX"
       meta="© 2026 • BUILDING THE OPEN WEB"
       preset="night"
-      palette={isHomeRoute ? { background: "transparent" } : undefined}
       height="490px"
       dotGap={6}
       radius={95}
       crop={0.19}
       grain={0}
       columns={columns}
-      backToTop={true}
       className="route-themed-footer"
     />
   );

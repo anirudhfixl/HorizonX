@@ -533,7 +533,7 @@ export function TokenCreationWizard() {
                 totalSupply,
                 totalSupplyBaseUnits: baseUnitsResult.formattedBaseUnits,
                 category,
-                description: description.trim() || "Ecosystem asset deployed via ProMiners simulation wizard.",
+                description: description.trim() || "Ecosystem asset deployed via HorizonX simulation wizard.",
                 network: "Ethereum Sepolia",
                 chainId: 11155111,
                 contractAddress: contractAddr,

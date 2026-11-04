@@ -1,10 +1,12 @@
 import React from "react";
+import { AccountSectionNav } from "@/components/account/account-section-nav";
 import { PageHeader } from "@/components/shared/page-header";
 import { ShieldCheck, AlertCircle, Lock } from "lucide-react";
 
 export default function AccountVerificationPage() {
   return (
-    <div className="mx-auto w-full max-w-[1800px] px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="mx-0 w-full max-w-none px-[clamp(1rem,2.25vw,2.5rem)] pt-0 pb-8 space-y-8">
+      <AccountSectionNav />
       <PageHeader
         title="Identity & Trust Verification"
         description="Verification levels for launchpad creators, project owners, and compliant token distributions."

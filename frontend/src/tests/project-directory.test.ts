@@ -10,7 +10,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log("\n==========================================");
-console.log("PROMINERS — MILESTONE 2-C PROJECT DIRECTORY TESTS");
+console.log("HORIZONX — MILESTONE 2-C PROJECT DIRECTORY TESTS");
 console.log("==========================================");
 
 // --- 1. Data Integrity & Schema ---
@@ -43,9 +43,9 @@ console.log("\n--- 2. Search Functionality ---");
 
 // Search by full name
 const searchByName = MOCK_PROJECTS.filter((p) =>
-  p.name.toLowerCase().includes("prominers foundation".toLowerCase())
+  p.name.toLowerCase().includes("horizonx foundation".toLowerCase())
 );
-assert(searchByName.length === 1 && searchByName[0].id === "prominers-dao", "Search by full name 'ProMiners Foundation' matches prominers-dao");
+assert(searchByName.length === 1 && searchByName[0].id === "prominers-dao", "Search by full name 'HorizonX Foundation' matches prominers-dao");
 
 // Partial case-insensitive search
 const searchPartial = MOCK_PROJECTS.filter((p) =>
@@ -71,7 +71,7 @@ const searchByTokenSymbol = (symbolQuery: string) => {
 };
 
 const tokenSearchPMIN = searchByTokenSymbol("PMIN");
-assert(tokenSearchPMIN.length === 1 && tokenSearchPMIN[0].id === "prominers-dao", "Search by linked token symbol 'PMIN' finds ProMiners Foundation");
+assert(tokenSearchPMIN.length === 1 && tokenSearchPMIN[0].id === "prominers-dao", "Search by linked token symbol 'PMIN' finds HorizonX Foundation");
 
 const tokenSearchAURA = searchByTokenSymbol("AURA");
 assert(tokenSearchAURA.length === 1 && tokenSearchAURA[0].id === "aurora-labs", "Search by linked token symbol 'AURA' finds Aurora Distributed Systems");

@@ -45,7 +45,7 @@ export function ExploreOrbitalHero() {
           <div className="explore-hero-copy">
             <div className="explore-hero-eyebrow">
               <span className="explore-hero-eyebrow-dot" aria-hidden="true" />
-              THE PROMINERS DISCOVERY NETWORK
+              THE HORIZONX DISCOVERY NETWORK
             </div>
 
             <h1 id="explore-hero-title">
