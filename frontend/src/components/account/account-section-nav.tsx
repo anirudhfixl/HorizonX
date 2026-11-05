@@ -1,3 +1,4 @@
+import { WorkspaceNavPortal } from "@/components/layout/workspace-nav-portal";
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -15,7 +16,8 @@ const accountSections = [
 export function AccountSectionNav() {
   const { pathname } = useLocation();
   return (
-    <nav className="tk-section-nav hx-workspace-nav" aria-label="Account workspace">
+    <WorkspaceNavPortal>
+      <nav className="tk-section-nav hx-workspace-nav" aria-label="Account workspace">
       <div className="tk-section-nav__links hx-workspace-nav__links">
         {accountSections.map((item) => (
           <NavLink
@@ -31,5 +33,6 @@ export function AccountSectionNav() {
         ))}
       </div>
     </nav>
+    </WorkspaceNavPortal>
   );
 }

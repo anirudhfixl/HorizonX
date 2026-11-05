@@ -1,3 +1,4 @@
+import { WorkspaceNavPortal } from "@/components/layout/workspace-nav-portal";
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
@@ -14,7 +15,8 @@ export function AirdropSectionNav() {
   const { pathname } = useLocation();
   const createActive = pathname === "/airdrops/campaigns/create";
   return (
-    <nav className="ad-section-nav hx-workspace-nav" aria-label="Airdrop workspace">
+    <WorkspaceNavPortal>
+      <nav className="ad-section-nav hx-workspace-nav" aria-label="Airdrop workspace">
       <div className="ad-section-nav__links hx-workspace-nav__links">
         {sections.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end}
@@ -31,6 +33,7 @@ export function AirdropSectionNav() {
         </Link>
       </div>
     </nav>
+    </WorkspaceNavPortal>
   );
 }
 

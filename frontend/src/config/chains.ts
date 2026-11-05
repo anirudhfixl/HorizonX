@@ -25,7 +25,7 @@ export const SEPOLIA_CONFIG: NetworkConfig = {
   icon: "🧪",
   isTestnet: true,
   explorerUrl: "https://sepolia.etherscan.io",
-  rpcUrl: import.meta.env.VITE_SEPOLIA_RPC_URL || undefined,
+  rpcUrl: (typeof import.meta !== "undefined" && import.meta.env?.VITE_SEPOLIA_RPC_URL) || undefined,
 };
 
 /**

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { DataArtwork } from "@/components/shared/data-artwork";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PROJECTS, TOKENS } from "@/data";
@@ -506,7 +507,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                 return (
                   <li key={proj.id} className="group relative border-b border-border/40 py-7 first:pt-2 transition-colors">
                     <div className="flex gap-5">
-                      <Avatar name={proj.name} className={cn("h-16 w-16 rounded-2xl text-lg", tone.tile)} />
+                      <DataArtwork src={(proj as typeof proj & { image?: string }).image} alt={`${proj.name} project`} className="h-28 w-36 shrink-0 rounded-xl border border-border/50" fallbackLabel="Project" />
                       <div className="min-w-0 flex-1 space-y-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">

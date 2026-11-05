@@ -36,6 +36,9 @@ export function AppShell() {
               <TopNav />
             </Suspense>
 
+            {/* One viewport-level glass sheet: blurs scrolling content behind both navbars. */}
+            <div className="hx-navigation-glass-overlay" aria-hidden="true" />
+
             <main className={`route-main min-w-0 flex-1 ${isHomeRoute ? "pt-0" : "pt-[84px] sm:pt-[84px]"} pb-0`}>
 <div key={pathname} className="route-page-transition">
                 <Suspense

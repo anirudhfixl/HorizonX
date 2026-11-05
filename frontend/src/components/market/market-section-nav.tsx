@@ -1,3 +1,4 @@
+import { WorkspaceNavPortal } from "@/components/layout/workspace-nav-portal";
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import "./market-section-nav.css";
@@ -14,7 +15,8 @@ export function MarketSectionNav() {
   const { pathname } = useLocation();
   const isAssetDetail = pathname.startsWith("/exchange/tokens/");
   return (
-    <nav className="mk-section-nav hx-workspace-nav" aria-label="Markets workspace">
+    <WorkspaceNavPortal>
+      <nav className="mk-section-nav hx-workspace-nav" aria-label="Markets workspace">
       <div className="mk-section-nav__links hx-workspace-nav__links">
         {sections.map((item) => {
           const active = item.to === "/exchange/markets"
@@ -33,6 +35,7 @@ export function MarketSectionNav() {
         })}
       </div>
     </nav>
+    </WorkspaceNavPortal>
   );
 }
 

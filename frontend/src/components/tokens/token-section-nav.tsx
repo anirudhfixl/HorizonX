@@ -1,3 +1,4 @@
+import { WorkspaceNavPortal } from "@/components/layout/workspace-nav-portal";
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
@@ -17,7 +18,8 @@ export function TokenSectionNav() {
   const { pathname } = useLocation();
   const isTokenDetail = /^\/tokens\/[^/]+(?:\/(?:contract|activity))?$/.test(pathname) && !["/tokens/create", "/tokens/my", "/tokens/watchlist", "/tokens/explore"].includes(pathname);
   return (
-    <nav className="tk-section-nav hx-workspace-nav" aria-label="Token workspace">
+    <WorkspaceNavPortal>
+      <nav className="tk-section-nav hx-workspace-nav" aria-label="Token workspace">
       <div className="tk-section-nav__links hx-workspace-nav__links">
         {destinations.map((item) => (
           <NavLink
@@ -36,6 +38,7 @@ export function TokenSectionNav() {
         </NavLink>
       </div>
     </nav>
+    </WorkspaceNavPortal>
   );
 }
 

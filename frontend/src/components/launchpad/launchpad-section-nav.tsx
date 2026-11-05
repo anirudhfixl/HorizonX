@@ -1,3 +1,4 @@
+import { WorkspaceNavPortal } from "@/components/layout/workspace-nav-portal";
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
@@ -13,7 +14,8 @@ export function LaunchpadSectionNav() {
   const createPresale = pathname === "/launchpad/presales/create";
   const createFair = pathname === "/launchpad/launches/create";
   return (
-    <nav className="lp-section-nav hx-workspace-nav" aria-label="Launchpad workspace">
+    <WorkspaceNavPortal>
+      <nav className="lp-section-nav hx-workspace-nav" aria-label="Launchpad workspace">
       <div className="lp-section-nav__links hx-workspace-nav__links">
         {sections.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `lp-section-nav__link${isActive ? " is-active" : ""}`}>
@@ -28,6 +30,7 @@ export function LaunchpadSectionNav() {
         <Link to="/launchpad/launches/create" className={`lp-section-nav__create lp-section-nav__create--secondary${createFair ? " is-active" : ""}`}>Create fair launch <span aria-hidden="true">＋</span></Link>
       </div>
     </nav>
+    </WorkspaceNavPortal>
   );
 }
 

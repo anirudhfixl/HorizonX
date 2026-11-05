@@ -3,6 +3,7 @@ import { StakingWorkspaceHeader } from "@/components/staking/staking-section-nav
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { DataArtwork } from "@/components/shared/data-artwork";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { STAKING_POOLS, TOKENS, PROJECTS } from "@/data";
@@ -653,6 +654,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
                 key={pool.id}
                 className="flex flex-col justify-between rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md hover:border-primary/50 transition-all hover:shadow-lg space-y-4"
               >
+                <DataArtwork src={(pool as typeof pool & { image?: string }).image} alt={`${pool.name} staking pool`} className="h-36 w-full rounded-xl border border-border/40" fallbackLabel="Staking pool" />
                 {/* Header: Network, Category & Status */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-2 flex-wrap">

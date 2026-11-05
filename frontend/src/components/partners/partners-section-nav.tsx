@@ -1,3 +1,4 @@
+import { WorkspaceNavPortal } from "@/components/layout/workspace-nav-portal";
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
 import "./partners-section-nav.css";
@@ -11,7 +12,8 @@ type Crumb = { label: string; to?: string };
 
 export function PartnersSectionNav() {
   return (
-    <nav className="pt-section-nav hx-workspace-nav" aria-label="Partners workspace">
+    <WorkspaceNavPortal>
+      <nav className="pt-section-nav hx-workspace-nav" aria-label="Partners workspace">
       <div className="pt-section-nav__links hx-workspace-nav__links">
         {sections.map((item) => (
           <NavLink
@@ -25,6 +27,7 @@ export function PartnersSectionNav() {
         ))}
       </div>
     </nav>
+    </WorkspaceNavPortal>
   );
 }
 

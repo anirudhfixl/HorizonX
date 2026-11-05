@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { DataArtwork } from "@/components/shared/data-artwork";
 import { PRESALES, FAIR_LAUNCHES } from "@/data";
 import { readSessionLaunchesRaw, subscribeSessionLaunches, sessionPresaleToPresale, sessionFairLaunchToFairLaunch } from "@/lib/launch-storage";
 import type { Presale, FairLaunch } from "@/types";
@@ -74,6 +75,7 @@ export interface LaunchEntry {
   allocation?: string;
   participants?: number;
   href: string;
+  image?: string;
 }
 
 export function parseAmount(raw?: string): Amount | null {
@@ -105,6 +107,7 @@ export function buildLaunchEntries(
     softCap: parseAmount(p.softCap),
     participants: p.participantCount,
     href: `/launchpad/presales/${p.id}`,
+    image: (p as Presale & { image?: string }).image,
   }));
   const fair: LaunchEntry[] = fairList.map((f) => ({
     kind: "fair",
@@ -123,6 +126,7 @@ export function buildLaunchEntries(
     allocation: f.totalSelling,
     participants: f.participantCount,
     href: `/launchpad/launches/${f.id}`,
+    image: (f as FairLaunch & { image?: string }).image,
   }));
   return [...presales, ...fair];
 }
@@ -581,6 +585,7 @@ export function LaunchpadHub() {
               const e = g.live[0];
               return <Link to={e.href} onPointerMove={handleLaunchCardPointerMove} onPointerLeave={handleLaunchCardPointerLeave} className="lp-tilt-card group relative flex min-h-[320px] min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-border/80 bg-card/60 p-5 transition-colors hover:border-primary/60 sm:p-7">
                 <div data-tilt-depth="1" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_85%_15%,hsl(var(--primary)/.16),transparent_55%)]" />
+                <DataArtwork src={e.image} alt={`${e.title} launch`} className="relative h-32 w-full rounded-xl border border-border/40" fallbackLabel="Launch artwork" />
                 <div data-tilt-depth="2" className="relative flex flex-wrap items-center justify-between gap-2"><div className="flex flex-wrap items-center gap-2"><StatusBadge status={e.status} /><KindTag kind={e.kind} /><NetworkChip network={e.network} /></div><ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} /></div>
                 <div data-tilt-depth="3" className="relative mt-12 space-y-4">
                   <div><p className="font-mono text-xs text-muted-foreground">{e.tokenId.toUpperCase()} {e.category ? `· ${e.category}` : ""}</p><h3 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-foreground sm:text-3xl group-hover:text-primary">{e.title}</h3><p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{e.description || "Explore this launch and review its recorded terms."}</p></div>

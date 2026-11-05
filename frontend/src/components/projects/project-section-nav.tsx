@@ -1,3 +1,4 @@
+import { WorkspaceNavPortal } from "@/components/layout/workspace-nav-portal";
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
@@ -12,7 +13,8 @@ export function ProjectSectionNav() {
   const isProjectDetail = pathname.startsWith("/projects/") && pathname !== "/projects/my";
 
   return (
-    <nav className="tk-section-nav hx-workspace-nav" aria-label="Projects workspace">
+    <WorkspaceNavPortal>
+      <nav className="tk-section-nav hx-workspace-nav" aria-label="Projects workspace">
       <div className="tk-section-nav__links hx-workspace-nav__links">
         {destinations.map((item) => (
           <NavLink
@@ -33,6 +35,7 @@ export function ProjectSectionNav() {
         <Link to="/launchpad">Launchpad</Link>
       </div>
     </nav>
+    </WorkspaceNavPortal>
   );
 }
 

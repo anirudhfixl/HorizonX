@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { DataArtwork } from "@/components/shared/data-artwork";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -635,6 +636,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                 className="flex flex-col justify-between rounded-2xl border border-border/60 bg-card/55 p-5 sm:p-5 backdrop-blur-md hover:border-primary/45 hover:bg-card/80 hover:shadow-xl hover:shadow-primary/5 transition-all duration-200 group min-w-0"
               >
                 <div className="space-y-4">
+                  <DataArtwork src={(air as typeof air & { image?: string }).image} alt={`${air.title} campaign`} className="h-36 w-full rounded-xl border border-border/40" fallbackLabel="Airdrop campaign" />
                   {/* Card Header: Network + Type + Badges */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">

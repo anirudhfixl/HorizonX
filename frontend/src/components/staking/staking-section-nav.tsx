@@ -1,3 +1,4 @@
+import { WorkspaceNavPortal } from "@/components/layout/workspace-nav-portal";
 import React from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import "@/components/staking/staking.css";
@@ -17,7 +18,8 @@ export function StakingSectionNav() {
   const poolDetail = pathname.startsWith("/staking/pools/") && !createActive;
 
   return (
-    <nav className="st-section-nav hx-workspace-nav" aria-label="Staking workspace">
+    <WorkspaceNavPortal>
+      <nav className="st-section-nav hx-workspace-nav" aria-label="Staking workspace">
       <div className="st-section-nav__links hx-workspace-nav__links">
         {sections.map((item) => (
           <NavLink
@@ -36,6 +38,7 @@ export function StakingSectionNav() {
         </Link>
       </div>
     </nav>
+    </WorkspaceNavPortal>
   );
 }
 
