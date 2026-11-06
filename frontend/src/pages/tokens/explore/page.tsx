@@ -8,7 +8,7 @@ import { PageMeta } from "@/components/seo/page-meta";
 export default function ExploreTokensPage() {
   return (
     <>
-      <PageMeta title="Explore tokens" description="Compare every token on HorizonX by price, volume and liquidity. Market figures are simulated." />
+      <PageMeta title="Explore tokens" description="Compare cryptocurrencies and HorizonX ecosystem tokens by live market cap, volume, and performance." />
       <TokenExplore />
     </>
   );

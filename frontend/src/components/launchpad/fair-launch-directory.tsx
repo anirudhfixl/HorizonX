@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FAIR_LAUNCHES, TOKENS, PROJECTS } from "@/data";
+import { useFairLaunches, useTokens, useProjects } from "@/api";
 import { readSessionLaunchesRaw, subscribeSessionLaunches, sessionFairLaunchToFairLaunch } from "@/lib/launch-storage";
 import { Token, Project, FairLaunch } from "@/types";
 import { cn } from "@/lib/utils";
@@ -24,8 +24,11 @@ import {
   Users,
   SearchX,
   Filter,
+  Scale,
+  Layers,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { NewPoolsDirectory } from "./new-pools-directory";
 
 export type FairLaunchSortOption =
   | "name-asc"
@@ -428,22 +431,30 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState<FairLaunchSortOption>("date-desc");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [activeTab, setActiveTab] = useState<"catalog" | "new-pools">("catalog");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(6);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  const { data: fairLaunches = [] } = useFairLaunches();
+  const { data: tokens = [] } = useTokens();
+  const { data: projects = [] } = useProjects();
+  const FAIR_LAUNCHES = fairLaunches as FairLaunch[];
+  const TOKENS = tokens as Token[];
+  const PROJECTS = projects as Project[];
 
   // Maps for fast token and project metadata lookups
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
     TOKENS.forEach((t) => map.set(t.id, t));
     return map;
-  }, []);
+  }, [TOKENS]);
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
     PROJECTS.forEach((p) => map.set(p.id, p));
     return map;
-  }, []);
+  }, [PROJECTS]);
 
   // Read session-simulated fair launches if present
   const sessionRaw = useSyncExternalStore(subscribeSessionLaunches, readSessionLaunchesRaw, () => "");
@@ -462,7 +473,7 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
 
   const allFairLaunches = useMemo(() => {
     return [...sessionFairLaunches, ...FAIR_LAUNCHES];
-  }, [sessionFairLaunches]);
+  }, [sessionFairLaunches, FAIR_LAUNCHES]);
 
   const sessionLaunchIds = useMemo(() => {
     return new Set(sessionFairLaunches.map((s) => s.id));
@@ -642,6 +653,39 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
         </Button>
       </header>
 
+      {/* Tab Switcher: HorizonX Fair Launches vs GeckoTerminal New Pools */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-border/50 pb-3">
+        <Button
+          type="button"
+          size="sm"
+          variant={activeTab === "catalog" ? "default" : "outline"}
+          onClick={() => setActiveTab("catalog")}
+          className="text-xs rounded-full gap-1.5"
+        >
+          <Scale className="h-3.5 w-3.5" />
+          <span>Fair Launches (HorizonX Ecosystem)</span>
+          <span className="font-mono text-[10px] opacity-80">({allFairLaunches.length})</span>
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={activeTab === "new-pools" ? "default" : "outline"}
+          onClick={() => setActiveTab("new-pools")}
+          className={cn(
+            "text-xs rounded-full gap-1.5 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/15",
+            activeTab === "new-pools" && "bg-emerald-500 text-black font-semibold hover:bg-emerald-500/90"
+          )}
+        >
+          <Layers className="h-3.5 w-3.5" />
+          <span>Live New Pools (GeckoTerminal Stream)</span>
+          <span className="font-mono text-[10px] rounded px-1.5 py-0.2 bg-emerald-400/20 text-emerald-300">Live Feed</span>
+        </Button>
+      </div>
+
+      {activeTab === "new-pools" ? (
+        <NewPoolsDirectory />
+      ) : (
+        <>
       {/* 2. Disclosure + how to read a fair launch */}
       <section aria-label="Data notice and how to read a fair launch" className="grid gap-6 lg:grid-cols-2">
         <div className="border-l-2 border-primary/60 pl-4">
@@ -973,7 +1017,10 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                   <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
                     <div className="flex items-center gap-1.5">
                       <StatusBadge status={fl.status} />
-                      <ProvenanceBadge kind={sessionLaunchIds.has(fl.id) ? "session" : "catalog"} />
+                      <ProvenanceBadge
+                        kind={sessionLaunchIds.has(fl.id) ? "session" : "catalog"}
+                        label={fl.source || "HorizonX Ecosystem (Simulated)"}
+                      />
                     </div>
                     <div className="flex min-w-0 items-center gap-2">
                       {fl.category && (
@@ -1125,7 +1172,10 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                         <td className="px-3 py-3.5">
                           <div className="flex flex-col gap-1 items-start">
                             <StatusBadge status={fl.status} />
-                            <ProvenanceBadge kind={sessionLaunchIds.has(fl.id) ? "session" : "catalog"} />
+                            <ProvenanceBadge
+                              kind={sessionLaunchIds.has(fl.id) ? "session" : "catalog"}
+                              label={fl.source || "HorizonX Ecosystem (Simulated)"}
+                            />
                           </div>
                         </td>
                         <td className="px-3 py-3.5 font-mono">
@@ -1273,6 +1323,8 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
             </Button>
           </div>
         </nav>
+      )}
+        </>
       )}
     </div>
   );

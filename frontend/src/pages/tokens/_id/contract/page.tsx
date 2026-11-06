@@ -1,21 +1,24 @@
 import NotFoundPage from "@/pages/not-found/page";
 import React from "react";
 import { TokenContract } from "@/components/tokens/token-contract";
-import { TOKENS, PROJECTS } from "@/data";
+import { useToken, useProject } from "@/api";
 import { useParams } from "react-router-dom";
 
 export default function TokenContractPage() {
   const { id = "" } = useParams<{ id: string }>();
-  const token = TOKENS.find((t) => t.id === id);
+  const { data: token, isLoading } = useToken(id);
+  const { data: project } = useProject(token?.projectId);
 
   if (!token) {
+    if (isLoading) {
+      return (
+        <div className="py-20 text-center text-sm text-muted-foreground animate-pulse">
+          Loading contract details...
+        </div>
+      );
+    }
     return <NotFoundPage />;
   }
 
-  // Resolve linked ecosystem project
-  const project = token.projectId
-    ? PROJECTS.find((p) => p.id === token.projectId)
-    : undefined;
-
-  return <TokenContract token={token} project={project} />;
+  return <TokenContract token={token as any} project={project as any} />;
 }

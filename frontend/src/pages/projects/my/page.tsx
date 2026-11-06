@@ -4,7 +4,7 @@ import { CopyButton } from "@/components/projects/copy-button";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { PROJECTS, TOKENS } from "@/data";
+import { useProjects, useTokens, type Project } from "@/api";
 import { cn } from "@/lib/utils";
 import {
   Briefcase,
@@ -19,8 +19,6 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ProjectBreadcrumb, ProjectSectionNav } from "@/components/projects/project-section-nav";
-
-type Project = (typeof PROJECTS)[number];
 
 const VERIFICATION_LABELS: Record<string, { label: string; text: string }> = {
   audit_available: { label: "Audit available", text: "text-emerald-400" },
@@ -51,8 +49,9 @@ function initialsOf(name: string) {
 export default function MyProjectsPage() {
   const { isConnected, address, shortAddress } = useWallet();
   const { openModal } = useModal();
+  const { data: allProjects = [] } = useProjects();
 
-  const owned = useMemo(() => resolveOwnedProjects(PROJECTS, address), [address]);
+  const owned = useMemo(() => resolveOwnedProjects(allProjects, address), [address, allProjects]);
 
   return (
     <div className="project-workspace-page mx-0 min-w-0 w-full max-w-none space-y-7 overflow-x-clip px-[clamp(1rem,2.25vw,2.5rem)] pb-20 pt-0">
@@ -221,7 +220,8 @@ function NoProjects() {
 /* ------------------------------------------------------------------ */
 
 function OwnedProject({ project }: { project: Project }) {
-  const linkedTokens = TOKENS.filter((t) => project.tokenIds?.includes(t.id));
+  const { data: allTokens = [] } = useTokens();
+  const linkedTokens = allTokens.filter((t) => project.tokenIds?.includes(t.id));
   const verification = project.verificationStatus ? VERIFICATION_LABELS[project.verificationStatus] : undefined;
 
   // Listing completeness: derived only from fields that exist on the record.

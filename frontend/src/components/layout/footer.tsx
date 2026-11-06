@@ -21,7 +21,7 @@ export function Footer() {
       label="HORIZONX"
       meta="© 2026 • BUILDING THE OPEN WEB"
       preset="night"
-      height="490px"
+      height="210px"
       dotGap={6}
       radius={95}
       crop={0.19}

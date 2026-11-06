@@ -12,6 +12,7 @@ import {
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
 import { StatefulButton } from "@/components/ui/stateful-button";
+import { HorizonXGlowMark } from "@/components/home/horizonx-glow-mark";
 
 export function WalletConnectSection() {
   const {
@@ -135,15 +136,11 @@ export function WalletConnectSection() {
             </div>
 
             <div className="flex min-h-[180px] flex-col items-center justify-center py-4 text-center sm:min-h-[190px]">
-              <div className="relative mb-4 grid h-[72px] w-[72px] place-items-center rounded-[22px] border border-violet-200/[.20] bg-[linear-gradient(145deg,rgba(196,181,253,.13),rgba(139,92,246,.035))] text-violet-100 shadow-[0_0_55px_rgba(139,92,246,.12),inset_0_1px_0_rgba(255,255,255,.08)]">
-                {connected ? (
-                  <Check className="h-9 w-9" strokeWidth={1.5} />
-                ) : (
-                  <Wallet className="h-9 w-9" strokeWidth={1.35} />
-                )}
-                <span className="absolute -bottom-2 -right-2 grid h-7 w-7 place-items-center rounded-lg border border-[#100d1b] bg-[#e7ddff] text-[#171126] shadow-[0_5px_18px_rgba(167,139,250,.22)]">
+              <div className="relative mb-4 grid h-[88px] w-[88px] place-items-center rounded-[24px] border border-white/[.10] bg-[linear-gradient(145deg,rgba(35,31,54,.78),rgba(13,12,24,.92))] text-violet-100 shadow-[inset_0_1px_0_rgba(255,255,255,.045)]">
+                <HorizonXGlowMark compact />
+                <span className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-lg border border-[#100d1b] bg-[#e7ddff] text-[#171126] shadow-[0_5px_18px_rgba(167,139,250,.22)]">
                   {connected ? (
-                    <ShieldCheck className="h-3.5 w-3.5" />
+                    <Check className="h-3.5 w-3.5" strokeWidth={2.2} />
                   ) : (
                     <Fingerprint className="h-3.5 w-3.5" />
                   )}
@@ -206,54 +203,51 @@ export function WalletConnectSection() {
               </div>
             )}
 
-            <StatefulButton
-              onClick={walletAction}
-              disabled={!mounted || isConnecting}
-              className="min-h-[46px] w-full justify-center gap-2.5 rounded-xl border border-violet-100/20 bg-[#e9e2ff] px-5 text-[12px] font-semibold text-[#100c1c] shadow-[0_10px_32px_rgba(139,92,246,.13)] transition-all hover:-translate-y-0.5 hover:border-violet-100/45 hover:bg-white hover:shadow-[0_14px_38px_rgba(139,92,246,.2)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-4 focus-visible:ring-offset-[#080711] disabled:cursor-wait disabled:opacity-60"
-            >
-              <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
-                {isConnecting
-                  ? "Connecting wallet..."
-                  : connected
-                    ? "Manage connected wallet"
-                    : "Connect wallet"}
-                <ArrowUpRight className="h-4 w-4 shrink-0" />
-              </span>
-            </StatefulButton>
-
             {connected && address && network?.explorerUrl ? (
-              <div className="mt-2.5 flex items-center justify-between gap-3 text-[9px]">
+              <div className="mx-auto mt-1 flex w-full max-w-[420px] flex-col gap-2.5 sm:flex-row">
                 <a
                   href={`${network.explorerUrl}/address/${address}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex min-h-8 items-center gap-1.5 text-white/45 transition-colors hover:text-violet-200"
+                  className="group inline-flex min-h-[48px] min-w-0 flex-1 items-center justify-center gap-2 rounded-full border border-white/[.13] bg-white/[.045] px-3 text-[11px] font-semibold tracking-[-.01em] text-white/75 shadow-[inset_0_1px_0_rgba(255,255,255,.045)] transition-[background,border-color,color,transform] duration-200 hover:-translate-y-[1px] hover:border-violet-200/30 hover:bg-violet-200/[.09] hover:text-violet-100 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-4 focus-visible:ring-offset-[#080711]"
                 >
-                  View on block explorer
-                  <ExternalLink className="h-3 w-3" />
+                  <span className="whitespace-nowrap">View on block explorer</span>
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
                 </a>
-                <button
-                  type="button"
-                  onClick={() => openModal("WALLET_DETAILS")}
-                  className="min-h-8 text-white/45 transition-colors hover:text-white"
+                <StatefulButton
+                  onClick={walletAction}
+                  disabled={!mounted || isConnecting}
+                  className="group relative mx-0 block min-h-[48px] min-w-0 w-full flex-1 justify-center overflow-hidden rounded-full border border-white/55 bg-[linear-gradient(112deg,#f0eaff_0%,#e6dcff_48%,#d9ccff_100%)] px-3 text-[11px] font-semibold tracking-[-.015em] text-[#171126] shadow-[0_8px_24px_rgba(139,92,246,.12),inset_0_1px_0_rgba(255,255,255,.9)] transition-[transform,box-shadow,border-color,filter] duration-200 ease-out hover:-translate-y-[2px] hover:border-white/80 hover:brightness-[1.035] hover:shadow-[0_13px_34px_rgba(139,92,246,.22),inset_0_1px_0_rgba(255,255,255,.95)] active:translate-y-0 active:scale-[.99] active:brightness-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-4 focus-visible:ring-offset-[#080711] disabled:cursor-wait disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-[0_8px_24px_rgba(139,92,246,.12)] before:pointer-events-none before:absolute before:inset-x-8 before:top-0 before:h-px before:bg-white/90 before:content-['']"
                 >
-                  Wallet details
-                </button>
+                  <span className="inline-flex w-full items-center justify-center gap-2 whitespace-nowrap">
+                    <span>Manage connected wallet</span>
+                    <span className="grid h-[28px] w-[28px] shrink-0 place-items-center rounded-full bg-[#211a35] text-[#f0eaff] shadow-[0_2px_8px_rgba(35,25,58,.2)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                      <ArrowUpRight className="h-[14px] w-[14px]" strokeWidth={2.2} />
+                    </span>
+                  </span>
+                </StatefulButton>
               </div>
-            ) : null}
+            ) : (
+              <StatefulButton
+                onClick={walletAction}
+                disabled={!mounted || isConnecting}
+                className="group relative mx-auto block min-h-[48px] w-full max-w-[280px] justify-center overflow-hidden rounded-full border border-white/55 bg-[linear-gradient(112deg,#f0eaff_0%,#e6dcff_48%,#d9ccff_100%)] px-5 text-[13px] font-semibold tracking-[-.015em] text-[#171126] shadow-[0_8px_24px_rgba(139,92,246,.12),inset_0_1px_0_rgba(255,255,255,.9)] transition-[transform,box-shadow,border-color,filter] duration-200 ease-out hover:-translate-y-[2px] hover:border-white/80 hover:brightness-[1.035] hover:shadow-[0_13px_34px_rgba(139,92,246,.22),inset_0_1px_0_rgba(255,255,255,.95)] active:translate-y-0 active:scale-[.99] active:brightness-[.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-4 focus-visible:ring-offset-[#080711] disabled:cursor-wait disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-[0_8px_24px_rgba(139,92,246,.12)] before:pointer-events-none before:absolute before:inset-x-8 before:top-0 before:h-px before:bg-white/90 before:content-['']"
+              >
+                <span className="inline-flex w-full items-center justify-center gap-3 whitespace-nowrap">
+                  <span>
+                    {isConnecting ? "Connecting wallet..." : "Connect wallet"}
+                  </span>
+                  <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full bg-[#211a35] text-[#f0eaff] shadow-[0_2px_8px_rgba(35,25,58,.2)] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                    <ArrowUpRight className="h-[15px] w-[15px]" strokeWidth={2.2} />
+                  </span>
+                </span>
+              </StatefulButton>
+            )}
           </div>
         </div>
 
         {/* Context and trust information */}
         <div className="mx-auto flex w-full max-w-[760px] flex-col items-start text-left lg:mx-0">
-          <div className="mb-4 flex w-full items-center justify-start gap-3 text-left">
-            <span className="h-px w-7 bg-violet-300/70" />
-            <p className="text-[10px] font-semibold uppercase tracking-[.25em] text-violet-200/75">
-              {connected ? "Web3 authentication" : "Start with your wallet"}
-            </p>
-            <span className="h-px w-7 bg-violet-300/70" />
-          </div>
-
           <h2
             id="wallet-connect-heading"
             className="flex w-full max-w-[760px] flex-col items-start text-left text-[clamp(2.15rem,3.8vw,3.8rem)] font-medium leading-[1.04] tracking-[-.067em] text-white"

@@ -15,14 +15,16 @@ export interface AssetMarkProps {
 
 /** Logo, or a quiet monogram when the asset has none. */
 export function AssetMark({ symbol, logoUrl, size = "md" }: AssetMarkProps) {
+  const [failed, setFailed] = React.useState(false);
   const h = hue(symbol);
+  const showImage = Boolean(logoUrl && !failed);
   return (
     <span
       className={`mx-mark mx-mark--${size}`}
-      style={logoUrl ? undefined : { background: `hsl(${h} 34% 22%)`, color: `hsl(${h} 70% 82%)` }}
+      style={showImage ? undefined : { background: `hsl(${h} 34% 22%)`, color: `hsl(${h} 70% 82%)` }}
       aria-hidden="true"
     >
-      {logoUrl ? <img src={logoUrl} alt="" /> : symbol.slice(0, 1)}
+      {showImage ? <img src={logoUrl} alt="" onError={() => setFailed(true)} loading="lazy" /> : symbol.slice(0, 1)}
     </span>
   );
 }

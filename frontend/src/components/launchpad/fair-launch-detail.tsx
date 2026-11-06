@@ -583,6 +583,7 @@ export function FairLaunchDetail({
       category={launch.category}
       ownerAddress={launch.ownerAddress}
       provenance={provenance}
+      provenanceLabel={launch.source || "HorizonX Ecosystem (Simulated)"}
       isSimulated={true}
       token={token}
       project={project}

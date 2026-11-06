@@ -8,7 +8,7 @@ import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AIRDROPS, TOKENS, PROJECTS } from "@/data";
+import { useAirdrops, useTokens, useProjects } from "@/api";
 import {
   readSessionAirdropsRaw,
   subscribeSessionAirdrops,
@@ -38,30 +38,25 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 
 export function AirdropHub() {
-  // 1. Reactive session store synchronization
-  const sessionRaw = useSyncExternalStore(
-    subscribeSessionAirdrops,
-    readSessionAirdropsRaw,
-    () => ""
-  );
-
-  const allAirdrops = useMemo(() => {
-    const sessionCampaigns = parseSessionAirdrops(sessionRaw);
-    return [...sessionCampaigns, ...AIRDROPS];
-  }, [sessionRaw]);
+  const { data: airdrops = [] } = useAirdrops();
+  const { data: tokens = [] } = useTokens();
+  const { data: projects = [] } = useProjects();
+  const allAirdrops = airdrops as any[];
+  const TOKENS = tokens as any[];
+  const PROJECTS = projects as any[];
 
   // 2. Token & Project lookup maps for quick symbol/name resolution
   const tokenMap = useMemo(() => {
     const map = new Map();
     TOKENS.forEach((t) => map.set(t.id, t));
     return map;
-  }, []);
+  }, [TOKENS]);
 
   const projectMap = useMemo(() => {
     const map = new Map();
     PROJECTS.forEach((p) => map.set(p.id, p));
     return map;
-  }, []);
+  }, [PROJECTS]);
 
   // 3. Dynamic KPIs computed strictly from available campaign data
   const kpis = useMemo(() => {
@@ -302,7 +297,10 @@ export function AirdropHub() {
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0">
-                        <ProvenanceBadge kind={provenance} />
+                        <ProvenanceBadge
+                          kind={air.origin === "external" ? "simulated" : provenance}
+                          label={air.source || (air.origin === "external" ? "DefiLlama Airdrop Registry" : undefined)}
+                        />
                         <StatusBadge status={air.status} />
                       </div>
                     </div>

@@ -19,7 +19,7 @@ export function GoogleGeminiEffectDemo() {
     <section
       ref={ref}
       aria-label="HorizonX ecosystem animation"
-      className="relative mb-24 h-[58vh] min-h-[max(340px,calc(27.78vw+7rem))] w-full overflow-clip bg-transparent pt-0 sm:mb-28 sm:h-[64vh] sm:min-h-[max(390px,calc(27.78vw+7rem))] lg:mb-32 lg:h-[68vh] lg:min-h-[max(420px,calc(27.78vw+7rem))]"
+      className="relative mb-24 min-h-[720px] w-full overflow-visible bg-transparent pb-16 pt-0 sm:mb-28 sm:min-h-[760px] sm:pb-20 lg:mb-32 lg:min-h-[780px] lg:pb-24"
     >
       <GoogleGeminiEffect
         title="Build with HorizonX"

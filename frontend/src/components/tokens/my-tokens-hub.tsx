@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { TOKENS, PROJECTS } from "@/data";
+import { useTokens, useProjects } from "@/api";
 import { Token, TokenMarketData, Project } from "@/types";
 import { SimulatedTokenReceipt, calculateBaseUnits } from "./token-creation-wizard";
 import { formatNumber } from "./token-detail-hub";
@@ -45,144 +45,29 @@ import { Link } from "react-router-dom";
 // Explicit literal ensures static analysis tests strictly pass:
 // "prominers_session_tokens"
 
-export type TokenWithMarket = Token & { market: TokenMarketData };
+import type { TokenWithMarket, MyTokensMetrics, ManagedItem } from "./my-tokens/types";
+import {
+  resolveCreatorTokens,
+  resolveSessionTokens,
+  calculateMyTokensMetrics,
+  subscribeSessionStorage,
+  readSessionStorageRaw,
+  isSepolia,
+  shortHex,
+  verificationInfo,
+} from "./my-tokens/utils";
 
-export interface MyTokensMetrics {
-  managedTokens: number;
-  aggregateSupplyRaw: bigint;
-  aggregateSupplyFormatted: string;
-  activeCatalogAssets: number;
-  simulatedCreatorAssets: number;
-}
-
-/**
- * Filter catalog tokens created by the given wallet address (case-insensitive).
- */
-export function resolveCreatorTokens(
-  tokens: TokenWithMarket[],
-  address?: string | null
-): TokenWithMarket[] {
-  if (!address) return [];
-  const normalized = address.toLowerCase();
-  return tokens.filter(
-    (t) => t.creatorAddress && t.creatorAddress.toLowerCase() === normalized
-  );
-}
-
-/**
- * Filter temporary session-simulated receipts created by the given wallet address.
- */
-export function resolveSessionTokens(
-  sessionReceipts: SimulatedTokenReceipt[],
-  address?: string | null
-): SimulatedTokenReceipt[] {
-  if (!address) return [];
-  const normalized = address.toLowerCase();
-  return sessionReceipts.filter(
-    (r) => r.creatorAddress && r.creatorAddress.toLowerCase() === normalized
-  );
-}
-
-/**
- * Calculate accurate creator telemetry metrics without floating-point errors.
- */
-export function calculateMyTokensMetrics(
-  catalogMatches: TokenWithMarket[],
-  sessionMatches: SimulatedTokenReceipt[]
-): MyTokensMetrics {
-  let totalRaw = BigInt(0);
-
-  for (const t of catalogMatches) {
-    const clean = (t.totalSupply || "0").replace(/[^0-9]/g, "");
-    if (clean) {
-      try {
-        totalRaw += BigInt(clean);
-      } catch {
-        // ignore
-      }
-    }
-  }
-
-  for (const s of sessionMatches) {
-    const clean = (s.totalSupply || "0").replace(/[^0-9]/g, "");
-    if (clean) {
-      try {
-        totalRaw += BigInt(clean);
-      } catch {
-        // ignore
-      }
-    }
-  }
-
-  const activeCatalog = catalogMatches.filter((t) => t.status === "active").length;
-
-  return {
-    managedTokens: catalogMatches.length + sessionMatches.length,
-    aggregateSupplyRaw: totalRaw,
-    aggregateSupplyFormatted: formatNumber(Number(totalRaw)),
-    activeCatalogAssets: activeCatalog,
-    simulatedCreatorAssets: sessionMatches.length,
-  };
-}
-
-/* ─── Client session storage subscriber ──────────────────────────────────── */
-
-function subscribeSessionStorage(callback: () => void) {
-  if (typeof window === "undefined") return () => {};
-  window.addEventListener("storage", callback);
-  return () => window.removeEventListener("storage", callback);
-}
-
-function readSessionStorageRaw(): string {
-  if (typeof window === "undefined") return "";
-  try {
-    return sessionStorage.getItem(SESSION_TOKENS_STORAGE_KEY) || "";
-  } catch {
-    return "";
-  }
-}
-
-/* ─── Workspace Model Types ─────────────────────────────────────────────── */
-
-export interface ManagedItem {
-  key: string;
-  stateKey: string;
-  kind: "catalog" | "session";
-  name: string;
-  symbol: string;
-  category?: string;
-  network: string;
-  decimals: number;
-  contractAddress: string;
-  token?: TokenWithMarket;
-  receipt?: SimulatedTokenReceipt;
-}
-
-function isSepolia(network: string): boolean {
-  const n = network.toLowerCase();
-  return n.includes("sepolia") || n === "ethereum";
-}
-
-function shortHex(addr?: string): string {
-  if (!addr) return "—";
-  return addr.length > 14 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
-}
-
-function verificationInfo(status?: string): { label: string; text: string } {
-  switch (status) {
-    case "audit_available":
-      return { label: "Audit available", text: "A smart-contract audit is recorded for this token (demonstration data)." };
-    case "contract_source_verified":
-      return { label: "Source verified", text: "The contract source is recorded as verified (demonstration data)." };
-    case "project_reviewed":
-      return { label: "Project reviewed", text: "The linked project is recorded as reviewed; the contract itself is not (demonstration data)." };
-    case "not_reviewed":
-    case undefined:
-      return { label: "Not reviewed", text: "No review is recorded for this token." };
-    default:
-      return { label: status.replace(/_/g, " "), text: "Stored verification tier on this record." };
-  }
-}
+export type { TokenWithMarket, MyTokensMetrics, ManagedItem };
+export {
+  resolveCreatorTokens,
+  resolveSessionTokens,
+  calculateMyTokensMetrics,
+  subscribeSessionStorage,
+  readSessionStorageRaw,
+  isSepolia,
+  shortHex,
+  verificationInfo,
+};
 
 /* ─── Main Component ─────────────────────────────────────────────────────── */
 
@@ -233,6 +118,11 @@ export function MyTokensHub() {
   const [newOwnerAddress, setNewOwnerAddress] = useState("");
   const [confirmTransfer, setConfirmTransfer] = useState(false);
 
+  const { data: tokens = [] } = useTokens();
+  const { data: projects = [] } = useProjects();
+  const TOKENS = tokens as any[];
+  const PROJECTS = projects as any[];
+
   // Project map for quick lookup
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
@@ -240,12 +130,12 @@ export function MyTokensHub() {
       map.set(p.id, p);
     }
     return map;
-  }, []);
+  }, [PROJECTS]);
 
   // Filter creator tokens based on active connected/demo address
   const catalogMatches = useMemo(() => {
     return resolveCreatorTokens(TOKENS, address);
-  }, [address]);
+  }, [TOKENS, address]);
 
   const sessionMatches = useMemo(() => {
     return resolveSessionTokens(sessionTokens, address);

@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { StakingWorkspaceHeader } from "@/components/staking/staking-section-nav";
 import { PageHeader } from "@/components/shared/page-header";
 import { MetricCard } from "@/components/shared/metric-card";
-import { STAKING_POOLS } from "@/data";
+import { useStakingPools } from "@/api";
 import { Layers, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function StakingDashboardPage() {
+  const { data: pools = [] } = useStakingPools();
+
   return (
     <main className="staking-page space-y-10">
       <StakingWorkspaceHeader items={[{ label: "Staking", to: "/staking" }, { label: "Overview" }]} />
@@ -51,7 +53,7 @@ export default function StakingDashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {STAKING_POOLS.map((pool) => (
+          {pools.map((pool) => (
             <div
               key={pool.id}
               className="flex flex-col justify-between rounded-2xl border border-border/60 bg-card/60 p-5 backdrop-blur-md hover:border-primary/50 transition-colors"

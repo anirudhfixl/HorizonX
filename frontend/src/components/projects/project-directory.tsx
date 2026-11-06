@@ -4,8 +4,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { DataArtwork } from "@/components/shared/data-artwork";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PROJECTS, TOKENS } from "@/data";
-import { Project, Token } from "@/types";
+import { useProjects, useTokens, type Project, type Token } from "@/api";
 import { cn } from "@/lib/utils";
 import {
   Briefcase,
@@ -29,6 +28,7 @@ import { ProjectBreadcrumb, ProjectSectionNav } from "@/components/projects/proj
 export type ProjectSortOption =
   | "name-asc"
   | "name-desc"
+  | "tvl-desc"
   | "date-desc"
   | "date-asc"
   | "tokens-desc";
@@ -58,12 +58,17 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
   const [pageSize, setPageSize] = useState<number>(6);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const { data: projects = [] } = useProjects();
+  const { data: tokens = [] } = useTokens();
+  const PROJECTS = projects as Project[];
+  const TOKENS = tokens as Token[];
+
   // Map of tokenId -> Token for fast relationship lookup
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
     TOKENS.forEach((t) => map.set(t.id, t));
     return map;
-  }, []);
+  }, [TOKENS]);
 
   // Unique categories derived from centralized mock data
   const uniqueCategories = useMemo(() => {
@@ -72,7 +77,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
       if (p.category) set.add(p.category);
     });
     return Array.from(set).sort();
-  }, []);
+  }, [PROJECTS]);
 
   // Filter Change Handlers with immediate page reset
   const handleSearchChange = (value: string) => {
@@ -180,8 +185,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
         verification: verificationFilter,
       })
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, categoryFilter, ecosystemFilter, statusFilter, verificationFilter, tokenMap]);
+  }, [PROJECTS, searchQuery, categoryFilter, ecosystemFilter, statusFilter, verificationFilter, tokenMap]);
 
   // Facet counts: how many projects each option would show given the *other* active filters.
   const facetCount = (key: keyof FilterState, value: string) =>
@@ -191,6 +195,8 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
   const sortedProjects = useMemo(() => {
     return [...filteredProjects].sort((a, b) => {
       switch (sortBy) {
+        case "tvl-desc":
+          return (b.tvl ?? 0) - (a.tvl ?? 0);
         case "name-asc":
           return a.name.localeCompare(b.name);
         case "name-desc":
@@ -200,7 +206,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
         case "date-asc":
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         case "tokens-desc":
-          return b.tokenIds.length - a.tokenIds.length;
+          return (b.tokenIds?.length || 0) - (a.tokenIds?.length || 0);
         default:
           return 0;
       }
@@ -242,7 +248,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     );
 
   const linkedTokensOf = (proj: Project) =>
-    proj.tokenIds.map((id) => tokenMap.get(id)).filter((t): t is Token => Boolean(t));
+    (proj.tokenIds || []).map((id) => tokenMap.get(id)).filter((t): t is Token => Boolean(t));
 
   const toneOf = (proj: Project) => {
     const idx = proj.category ? uniqueCategories.indexOf(proj.category) : -1;
@@ -534,6 +540,22 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                               {proj.category && <span className={cn("font-semibold", tone.text)}>{proj.category}</span>}
                               {proj.category && proj.ecosystem && <span aria-hidden>·</span>}
                               {proj.ecosystem && <EcosystemMark proj={proj} isSepolia={isSepoliaProject(proj)} />}
+                              {proj.tvl ? (
+                                <>
+                                  <span aria-hidden>·</span>
+                                  <span className="font-mono font-medium text-emerald-400">
+                                    TVL ${proj.tvl >= 1e9 ? `${(proj.tvl / 1e9).toFixed(2)}B` : proj.tvl >= 1e6 ? `${(proj.tvl / 1e6).toFixed(2)}M` : proj.tvl.toLocaleString()}
+                                  </span>
+                                </>
+                              ) : null}
+                              {proj.source && (
+                                <>
+                                  <span aria-hidden>·</span>
+                                  <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-mono", proj.isExternal ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20")}>
+                                    {proj.source}
+                                  </span>
+                                </>
+                              )}
                             </p>
                           </div>
                           <StatusBadge status={proj.status} />

@@ -43,10 +43,10 @@ function generateStaticParams() {
 }
 
 const contractParams = generateStaticParams();
-assert(contractParams.length === 9, "Static params generate all 9 catalog tokens for contract route");
+assert(contractParams.length === 27, "Static params generate all 27 catalog tokens for contract route");
 
 const activityParams = generateStaticParams();
-assert(activityParams.length === 9, "Static params generate all 9 catalog tokens for activity route");
+assert(activityParams.length === 27, "Static params generate all 27 catalog tokens for activity route");
 
 const expectedIds = [
   "prominers",

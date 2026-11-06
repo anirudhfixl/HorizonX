@@ -42,7 +42,8 @@ export interface LaunchpadDetailShellProps {
   network: string;
   category?: string;
   ownerAddress: string;
-  provenance: "catalog" | "session";
+  provenance: "catalog" | "session" | "simulated";
+  provenanceLabel?: string;
   isSimulated?: boolean;
   token?: Token;
   project?: Project;
@@ -67,6 +68,7 @@ export function LaunchpadDetailShell({
   category,
   ownerAddress,
   provenance,
+  provenanceLabel,
   isSimulated: _isSimulated = true,
   token,
   project,
@@ -134,7 +136,7 @@ export function LaunchpadDetailShell({
                   <span className="lf-detail-type">{kind === "presale" ? "Presale" : "Fair launch"}</span>
                   <StatusBadge status={status} />
                   <NetworkChip network={network} />
-                  <ProvenanceBadge kind={provenance} />
+                  <ProvenanceBadge kind={provenance} label={provenanceLabel} />
                   {category && <span className="lf-detail-category">{category}</span>}
                 </div>
                 <h1>{title}</h1>
@@ -184,7 +186,7 @@ export function LaunchpadDetailShell({
               <div className="min-w-0 space-y-2">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-primary">{kind === "presale" ? "Presale" : "Fair Launch"}</span>
-                  <StatusBadge status={status} /><NetworkChip network={network} /><ProvenanceBadge kind={provenance} />
+                  <StatusBadge status={status} /><NetworkChip network={network} /><ProvenanceBadge kind={provenance} label={provenanceLabel} />
                   {category && <span className="text-muted-foreground/80 font-medium">· {category}</span>}
                 </div>
                 <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">{title}</h1>

@@ -2,53 +2,60 @@ import NotFoundPage from "@/pages/not-found/page";
 import React from "react";
 import { TokenActivity } from "@/components/tokens/token-activity";
 import {
-  TOKENS,
-  PROJECTS,
-  PRESALES,
-  FAIR_LAUNCHES,
-  AIRDROPS,
-  STAKING_POOLS,
-} from "@/data";
+  useToken,
+  useProject,
+  usePresales,
+  useFairLaunches,
+  useAirdrops,
+  useStakingPools,
+} from "@/api";
 import { useParams } from "react-router-dom";
 
 export default function TokenActivityPage() {
   const { id = "" } = useParams<{ id: string }>();
-  const token = TOKENS.find((t) => t.id === id);
+  const { data: token, isLoading } = useToken(id);
+  const { data: project } = useProject(token?.projectId);
+  const { data: allPresales = [] } = usePresales();
+  const { data: allFairLaunches = [] } = useFairLaunches();
+  const { data: allAirdrops = [] } = useAirdrops();
+  const { data: allStakingPools = [] } = useStakingPools();
 
   if (!token) {
+    if (isLoading) {
+      return (
+        <div className="py-20 text-center text-sm text-muted-foreground animate-pulse">
+          Loading token activity...
+        </div>
+      );
+    }
     return <NotFoundPage />;
   }
 
-  // Resolve linked ecosystem project
-  const project = token.projectId
-    ? PROJECTS.find((p) => p.id === token.projectId)
-    : undefined;
-
   // Resolve genuine ecosystem utilities
-  const presales = PRESALES.filter(
+  const presales = allPresales.filter(
     (p) => p.tokenId === token.id || (token.projectId && p.projectId === token.projectId)
   );
 
-  const fairLaunches = FAIR_LAUNCHES.filter(
+  const fairLaunches = allFairLaunches.filter(
     (f) => f.tokenId === token.id || (token.projectId && f.projectId === token.projectId)
   );
 
-  const airdrops = AIRDROPS.filter(
+  const airdrops = allAirdrops.filter(
     (a) => a.tokenId === token.id || (token.projectId && a.projectId === token.projectId)
   );
 
-  const stakingPools = STAKING_POOLS.filter(
+  const stakingPools = allStakingPools.filter(
     (s) => s.tokenId === token.id || (token.projectId && s.projectId === token.projectId)
   );
 
   return (
     <TokenActivity
-      token={token}
-      project={project}
-      presales={presales}
-      fairLaunches={fairLaunches}
-      airdrops={airdrops}
-      stakingPools={stakingPools}
+      token={token as any}
+      project={project as any}
+      presales={presales as any}
+      fairLaunches={fairLaunches as any}
+      airdrops={airdrops as any}
+      stakingPools={stakingPools as any}
     />
   );
 }

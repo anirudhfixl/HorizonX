@@ -6,7 +6,7 @@ import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PRESALES, TOKENS, PROJECTS } from "@/data";
+import { usePresales, useTokens, useProjects, cryptoRankClient } from "@/api";
 import { readSessionLaunchesRaw, subscribeSessionLaunches, sessionPresaleToPresale } from "@/lib/launch-storage";
 import { Token, Project, Presale } from "@/types";
 import { cn } from "@/lib/utils";
@@ -171,19 +171,37 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(6);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [providerStatus, setProviderStatus] = useState<{ configured: boolean; planRestricted?: boolean } | null>(null);
+
+  React.useEffect(() => {
+    let active = true;
+    cryptoRankClient.getStatus().then((status) => {
+      if (active) setProviderStatus(status);
+    }).catch(() => {
+      if (active) setProviderStatus({ configured: false, planRestricted: false });
+    });
+    return () => { active = false; };
+  }, []);
+
+  const { data: presales = [] } = usePresales();
+  const { data: tokens = [] } = useTokens();
+  const { data: projects = [] } = useProjects();
+  const PRESALES = presales as Presale[];
+  const TOKENS = tokens as Token[];
+  const PROJECTS = projects as Project[];
 
   // Maps for fast token and project metadata lookups
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
     TOKENS.forEach((t) => map.set(t.id, t));
     return map;
-  }, []);
+  }, [TOKENS]);
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
     PROJECTS.forEach((p) => map.set(p.id, p));
     return map;
-  }, []);
+  }, [PROJECTS]);
 
   // Read session-simulated presales if present
   const sessionRaw = useSyncExternalStore(subscribeSessionLaunches, readSessionLaunchesRaw, () => "");
@@ -202,7 +220,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
 
   const allPresales = useMemo(() => {
     return [...sessionPresales, ...PRESALES];
-  }, [sessionPresales]);
+  }, [sessionPresales, PRESALES]);
 
   const sessionPresaleIds = useMemo(() => {
     return new Set(sessionPresales.map((s) => s.id));
@@ -456,6 +474,34 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
           </p>
         </div>
       </section>
+
+      {/* External Provider Status Notice */}
+      {allPresales.some((ps) => ps.origin === "external" || (ps as any).isExternal) ? (
+        <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3.5 backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 text-cyan-400 font-medium">
+            <span className="h-2 w-2 rounded-full bg-cyan-400" />
+            <span>CoinGecko Launchpad Sector Intelligence Active. Note: Circulating tokens are secondary market assets, not active presales.</span>
+          </div>
+          <span className="text-[11px] font-mono text-cyan-300/80 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+            {allPresales.filter((ps) => ps.origin === "external" || (ps as any).isExternal).length} External Listings
+          </span>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 backdrop-blur-sm flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-amber-400 font-medium">
+            <span className="h-2 w-2 rounded-full bg-amber-400" />
+            <span>
+              External Provider Notice: {providerStatus && !providerStatus.configured
+                ? "CryptoRank API key unconfigured in server environment."
+                : "CryptoRank Free Sandbox plan restricts access to public sales (HTTP 403)."}{" "}
+              Displaying {allPresales.length} HorizonX Ecosystem (Simulated) presales.
+            </span>
+          </div>
+          <span className="text-[11px] font-mono text-amber-300/80 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+            Catalog Mode
+          </span>
+        </div>
+      )}
 
       {/* 3. Discovery controls */}
       <section aria-label="Search and filters" className="space-y-5">
@@ -725,7 +771,10 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                     <div className="min-w-0 space-y-2.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusBadge status={ps.status} />
-                        <ProvenanceBadge kind={sessionPresaleIds.has(ps.id) ? "session" : "catalog"} />
+                        <ProvenanceBadge
+                          kind={ps.origin === "external" ? "simulated" : sessionPresaleIds.has(ps.id) ? "session" : "catalog"}
+                          label={ps.source || (ps.origin === "external" ? "CryptoRank Public Sales" : "HorizonX Ecosystem (Simulated)")}
+                        />
                         <NetworkChip network={ps.network} />
                         {(ps.category || token?.category) && (
                           <span className="text-[11px] text-muted-foreground">{ps.category || token?.category}</span>
@@ -877,7 +926,10 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                       <td className="px-4 py-3.5">
                         <div className="flex flex-col gap-1 items-start">
                           <StatusBadge status={ps.status} />
-                          <ProvenanceBadge kind={sessionPresaleIds.has(ps.id) ? "session" : "catalog"} />
+                          <ProvenanceBadge
+                            kind={ps.origin === "external" ? "simulated" : sessionPresaleIds.has(ps.id) ? "session" : "catalog"}
+                            label={ps.source || (ps.origin === "external" ? "CryptoRank Public Sales" : "HorizonX Ecosystem (Simulated)")}
+                          />
                         </div>
                       </td>
                       <td className="px-4 py-3.5">

@@ -25,13 +25,55 @@ import {
   portfolioSeries,
   sessionCreatedBy,
   summarizeMarket,
+  TOKEN_CATALOG,
+  trendingScore,
   workspaceActivity,
 } from "@/lib/tokens/selectors";
-import { Link } from "react-router-dom";
+import { useTokens, useMarketOverview } from "@/api";
+import { Link, useNavigate } from "react-router-dom";
 
 type CreatedRow = { key: string; kind: "catalog"; token: TokenWithMarket } | { key: string; kind: "session"; receipt: SessionReceipt };
 
 const signedUsd = (v: number) => `${v >= 0 ? "+" : "−"}${usdCompact(Math.abs(v))}`;
+
+function RankedList({
+  title,
+  items,
+  metric,
+  onAll,
+}: {
+  title: string;
+  items: TokenWithMarket[];
+  metric: (t: TokenWithMarket) => React.ReactNode;
+  onAll: () => void;
+}) {
+  return (
+    <section className="tk-ranked" aria-label={title}>
+      <header>
+        <h3>{title}</h3>
+        <button type="button" className="mx-link" onClick={onAll}>
+          See all
+        </button>
+      </header>
+      <ol>
+        {items.map((t, i) => (
+          <li key={t.id}>
+            <span className="tk-ranked__n">{i + 1}</span>
+            <Link to={`/tokens/${t.id}`} className="mx-identity">
+              <AssetIdentity
+                symbol={t.symbol}
+                name={t.name}
+                logoUrl={t.logoUrl || (t as any).logo || (t as any).image}
+                size="sm"
+              />
+            </Link>
+            <span className="tk-ranked__metric">{metric(t)}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
 
 function Status({ status }: { status: string }) {
   const live = status === "active";
@@ -44,6 +86,7 @@ function Status({ status }: { status: string }) {
 }
 
 export function TokenDashboard() {
+  const navigate = useNavigate();
   const { isConnected, isConnecting, address, shortAddress: short, connectDemo } = useWallet();
   const { openModal } = useModal();
   const watch = useTokenWatchlist();
@@ -51,6 +94,18 @@ export function TokenDashboard() {
   const [tab, setTab] = useState<"holdings" | "created">("holdings");
   const [page, setPage] = useState(1);
   const pageSize = 5;
+
+  const { data: apiTokens = [] } = useTokens();
+  const { data: marketOverview } = useMarketOverview();
+
+  const allTokens = useMemo<TokenWithMarket[]>(() => {
+    if (apiTokens && apiTokens.length > 0) {
+      return apiTokens as unknown as TokenWithMarket[];
+    }
+    return TOKEN_CATALOG;
+  }, [apiTokens]);
+
+  const tokenMap = useMemo(() => new Map(allTokens.map((t) => [t.id, t])), [allTokens]);
 
   const ws = useMemo(() => {
     const addr = isConnected ? address : null;
@@ -68,29 +123,77 @@ export function TokenDashboard() {
   }, [isConnected, address, receipts]);
 
   const market = useMemo(() => summarizeMarket(), []);
-  const rail: RailItem[] = useMemo(
-    () =>
-      discoveryLists().trending.slice(0, 8).map((t) => ({
-        id: t.id,
-        href: `/tokens/${t.id}`,
-        symbol: t.symbol,
-        name: t.name,
-        logoUrl: t.logoUrl,
-        value: usdPrice(t.market.price),
-        change: num(t.market.priceChange24h),
-        changeLabel: pct(t.market.priceChange24h),
-        series: sparkValues(t),
-        meta: t.network,
-      })),
-    [],
+
+  const isLiveFeed = Boolean(
+    allTokens.some((t) => t.market?.isLive || (t as any).isExternal) &&
+    marketOverview?.volume24h
   );
+
+  const globalCapDisplay = marketOverview?.totalMarketCap
+    ? usdCompact(marketOverview.totalMarketCap)
+    : usdCompact(market.marketCap);
+
+  const globalVolDisplay = marketOverview?.volume24h
+    ? usdCompact(marketOverview.volume24h)
+    : usdCompact(market.volume24h);
+
+  const btcDom = marketOverview?.btcDominance
+    ? `${marketOverview.btcDominance.toFixed(1)}%`
+    : "54.2%";
+
+  const ethDom = marketOverview?.ethDominance
+    ? `${marketOverview.ethDominance.toFixed(1)}%`
+    : "16.8%";
+
+  const activeMarketsDisplay = marketOverview?.activeMarketsCount
+    ? marketOverview.activeMarketsCount.toLocaleString("en-US")
+    : allTokens.length.toString();
+
+  const rail: RailItem[] = useMemo(() => {
+    const list = [...allTokens].sort((a, b) => trendingScore(b) - trendingScore(a)).slice(0, 8);
+    return list.map((t) => ({
+      id: t.id,
+      href: `/tokens/${t.id}`,
+      symbol: t.symbol,
+      name: t.name,
+      logoUrl: t.logoUrl || (t as any).logo || (t as any).image,
+      value: usdPrice(t.market.price),
+      change: num(t.market.priceChange24h),
+      changeLabel: pct(t.market.priceChange24h),
+      series: sparkValues(t),
+      meta: t.network,
+    }));
+  }, [allTokens]);
+
+  const topGainers = useMemo(() => {
+    return [...allTokens]
+      .filter((t) => num(t.market.priceChange24h) > 0)
+      .sort((a, b) => num(b.market.priceChange24h) - num(a.market.priceChange24h))
+      .slice(0, 5);
+  }, [allTokens]);
+
+  const topLosers = useMemo(() => {
+    return [...allTokens]
+      .filter((t) => num(t.market.priceChange24h) < 0)
+      .sort((a, b) => num(a.market.priceChange24h) - num(b.market.priceChange24h))
+      .slice(0, 5);
+  }, [allTokens]);
+
+  const topVolume = useMemo(() => {
+    return [...allTokens]
+      .sort((a, b) => num(b.market.volume24h) - num(a.market.volume24h))
+      .slice(0, 5);
+  }, [allTokens]);
 
   const createdRows: CreatedRow[] = [
     ...ws.created.map((token) => ({ key: token.id, kind: "catalog" as const, token })),
     ...ws.session.map((receipt) => ({ key: receipt.transactionHash, kind: "session" as const, receipt })),
   ];
   const createdCount = createdRows.length;
-  const watched = watch.ids.map(getToken).filter((t): t is TokenWithMarket => !!t);
+  const watched = useMemo(
+    () => watch.ids.map((id) => tokenMap.get(id) || getToken(id)).filter((t): t is TokenWithMarket => !!t),
+    [watch.ids, tokenMap]
+  );
   const activeTab = tab === "holdings" && !ws.rows.length && createdCount ? "created" : tab;
   const activeRows = activeTab === "holdings" ? ws.rows : createdRows;
   const totalPages = Math.max(1, Math.ceil(activeRows.length / pageSize));
@@ -151,14 +254,49 @@ export function TokenDashboard() {
       <header className="tk-head tk-head--dash">
         <div>
           <h1 className="tk-title">Tokens</h1>
-          <p className="tk-lede">Your holdings, the tokens you created and the ones you follow.</p>
+          <p className="tk-lede">Unified cryptocurrency markets, your wallet holdings, and tracked ecosystem assets.</p>
         </div>
+        <dl className="tk-summary" aria-label="Global market overview">
+          <div>
+            <dt>Global Market Cap</dt>
+            <dd>{globalCapDisplay}</dd>
+          </div>
+          <div>
+            <dt>24h Global Volume</dt>
+            <dd>{globalVolDisplay}</dd>
+          </div>
+          <div>
+            <dt>BTC / ETH Dominance</dt>
+            <dd>
+              {btcDom} <span className="mx-muted font-normal text-xs">/ {ethDom}</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Active Markets</dt>
+            <dd>{activeMarketsDisplay}</dd>
+          </div>
+        </dl>
         {isConnected && (
           <p className="tk-wallet" title={address ?? undefined}>
             <span className="mx-mono">{short ?? shortAddress(address)}</span>
           </p>
         )}
       </header>
+
+      <div className="tk-source">
+        <ProvenanceTag
+          kind={isLiveFeed ? "onchain" : "simulated"}
+          label={isLiveFeed ? "Live CoinMarketCap feed" : "Simulated telemetry"}
+        />
+        <span>
+          {isLiveFeed
+            ? "Global market metrics and prices aggregated from CoinMarketCap."
+            : "Demonstration telemetry; connecting live feed replaces these values."}
+        </span>
+        <span className="mx-muted" style={{ marginLeft: "auto" }}>
+          HorizonX Ecosystem Cap: {usdCompact(market.marketCap)}
+        </span>
+      </div>
 
       {/* Portfolio */}
       <section className="tk-portfolio" aria-label="Portfolio">
@@ -324,13 +462,49 @@ export function TokenDashboard() {
         <header className="tk-section__head">
           <h2 id="mkt-h">Market today</h2>
           <span className="tk-inline-stats">
-            <span>{usdCompact(market.marketCap)} market cap</span>
-            <span className={market.weightedChange >= 0 ? "is-up" : "is-down"}>{pct(market.weightedChange)} weighted 24h</span>
-            <ProvenanceTag kind="simulated" />
+            <span>{globalCapDisplay} global cap</span>
+            <span className="mx-muted font-mono text-xs">BTC {btcDom} · ETH {ethDom}</span>
+            <ProvenanceTag
+              kind={isLiveFeed ? "onchain" : "simulated"}
+              label={isLiveFeed ? "CoinMarketCap" : "Simulated"}
+            />
           </span>
           <Link to="/tokens/explore" className="mx-link">Explore all tokens</Link>
         </header>
         <TrendingRail items={rail} label="Trending tokens" />
+
+        <div className="tk-cols3" style={{ marginTop: "2rem" }}>
+          <RankedList
+            title="Top gainers"
+            items={topGainers}
+            metric={(t) => (
+              <span className="is-up font-mono">
+                {pct(t.market.priceChange24h)}
+              </span>
+            )}
+            onAll={() => navigate("/tokens/explore?preset=gainers")}
+          />
+          <RankedList
+            title="Top volume"
+            items={topVolume}
+            metric={(t) => (
+              <span className="font-mono">
+                {usdCompact(t.market.volume24h)}
+              </span>
+            )}
+            onAll={() => navigate("/tokens/explore?preset=volume")}
+          />
+          <RankedList
+            title="Top movers (24h dip)"
+            items={topLosers}
+            metric={(t) => (
+              <span className="is-down font-mono">
+                {pct(t.market.priceChange24h)}
+              </span>
+            )}
+            onAll={() => navigate("/tokens/explore?preset=gainers")}
+          />
+        </div>
       </section>
     </div>
   );

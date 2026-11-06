@@ -178,7 +178,9 @@ export function tokenRelations(token: TokenWithMarket): Relation[] {
       cta: "View pool",
     });
   }
-  const project = token.projectId ? PROJECTS.find((p) => p.id === token.projectId) : undefined;
+  const project = token.projectId
+    ? PROJECTS.find((p) => p.id === token.projectId)
+    : PROJECTS.find((p) => p.tokenIds?.includes(token.id));
   if (project) {
     out.push({
       id: project.id,
@@ -198,15 +200,17 @@ export function tokenRelations(token: TokenWithMarket): Relation[] {
       title: `${token.symbol} market`,
       status: "Listed",
       tone: "live",
-      href: `/exchange/tokens/${token.id}`,
-      cta: "Open exchange",
+      href: `/tokens/${token.id}#trade`,
+      cta: `Trade ${token.symbol}`,
     });
   }
   return out;
 }
 
 export const getProject = (token: TokenWithMarket) =>
-  token.projectId ? PROJECTS.find((p) => p.id === token.projectId) : undefined;
+  token.projectId
+    ? PROJECTS.find((p) => p.id === token.projectId)
+    : PROJECTS.find((p) => p.tokenIds?.includes(token.id));
 
 /* ── user workspace ────────────────────────────────────────────────────── */
 

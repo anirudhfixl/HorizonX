@@ -51,21 +51,8 @@ interface TokenDetailHubProps {
   initialTab?: "overview" | "contract" | "activity";
 }
 
-// Format numbers as currency with K/M abbreviations
-export function formatCurrency(val?: number): string {
-  if (val === undefined || val === null || val === 0) return "$0.00";
-  if (val >= 1000000000) return `$${(val / 1000000000).toFixed(2)}B`;
-  if (val >= 1000000) return `$${(val / 1000000).toFixed(2)}M`;
-  if (val >= 1000) return `$${(val / 1000).toFixed(2)}K`;
-  if (val < 0.01) return `$${val.toFixed(4)}`;
-  return `$${val.toFixed(2)}`;
-}
-
-// Format integer values with commas
-export function formatNumber(val?: number): string {
-  if (val === undefined || val === null) return "0";
-  return new Intl.NumberFormat("en-US").format(val);
-}
+import { formatCurrency, formatNumber } from "./detail/formatters";
+export { formatCurrency, formatNumber };
 
 export function TokenDetailHub({
   token,
@@ -354,7 +341,7 @@ contract ${contractName} is ERC20, ERC20Burnable, ERC20Permit, Ownable {
               size="sm"
               className="bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90"
             >
-              <Link to={`/exchange/tokens/${token.id}`}>Trade {token.symbol}</Link>
+              <Link to={`/tokens/${token.id}#trade`}>Trade {token.symbol}</Link>
             </Button>
 
             {token.contractAddress ? (

@@ -1,7 +1,8 @@
+import "@/components/shared/entity-detail.css";
 import React, { useMemo, useState } from "react";
 import { TokenSectionNav } from "@/components/tokens/token-section-nav";
 import { TokenDetailTabs } from "@/components/tokens/token-detail-tabs";
-import { ExternalLink, Share2, Sliders } from "lucide-react";
+import { ArrowDownUp, ExternalLink, Share2, Sliders } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { AllocationBar, type AllocationRow } from "@/components/market/allocation-bar";
@@ -14,6 +15,7 @@ import { PriceChart } from "@/components/market/price-chart";
 import { ProvenanceTag } from "@/components/market/provenance-tag";
 import { TabBar } from "@/components/market/tab-bar";
 import { WatchButton } from "@/components/market/watch-button";
+import { useModal } from "@/contexts/modal-context";
 import { useWallet } from "@/contexts/wallet-context";
 import { CHART_RANGES } from "@/lib/tokens/config";
 import { circulatingSupply, simulatedAllocations, simulatedHolders, simulatedSeries, simulatedTrades, seriesChange } from "@/lib/tokens/demo-data";
@@ -61,10 +63,128 @@ function Change({ value, digits }: { value?: number; digits?: number }) {
 
 
 
+export function InstantSwapWidget({ token }: { token: TokenWithMarket }) {
+  const { isConnected } = useWallet();
+  const { openModal } = useModal();
+  const [payAmount, setPayAmount] = useState<string>("0.1");
+  const [direction, setDirection] = useState<"eth_to_token" | "token_to_eth">("eth_to_token");
+
+  // Reference ETH price of $2,500
+  const ethPrice = 2500;
+  const tokenPrice = Math.max(num(token.market.price), 0.000001);
+  const rate = ethPrice / tokenPrice;
+
+  const receiveAmount = useMemo(() => {
+    const p = parseFloat(payAmount) || 0;
+    if (direction === "eth_to_token") {
+      const val = p * rate;
+      return val >= 100 ? val.toFixed(2) : val >= 1 ? val.toFixed(4) : val.toFixed(6);
+    } else {
+      const val = p / rate;
+      return val >= 100 ? val.toFixed(2) : val >= 1 ? val.toFixed(4) : val.toFixed(6);
+    }
+  }, [payAmount, direction, rate]);
+
+  const handleSwap = () => {
+    if (!isConnected) {
+      openModal("CONNECT_WALLET");
+      return;
+    }
+    toast.success(`Swap Simulated Successfully`, {
+      description: `Exchanged ${payAmount} ${direction === "eth_to_token" ? "ETH" : token.symbol} for ${receiveAmount} ${direction === "eth_to_token" ? token.symbol : "ETH"} on Sepolia.`,
+    });
+  };
+
+  return (
+    <div id="trade" className="rounded-xl border border-border/80 bg-card/70 p-5 backdrop-blur-md space-y-4">
+      <div>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-mono uppercase tracking-wider text-primary font-semibold">Trade</span>
+          <span className="text-[11px] font-mono text-muted-foreground">{token.symbol} / USD · {token.network}</span>
+        </div>
+        <h3 className="text-base font-semibold text-foreground mt-0.5">Instant swap</h3>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Exchange {direction === "eth_to_token" ? `ETH for ${token.symbol}` : `${token.symbol} for ETH`}
+        </p>
+      </div>
+
+      <div className="space-y-2.5">
+        <div className="entity-detail-swap-field">
+          <label htmlFor="swap-pay">You pay</label>
+          <div>
+            <input
+              id="swap-pay"
+              type="number"
+              min="0"
+              step="any"
+              value={payAmount}
+              onChange={(e) => setPayAmount(e.target.value)}
+              placeholder="0.0"
+            />
+            <span>{direction === "eth_to_token" ? "ETH" : token.symbol}</span>
+          </div>
+        </div>
+
+        <div className="flex justify-center -my-1">
+          <button
+            type="button"
+            aria-label="Switch swap direction"
+            onClick={() => setDirection((d) => (d === "eth_to_token" ? "token_to_eth" : "eth_to_token"))}
+            className="entity-detail-swap-switch hover:rotate-180 transition-transform cursor-pointer"
+          >
+            <ArrowDownUp className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        <div className="entity-detail-swap-field">
+          <label htmlFor="swap-receive">You receive (estimated)</label>
+          <div>
+            <input
+              id="swap-receive"
+              type="text"
+              readOnly
+              value={receiveAmount}
+              className="opacity-90"
+            />
+            <span>{direction === "eth_to_token" ? token.symbol : "ETH"}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border/50 bg-secondary/30 p-2.5 text-xs text-muted-foreground space-y-1">
+        <div className="flex justify-between">
+          <span>Quoted Rate</span>
+          <span className="font-mono text-foreground font-medium">
+            1 {token.symbol} ≈ ${usdPrice(tokenPrice)}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span>Pool Liquidity</span>
+          <span className="font-mono text-foreground font-medium">
+            {token.market.liquidity ? usdCompact(token.market.liquidity) : "—"}
+          </span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleSwap}
+        className="mx-btn mx-btn--primary w-full justify-center py-2.5 font-medium"
+      >
+        {isConnected ? `Swap ${token.symbol}` : "Connect wallet to swap"}
+      </button>
+
+      <p className="text-[11px] leading-relaxed text-muted-foreground pt-1 border-t border-border/40">
+        Demo swap execution operates as a client-side simulation. Review contract address before approving.
+      </p>
+    </div>
+  );
+}
+
 export function TokenDetailHeader({ token, activeTab }: { token: TokenWithMarket; activeTab: "overview" | "contract" | "activity" }) {
   const watch = useTokenWatchlist();
   const { isConnected, address } = useWallet();
-  const rank = marketRank(token.id);
+  const rank = (token as any).cmcRank || marketRank(token.id);
   const price = num(token.market.price);
   const change = num(token.market.priceChange24h);
   const project = getProject(token);
@@ -94,17 +214,17 @@ export function TokenDetailHeader({ token, activeTab }: { token: TokenWithMarket
 
       <header className="td-head">
         <div className="td-ident">
-          <AssetMark symbol={token.symbol} logoUrl={token.logoUrl} size="lg" />
+          <AssetMark symbol={token.symbol} logoUrl={token.logoUrl || (token as any).logo || (token as any).image} size="lg" />
           <div className="min-w-0">
             <h1 className="td-name">
               {token.name}
               <span className="td-sym">{token.symbol}</span>
             </h1>
             <p className="td-sub">
-              {[token.category, token.network, rank ? `Rank ${rank} of ${TOKEN_CATALOG.length} by market cap` : null].filter(Boolean).join(" · ")}
+              {[token.category, token.network, rank && rank > 0 ? `Rank #${rank} by market cap` : null].filter(Boolean).join(" · ")}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2" aria-label="Token catalog metadata">
-              <ProvenanceTag kind="catalog" label="Catalog" />
+              <ProvenanceTag kind={token.market?.isLive ? "onchain" : "catalog"} label={token.market?.isLive ? "Live CoinMarketCap" : "Catalog"} />
               <StatusBadge status={token.status} />
               <span className="mx-prov mx-prov--catalog">{token.standard || "Standard not recorded"}</span>
               <span className="mx-prov mx-prov--catalog">{verificationLabel(token.verificationStatus)}</span>
@@ -145,7 +265,7 @@ export function TokenDetailHeader({ token, activeTab }: { token: TokenWithMarket
 
       <div className="td-actions">
         <WatchButton variant="labelled" name={token.symbol} watched={watch.has(token.id)} onToggle={() => watch.toggle(token.id)} />
-        {exchange && <Link to={exchange.href} className="mx-btn mx-btn--primary">Trade {token.symbol}</Link>}
+        {exchange && <a href="#trade" className="mx-btn mx-btn--primary">Trade {token.symbol}</a>}
         {explorerUrl && (
           <a href={explorerUrl} target="_blank" rel="noreferrer" className="mx-btn">
             Explorer <ExternalLink aria-hidden="true" />
@@ -160,7 +280,10 @@ export function TokenDetailHeader({ token, activeTab }: { token: TokenWithMarket
           </Link>
         )}
         <span className="td-source">
-          <ProvenanceTag kind="simulated" label="Simulated market data" />
+          <ProvenanceTag
+            kind={token.market?.isLive ? "onchain" : "simulated"}
+            label={token.market?.isLive ? "Live CoinMarketCap feed" : "Simulated market data"}
+          />
         </span>
       </div>
     </>
@@ -246,11 +369,15 @@ export function TokenDetail({ token }: { token: TokenWithMarket }) {
               formatValue={usdPrice}
               formatTime={(t) => (range === "24H" ? formatDateTime(t) : formatDate(t))}
             />
-            <p className="tk-note">Illustrative price path generated from the catalog price and 24h change. It is not historical market data.</p>
+            {token.market?.isLive ? (
+              <p className="tk-note">Live price feed anchored to CoinMarketCap. Trajectory rendered for historical context.</p>
+            ) : (
+              <p className="tk-note">Illustrative price path generated from the catalog price and 24h change. It is not historical market data.</p>
+            )}
           </section>
 
           <dl className="td-stats" aria-label="Market statistics">
-            <div><dt>Market cap</dt><dd>{usdCompact(cap)}<small>Rank {rank} of {TOKEN_CATALOG.length}</small></dd></div>
+            <div><dt>Market cap</dt><dd>{usdCompact(cap)}<small>{token.market?.isLive && rank > 0 ? `Rank #${rank} Global Market Cap` : `Rank ${rank || 1} of ${TOKEN_CATALOG.length}`}</small></dd></div>
             <div><dt>Fully diluted</dt><dd>{totalSupply ? usdCompact(fdv) : "—"}<small>Price × total supply</small></dd></div>
             <div><dt>Volume 24h</dt><dd>{usdCompact(volume)}<small>{turnover.toFixed(1)}% of market cap</small></dd></div>
             <div><dt>Liquidity</dt><dd>{usdCompact(num(token.market.liquidity))}<small>{cap ? `${((num(token.market.liquidity) / cap) * 100).toFixed(1)}% of market cap` : ""}</small></dd></div>
@@ -393,6 +520,8 @@ export function TokenDetail({ token }: { token: TokenWithMarket }) {
         </div>
 
         <aside className="td-aside" aria-label="Related">
+          <InstantSwapWidget token={token} />
+
           <div>
             {relationRows.length > 0 ? (
               <EcosystemRelationships rows={relationRows} heading={`${token.symbol} on HorizonX`} />

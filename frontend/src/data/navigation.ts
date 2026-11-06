@@ -25,6 +25,13 @@ export const TOP_NAV_ITEMS: NavItem[] = [
     label: "Tokens",
     href: "/tokens",
     description: "Token directory, creation and management",
+    children: [
+      { label: "Dashboard", href: "/tokens", description: "Token ecosystem overview" },
+      { label: "Explore Tokens", href: "/tokens/explore", description: "Discover and filter all tokens" },
+      { label: "Watchlist", href: "/tokens/watchlist", description: "Your starred and tracked tokens" },
+      { label: "My Tokens", href: "/tokens/my", description: "Tokens created or managed by you" },
+      { label: "Create Token", href: "/tokens/create", description: "Deploy a new standard token" },
+    ],
   },
   {
     label: "Launchpad",
@@ -40,11 +47,6 @@ export const TOP_NAV_ITEMS: NavItem[] = [
     label: "Staking",
     href: "/staking",
     description: "Staking pools and positions",
-  },
-  {
-    label: "Markets",
-    href: "/exchange",
-    description: "Exchange markets and watchlists",
   },
   {
     label: "Partners",
@@ -85,7 +87,6 @@ export const FOOTER_NAV: Record<string, NavItem[]> = {
     { label: "Launchpad", href: "/launchpad" },
     { label: "Airdrops", href: "/airdrops" },
     { label: "Staking", href: "/staking" },
-    { label: "Markets", href: "/exchange" },
   ],
   Resources: [
     { label: "Documentation", href: "/docs" },

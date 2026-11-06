@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { TOKENS, PROJECTS } from "@/data";
+import { useTokens, useProjects } from "@/api";
 import { cn } from "@/lib/utils";
 import { findCatalogToken, formatNumber, parseNumber } from "@/lib/presale-create";
 import {
@@ -144,6 +144,9 @@ export function CreateFairLaunchForm() {
   const { isConnected, isUnsupportedNetwork, switchNetwork, isDemoMode, shortAddress, address, walletProvider, balance, network } = useWallet();
   const { openModal } = useModal();
   const headingRef = useRef<HTMLHeadingElement>(null);
+
+  const { data: TOKENS = [] } = useTokens();
+  const { data: PROJECTS = [] } = useProjects();
 
   const [draft, setDraft] = useState<FairLaunchDraft>(DEFAULT_FL_DRAFT);
   const [selectedTokenInfo, setSelectedTokenInfo] = useState<SelectedToken | null>(null);

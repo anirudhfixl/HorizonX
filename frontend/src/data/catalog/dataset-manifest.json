@@ -1,0 +1,35 @@
+{
+  "name": "HorizonX Web2 Demo Dataset",
+  "version": "3.0.0",
+  "generatedAt": "2026-11-06",
+  "purpose": "Curated local demo catalog for Web2 ecosystem UI, relational navigation, search, filtering, pagination, and image-loading QA.",
+  "provenance": "All catalog records and market-like values are illustrative demo data. They are not live market feeds, endorsements, verified projects, or on-chain state.",
+  "totalRecords": 177,
+  "recordCounts": {
+    "projects": 30,
+    "tokens": 27,
+    "presales": 24,
+    "fair-launches": 24,
+    "airdrops": 24,
+    "staking-pools": 24,
+    "partners": 24
+  },
+  "imagePath": "/images/horizonx-dataset-placeholder.svg",
+  "imagePolicy": "Every image, bannerImage, coverImage, and galleryImages value in the catalog uses the same local placeholder asset. Replace these fields with real artwork later.",
+  "relationships": {
+    "projects.tokenIds": "Each token ID must resolve to tokens.id.",
+    "projects.partnerIds": "Each partner ID must resolve to partners.id.",
+    "tokens.projectId": "Each project ID must resolve to projects.id.",
+    "presales.projectId/tokenId": "Each projectId and tokenId must resolve to projects.id and tokens.id.",
+    "fair-launches.projectId/tokenId": "Each projectId and tokenId must resolve to projects.id and tokens.id.",
+    "airdrops.projectId/tokenId": "Each projectId and tokenId must resolve to projects.id and tokens.id.",
+    "staking-pools.projectId/tokenId": "Each projectId and tokenId must resolve to projects.id and tokens.id."
+  },
+  "notes": [
+    "Dataset expanded to three coherent cohorts: original records plus Cohort II and Cohort III variants.",
+    "Every cohort uses remapped IDs so cross-collection relationships resolve within its own cohort.",
+    "All records are illustrative demo content; no external Web2 APIs are required.",
+    "All image, banner, cover, and gallery fields use the same local placeholder asset.",
+    "Partner .example URLs are reserved placeholders, not real websites."
+  ]
+}

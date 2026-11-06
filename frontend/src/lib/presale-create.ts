@@ -135,7 +135,7 @@ export function formatNumber(n: number): string {
 }
 
 /** Catalog lookup only: matches the typed address against sample catalog tokens, never on-chain. */
-export function findCatalogToken(address: string, tokens: Token[]): Token | undefined {
+export function findCatalogToken<T extends { contractAddress?: string }>(address: string, tokens: T[]): T | undefined {
   const a = address.trim().toLowerCase();
   if (!ADDRESS_RE.test(address.trim())) return undefined;
   return tokens.find((t) => t.contractAddress?.toLowerCase() === a);

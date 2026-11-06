@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">HorizonX demo artwork</title>
+  <desc id="desc">Shared placeholder artwork used to verify image loading across HorizonX dataset cards and detail pages.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#171310"/><stop offset="1" stop-color="#392015"/></linearGradient>
+    <radialGradient id="glow"><stop offset="0" stop-color="#f28a42" stop-opacity=".55"/><stop offset="1" stop-color="#f28a42" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="960" height="640" fill="url(#bg)"/>
+  <circle cx="480" cy="300" r="260" fill="url(#glow)"/>
+  <g fill="none" stroke="#f0a36d" stroke-opacity=".72">
+    <circle cx="480" cy="300" r="150" stroke-width="2"/>
+    <circle cx="480" cy="300" r="112" stroke-width="1.5"/>
+    <path d="M330 300h300M480 150v300M374 194l212 212M586 194 374 406" stroke-width="1.5"/>
+  </g>
+  <circle cx="480" cy="300" r="28" fill="#f28a42"/>
+  <text x="480" y="535" text-anchor="middle" fill="#f4e7dc" font-family="Arial,sans-serif" font-size="26" letter-spacing="8">HORIZONX</text>
+  <text x="480" y="570" text-anchor="middle" fill="#c5a28b" font-family="Arial,sans-serif" font-size="13" letter-spacing="3">DATASET IMAGE TEST</text>
+</svg>

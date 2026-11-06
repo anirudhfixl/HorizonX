@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataArtwork } from "@/components/shared/data-artwork";
-import { PRESALES, FAIR_LAUNCHES } from "@/data";
+import { usePresales, useFairLaunches } from "@/api";
 import { readSessionLaunchesRaw, subscribeSessionLaunches, sessionPresaleToPresale, sessionFairLaunchToFairLaunch } from "@/lib/launch-storage";
 import type { Presale, FairLaunch } from "@/types";
 import { cn } from "@/lib/utils";
@@ -18,9 +18,13 @@ import {
   X,
   SearchX,
   RotateCcw,
+  Sparkles,
+  Layers,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LaunchpadWorkspaceHeader } from "@/components/launchpad/launchpad-section-nav";
+import { CoinGeckoLaunchpadSection } from "@/components/launchpad/coingecko-launchpad-section";
+import { NewPoolsDirectory } from "@/components/launchpad/new-pools-directory";
 
 import type { PointerEvent as ReactPointerEvent } from "react";
 
@@ -88,8 +92,8 @@ export function parseAmount(raw?: string): Amount | null {
 }
 
 export function buildLaunchEntries(
-  presalesList: Presale[] = PRESALES,
-  fairList: FairLaunch[] = FAIR_LAUNCHES
+  presalesList: Presale[] = [],
+  fairList: FairLaunch[] = []
 ): LaunchEntry[] {
   const presales: LaunchEntry[] = presalesList.map((p) => ({
     kind: "presale",
@@ -404,11 +408,18 @@ function SectionHead({ id, title, note, count }: { id: string; title: string; no
 type Filter = "all" | LaunchKind;
 
 export function LaunchpadHub() {
+  type HubTab = "launches" | "coingecko" | "new-pools";
+  const [hubTab, setHubTab] = useState<HubTab>("launches");
   const [filter, setFilter] = useState<Filter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [networkFilter, setNetworkFilter] = useState("all");
   const [liveOnly, setLiveOnly] = useState(false);
   const [sepoliaOnly, setSepoliaOnly] = useState(false);
+
+  const { data: presales = [] } = usePresales();
+  const { data: fairLaunches = [] } = useFairLaunches();
+  const PRESALES = presales as Presale[];
+  const FAIR_LAUNCHES = fairLaunches as FairLaunch[];
 
   const sessionRaw = useSyncExternalStore(subscribeSessionLaunches, readSessionLaunchesRaw, () => "");
   const all = useMemo(() => {
@@ -426,7 +437,7 @@ export function LaunchpadHub() {
       }
     }
     return buildLaunchEntries([...extraPresales, ...PRESALES], [...extraFair, ...FAIR_LAUNCHES]);
-  }, [sessionRaw]);
+  }, [sessionRaw, PRESALES, FAIR_LAUNCHES]);
 
   // Filter pipeline
   const visible = useMemo(() => {
@@ -541,6 +552,59 @@ export function LaunchpadHub() {
         </aside>
       </section>
 
+      {/* Sector Navigation Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-border/50 pb-3">
+        <button
+          type="button"
+          onClick={() => setHubTab("launches")}
+          className={cn(
+            "flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all",
+            hubTab === "launches"
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          )}
+        >
+          <Rocket className="h-3.5 w-3.5" />
+          <span>Launchpad Overview ({all.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setHubTab("coingecko")}
+          className={cn(
+            "flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all border",
+            hubTab === "coingecko"
+              ? "border-sky-500/60 bg-sky-500/15 text-sky-300 font-bold shadow-sm"
+              : "border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          )}
+        >
+          <Sparkles className="h-3.5 w-3.5 text-sky-400" />
+          <span>CoinGecko Platforms &amp; Tokens</span>
+          <span className="rounded-full bg-sky-500/20 px-1.5 py-0.2 text-[10px] text-sky-300 font-mono">Live</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setHubTab("new-pools")}
+          className={cn(
+            "flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all border",
+            hubTab === "new-pools"
+              ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300 font-bold shadow-sm"
+              : "border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          )}
+        >
+          <Layers className="h-3.5 w-3.5 text-emerald-400" />
+          <span>GeckoTerminal New Pools</span>
+          <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.2 text-[10px] text-emerald-300 font-mono">DEX Stream</span>
+        </button>
+      </div>
+
+      {hubTab === "coingecko" ? (
+        <CoinGeckoLaunchpadSection />
+      ) : hubTab === "new-pools" ? (
+        <NewPoolsDirectory />
+      ) : (
+        <>
       {/* Counts and discovery controls */}
       <section className="rounded-2xl border border-border/70 bg-card/35 p-2.5 sm:p-3">
         <div className="grid grid-cols-3 gap-1 sm:grid-cols-3">
@@ -716,6 +780,8 @@ export function LaunchpadHub() {
           </div>
         </section>
       </section>
+        </>
+      )}
 
       </div>
     </div>

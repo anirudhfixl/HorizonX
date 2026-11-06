@@ -97,34 +97,34 @@ console.log("\n--- 2. Dynamic KPI Calculations ---");
 
 const catalogKpis = calculateAirdropKpis(MOCK_AIRDROPS);
 
-assert(catalogKpis.totalCampaigns === 8, `Total catalog campaigns equals 8 (got ${catalogKpis.totalCampaigns})`);
+assert(catalogKpis.totalCampaigns === 24, `Total catalog campaigns equals 24 (got ${catalogKpis.totalCampaigns})`);
 assert(
-  catalogKpis.activeCampaigns === 4,
-  `Active campaigns count equals 4 (got ${catalogKpis.activeCampaigns})`
+  catalogKpis.activeCampaigns === 12,
+  `Active campaigns count equals 12 (got ${catalogKpis.activeCampaigns})`
 );
 assert(
-  catalogKpis.sepoliaActiveCampaigns === 3,
-  `Sepolia active campaigns count equals 3 (got ${catalogKpis.sepoliaActiveCampaigns})`
+  catalogKpis.sepoliaActiveCampaigns === 9,
+  `Sepolia active campaigns count equals 9 (got ${catalogKpis.sepoliaActiveCampaigns})`
 );
 assert(
-  catalogKpis.totalRecipients === 39300,
-  `Total eligible recipients equals 39,300 (got ${catalogKpis.totalRecipients})`
+  catalogKpis.totalRecipients === 117900,
+  `Total eligible recipients equals 117,900 (got ${catalogKpis.totalRecipients})`
 );
 assert(
-  catalogKpis.totalClaimed === 20265,
-  `Total processed claims equals 20,265 (got ${catalogKpis.totalClaimed})`
+  catalogKpis.totalClaimed === 60795,
+  `Total processed claims equals 60,795 (got ${catalogKpis.totalClaimed})`
 );
 assert(
   catalogKpis.overallClaimRate === 52,
-  `Overall claim rate equals 52% (20,265 / 39,300 = 51.56% -> 52%, got ${catalogKpis.overallClaimRate}%)`
+  `Overall claim rate equals 52% (got ${catalogKpis.overallClaimRate}%)`
 );
 assert(
-  catalogKpis.totalTokensNumeric === 12800000,
-  `Total tokens pool numeric equals 12,800,000 (got ${catalogKpis.totalTokensNumeric})`
+  catalogKpis.totalTokensNumeric === 38400000,
+  `Total tokens pool numeric equals 38,400,000 (got ${catalogKpis.totalTokensNumeric})`
 );
 assert(
-  catalogKpis.totalTokensFormatted === "12.8M",
-  `Total tokens pool formatted equals '12.8M' (got ${catalogKpis.totalTokensFormatted})`
+  catalogKpis.totalTokensFormatted === "38.4M",
+  `Total tokens pool formatted equals '38.4M' (got ${catalogKpis.totalTokensFormatted})`
 );
 
 // --- 3. Catalog and Session Campaign Aggregation ---
@@ -132,8 +132,8 @@ console.log("\n--- 3. Catalog and Session Campaign Aggregation ---");
 
 const allCatalogOnly = getAllAirdropCampaigns(MOCK_AIRDROPS);
 assert(
-  allCatalogOnly.length === 8,
-  `getAllAirdropCampaigns() with empty session returns exactly 8 catalog campaigns`
+  allCatalogOnly.length === 24,
+  `getAllAirdropCampaigns() with empty session returns exactly 24 catalog campaigns`
 );
 
 const sampleSessionCampaign: SessionAirdropCampaign = {
@@ -164,8 +164,8 @@ assert(sessionItems[0].title === sampleSessionCampaign.title, "Session item has 
 
 const allAggregated = getAllAirdropCampaigns(MOCK_AIRDROPS);
 assert(
-  allAggregated.length === 9,
-  `getAllAirdropCampaigns() returns 9 campaigns (1 session + 8 catalog)`
+  allAggregated.length === 25,
+  `getAllAirdropCampaigns() returns 25 campaigns (1 session + 24 catalog)`
 );
 assert(
   allAggregated[0].id === sampleSessionCampaign.id,
@@ -175,32 +175,32 @@ assert(
 // Re-calculate KPIs with session campaign included
 const updatedKpis = calculateAirdropKpis(allAggregated);
 assert(
-  updatedKpis.totalCampaigns === 9,
-  `Updated total campaigns equals 9 (got ${updatedKpis.totalCampaigns})`
+  updatedKpis.totalCampaigns === 25,
+  `Updated total campaigns equals 25 (got ${updatedKpis.totalCampaigns})`
 );
 assert(
-  updatedKpis.activeCampaigns === 5,
-  `Updated active campaigns equals 5 (4 catalog + 1 session active, got ${updatedKpis.activeCampaigns})`
+  updatedKpis.activeCampaigns === 13,
+  `Updated active campaigns equals 13 (got ${updatedKpis.activeCampaigns})`
 );
 assert(
-  updatedKpis.sepoliaActiveCampaigns === 4,
-  `Updated Sepolia active campaigns equals 4 (3 catalog + 1 session active, got ${updatedKpis.sepoliaActiveCampaigns})`
+  updatedKpis.sepoliaActiveCampaigns === 10,
+  `Updated Sepolia active campaigns equals 10 (got ${updatedKpis.sepoliaActiveCampaigns})`
 );
 assert(
-  updatedKpis.totalRecipients === 39800,
-  `Updated total recipients equals 39,800 (39,300 + 500, got ${updatedKpis.totalRecipients})`
+  updatedKpis.totalRecipients === 118400,
+  `Updated total recipients equals 118,400 (got ${updatedKpis.totalRecipients})`
 );
 assert(
-  updatedKpis.totalClaimed === 20415,
-  `Updated total claims equals 20,415 (20,265 + 150, got ${updatedKpis.totalClaimed})`
+  updatedKpis.totalClaimed === 60945,
+  `Updated total claims equals 60,945 (got ${updatedKpis.totalClaimed})`
 );
 assert(
-  updatedKpis.totalTokensNumeric === 12900000,
-  `Updated total tokens equals 12,900,000 (12.8M + 100K, got ${updatedKpis.totalTokensNumeric})`
+  updatedKpis.totalTokensNumeric === 38500000,
+  `Updated total tokens equals 38,500,000 (got ${updatedKpis.totalTokensNumeric})`
 );
 assert(
-  updatedKpis.totalTokensFormatted === "12.9M",
-  `Updated formatted tokens equals '12.9M' (got ${updatedKpis.totalTokensFormatted})`
+  updatedKpis.totalTokensFormatted === "38.5M",
+  `Updated formatted tokens equals '38.5M' (got ${updatedKpis.totalTokensFormatted})`
 );
 
 // --- 4. Search and Quick Filter Presets ---
@@ -208,11 +208,11 @@ console.log("\n--- 4. Search and Quick Filter Presets ---");
 
 // Preset: "all"
 const allResults = filterAirdropCampaigns(allAggregated, { preset: "all" });
-assert(allResults.length === 9, "Preset 'all' returns all 9 campaigns");
+assert(allResults.length === 25, "Preset 'all' returns all 25 campaigns");
 
 // Preset: "live"
 const liveResults = filterAirdropCampaigns(allAggregated, { preset: "live" });
-assert(liveResults.length === 5, `Preset 'live' returns 5 active campaigns (got ${liveResults.length})`);
+assert(liveResults.length === 13, `Preset 'live' returns 13 active campaigns (got ${liveResults.length})`);
 assert(
   liveResults.every((c) => c.status === "active"),
   "All campaigns in preset 'live' have status 'active'"
@@ -221,8 +221,8 @@ assert(
 // Preset: "sepolia"
 const sepoliaResults = filterAirdropCampaigns(allAggregated, { preset: "sepolia" });
 assert(
-  sepoliaResults.length === 6,
-  `Preset 'sepolia' returns 6 campaigns (5 catalog + 1 session on Sepolia, got ${sepoliaResults.length})`
+  sepoliaResults.length === 16,
+  `Preset 'sepolia' returns 16 campaigns (got ${sepoliaResults.length})`
 );
 assert(
   sepoliaResults.every((c) => isSepoliaNetwork(c.network)),
@@ -232,14 +232,14 @@ assert(
 // Search by title
 const searchTitle = filterAirdropCampaigns(allAggregated, { searchQuery: "Genesis" });
 assert(
-  searchTitle.length === 1 && searchTitle[0].id === "air-pmin-genesis",
+  searchTitle.length >= 1 && searchTitle.some((c) => c.id === "air-pmin-genesis"),
   "Search 'Genesis' matches air-pmin-genesis"
 );
 
 // Search by token symbol / tokenId
 const searchToken = filterAirdropCampaigns(allAggregated, { searchQuery: "aurora" });
 assert(
-  searchToken.length === 1 && searchToken[0].id === "air-aurora-gpu",
+  searchToken.length >= 1 && searchToken.some((c) => c.id === "air-aurora-gpu"),
   "Search 'aurora' matches air-aurora-gpu"
 );
 

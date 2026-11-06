@@ -118,7 +118,7 @@ export function EarthHero() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .earth-hero {
           position:relative; isolation:isolate; width:100vw; height:min(850px,100svh); min-height:690px;
           margin:-.5rem calc(50% - 50vw) 0; overflow:hidden; display:grid; place-items:center;

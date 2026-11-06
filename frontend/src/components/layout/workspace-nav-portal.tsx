@@ -13,6 +13,8 @@ type WorkspaceNavPortalProps = {
 export function WorkspaceNavPortal({ children }: WorkspaceNavPortalProps) {
   const navigation = (
     <div className="hx-workspace-nav-portal">
+      {/* Render the shared glass only on routes that actually have inner navigation. */}
+      <div className="hx-navigation-glass-overlay" aria-hidden="true" />
       {children}
     </div>
   );

@@ -23,16 +23,18 @@ import {
   tokenRelations,
   trendingScore,
 } from "@/lib/tokens/selectors";
+import { useTokens, useMarketOverview } from "@/api";
 import { Link } from "react-router-dom";
 
 type SortKey = "name" | "price" | "change" | "cap" | "volume" | "liquidity" | "trend" | "new";
 type Dir = "asc" | "desc";
-type PresetId = "all" | "trending" | "new" | "gainers" | "volume" | "verified";
+type PresetId = "all" | "ecosystem" | "trending" | "new" | "gainers" | "volume" | "verified";
 
 const PAGE = 10;
 
 const PRESETS: { id: PresetId; label: string }[] = [
   { id: "all", label: "All tokens" },
+  { id: "ecosystem", label: "HorizonX Ecosystem" },
   { id: "trending", label: "Trending" },
   { id: "new", label: "Recently launched" },
   { id: "gainers", label: "Top gainers" },
@@ -48,14 +50,12 @@ const sortValue: Record<SortKey, (t: TokenWithMarket) => number | string> = {
   volume: (t) => num(t.market.volume24h),
   liquidity: (t) => num(t.market.liquidity),
   trend: trendingScore,
-  new: (t) => Date.parse(t.createdAt),
+  new: (t) => Date.parse(t.createdAt || t.updatedAt || ""),
 };
-
-const networks = Array.from(new Set(TOKEN_CATALOG.map((t) => t.network))).sort();
-const categories = Array.from(new Set(TOKEN_CATALOG.map((t) => t.category).filter(Boolean) as string[])).sort();
 
 const PRESET_STATE: Record<PresetId, { sort: SortKey; dir: Dir; review: string }> = {
   all: { sort: "cap", dir: "desc", review: "any" },
+  ecosystem: { sort: "cap", dir: "desc", review: "any" },
   trending: { sort: "trend", dir: "desc", review: "any" },
   new: { sort: "new", dir: "desc", review: "any" },
   gainers: { sort: "change", dir: "desc", review: "any" },
@@ -87,7 +87,7 @@ function RankedList({ title, items, metric, onAll }: { title: string; items: Tok
           <li key={t.id}>
             <span className="tk-ranked__n">{i + 1}</span>
             <Link to={`/tokens/${t.id}`} className="mx-identity">
-              <AssetIdentity symbol={t.symbol} name={t.name} logoUrl={t.logoUrl} size="sm" />
+              <AssetIdentity symbol={t.symbol} name={t.name} logoUrl={t.logoUrl || (t as any).logo || (t as any).image} size="sm" />
             </Link>
             <span className="tk-ranked__metric">{metric(t)}</span>
           </li>
@@ -99,6 +99,33 @@ function RankedList({ title, items, metric, onAll }: { title: string; items: Tok
 
 export function TokenExplore() {
   const watch = useTokenWatchlist();
+
+  // Consume centralized data hooks from @/api
+  const { data: apiTokens = [] } = useTokens();
+  const { data: marketOverview } = useMarketOverview();
+
+  // Merge live API tokens with catalog fallback if loading
+  const allTokens = useMemo<TokenWithMarket[]>(() => {
+    if (apiTokens && apiTokens.length > 0) {
+      return apiTokens as unknown as TokenWithMarket[];
+    }
+    return TOKEN_CATALOG;
+  }, [apiTokens]);
+
+  const isLiveFeed = Boolean(
+    allTokens.some((t) => t.market?.isLive || (t as any).isExternal) &&
+    marketOverview?.volume24h
+  );
+
+  const networks = useMemo(
+    () => Array.from(new Set(allTokens.map((t) => t.network))).filter(Boolean).sort(),
+    [allTokens]
+  );
+  const categories = useMemo(
+    () => Array.from(new Set(allTokens.map((t) => t.category).filter(Boolean) as string[])).sort(),
+    [allTokens]
+  );
+
   const [query, setQuery] = useState("");
   const [network, setNetwork] = useState("all");
   const [category, setCategory] = useState("all");
@@ -122,11 +149,11 @@ export function TokenExplore() {
     setCategory(pick("category", categories) ?? "all");
     setReview(pick("review", ["any", "reviewed", ...VERIFICATION_TIERS.map((v) => v.value)]) ?? "any");
     setCap(pick("cap", MARKET_CAP_BANDS.map((b) => b.value)) ?? "any");
-    setPreset((pick("view", PRESETS.map((x) => x.id)) as PresetId) ?? "all");
+    setPreset(((pick("view", PRESETS.map((x) => x.id)) || pick("preset", PRESETS.map((x) => x.id))) as PresetId) ?? "all");
     setSortKey((pick("sort", Object.keys(sortValue)) as SortKey) ?? "cap");
     setDir((pick("dir", ["asc", "desc"]) as Dir) ?? "desc");
     setReady(true);
-  }, []);
+  }, [networks, categories]);
 
   useEffect(() => {
     if (!ready) return;
@@ -159,7 +186,7 @@ export function TokenExplore() {
     const k = key as SortKey;
     setDir(k === sortKey ? (dir === "desc" ? "asc" : "desc") : k === "name" ? "asc" : "desc");
     setSortKey(k);
-    setPreset((p) => (p === "verified" ? p : "all"));
+    setPreset((p) => (p === "verified" || p === "ecosystem" ? p : "all"));
     resetVisible();
   };
 
@@ -167,37 +194,49 @@ export function TokenExplore() {
     const q = query.trim().toLowerCase();
     const band = MARKET_CAP_BANDS.find((b) => b.value === cap) ?? MARKET_CAP_BANDS[0];
     const get = sortValue[sortKey];
-    return TOKEN_CATALOG.filter((t) => {
-      if (q && !`${t.name} ${t.symbol} ${t.contractAddress ?? ""}`.toLowerCase().includes(q)) return false;
-      if (network !== "all" && t.network !== network) return false;
-      if (category !== "all" && t.category !== category) return false;
-      if (review === "reviewed" ? !isReviewed(t) : review !== "any" && (t.verificationStatus ?? "not_reviewed") !== review) return false;
-      const c = num(t.market.marketCap);
-      return c >= band.min && c < band.max;
-    }).sort((a, b) => {
-      const av = get(a), bv = get(b);
-      const cmp = typeof av === "string" ? av.localeCompare(bv as string) : (av as number) - (bv as number);
-      return dir === "asc" ? cmp : -cmp;
-    });
-  }, [query, network, category, review, cap, sortKey, dir]);
+    return allTokens
+      .filter((t) => {
+        if (preset === "ecosystem" && !(t as any).isEcosystem && (t as any).isExternal) return false;
+        if (q && !`${t.name} ${t.symbol} ${t.contractAddress ?? ""} ${t.id}`.toLowerCase().includes(q)) return false;
+        if (network !== "all" && t.network !== network) return false;
+        if (category !== "all" && t.category !== category) return false;
+        if (review === "reviewed" ? !isReviewed(t) : review !== "any" && (t.verificationStatus ?? "not_reviewed") !== review) return false;
+        const c = num(t.market.marketCap);
+        return c >= band.min && c < band.max;
+      })
+      .sort((a, b) => {
+        const av = get(a), bv = get(b);
+        const cmp = typeof av === "string" ? av.localeCompare(bv as string) : (av as number) - (bv as number);
+        return dir === "asc" ? cmp : -cmp;
+      });
+  }, [allTokens, query, network, category, review, cap, preset, sortKey, dir]);
 
-  const filtersActive = query || network !== "all" || category !== "all" || review !== "any" || cap !== "any";
+  const filtersActive = query || network !== "all" || category !== "all" || review !== "any" || cap !== "any" || preset === "ecosystem";
   const reset = () => {
     setQuery(""); setNetwork("all"); setCategory("all"); setReview("any"); setCap("any");
     applyPreset("all");
   };
 
   /* Editorial content */
-  const market = useMemo(() => summarizeMarket(), []);
-  const lists = useMemo(() => discoveryLists(), []);
+  const market = useMemo(() => summarizeMarket(allTokens), [allTokens]);
+  const lists = useMemo(() => discoveryLists(allTokens), [allTokens]);
+
+  const displayMarketCap = isLiveFeed && marketOverview?.totalMarketCap
+    ? marketOverview.totalMarketCap
+    : market.marketCap;
+
+  const displayVolume24h = isLiveFeed && marketOverview?.volume24h
+    ? marketOverview.volume24h
+    : market.volume24h;
+
   const railItems: RailItem[] = useMemo(
     () =>
-      lists.trending.map((t) => ({
+      lists.trending.slice(0, 12).map((t) => ({
         id: t.id,
         href: `/tokens/${t.id}`,
         symbol: t.symbol,
         name: t.name,
-        logoUrl: t.logoUrl,
+        logoUrl: t.logoUrl || (t as any).logo || (t as any).image,
         value: usdPrice(t.market.price),
         change: num(t.market.priceChange24h),
         changeLabel: pct(t.market.priceChange24h),
@@ -206,16 +245,17 @@ export function TokenExplore() {
       })),
     [lists],
   );
+
   const slides: FeaturedSlide[] = useMemo(
     () =>
-      featuredTokens().map((t) => {
+      featuredTokens(allTokens).map((t) => {
         const live = tokenRelations(t).filter((r) => REL_TAG[r.kind] && r.tone === "live");
         const c = num(t.market.priceChange24h);
         return {
           id: t.id,
           href: `/tokens/${t.id}`,
           symbol: t.symbol,
-          logoUrl: t.logoUrl,
+          logoUrl: t.logoUrl || (t as any).logo || (t as any).image,
           title: t.name,
           kicker: `${t.category ?? "Token"} on ${t.network}`,
           description: t.description ?? "",
@@ -231,7 +271,7 @@ export function TokenExplore() {
           cta: `View ${t.symbol}`,
         };
       }),
-    [],
+    [allTokens],
   );
 
   const columns: Column<TokenWithMarket>[] = [
@@ -240,11 +280,19 @@ export function TokenExplore() {
       key: "name",
       header: "Token",
       sortable: true,
-      cell: (t) => (
-        <Link to={`/tokens/${t.id}`} className="mx-identity">
-          <AssetIdentity symbol={t.symbol} name={t.name} logoUrl={t.logoUrl} />
-        </Link>
-      ),
+      cell: (t) => {
+        const isEcosystem = (t as any).isEcosystem || !(t as any).isExternal;
+        return (
+          <Link to={`/tokens/${t.id}`} className="mx-identity">
+            <AssetIdentity
+              symbol={t.symbol}
+              name={t.name}
+              logoUrl={t.logoUrl || (t as any).logo || (t as any).image}
+              meta={isEcosystem ? <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">Ecosystem</span> : undefined}
+            />
+          </Link>
+        );
+      },
     },
     { key: "price", header: "Price", sortable: true, align: "end", cell: (t) => usdPrice(t.market.price) },
     { key: "change", header: "24h", sortable: true, align: "end", cell: (t) => <ChangeCell value={t.market.priceChange24h} /> },
@@ -269,7 +317,7 @@ export function TokenExplore() {
       cell: (t) => (
         <span className="tk-row-actions">
           {t.status === "active" && (
-            <Link to={`/exchange/tokens/${t.id}`} className="mx-link hide-md">Trade</Link>
+            <Link to={`/tokens/${t.id}#trade`} className="mx-link hide-md">Trade</Link>
           )}
           <WatchButton name={t.symbol} watched={watch.has(t.id)} onToggle={() => watch.toggle(t.id)} />
         </span>
@@ -291,18 +339,29 @@ export function TokenExplore() {
           </p>
         </div>
         <dl className="tk-summary" aria-label="Market summary">
-          <div><dt>Market cap</dt><dd>{usdCompact(market.marketCap)}</dd></div>
-          <div><dt>24h volume</dt><dd>{usdCompact(market.volume24h)}</dd></div>
+          <div><dt>Market cap</dt><dd>{usdCompact(displayMarketCap)}</dd></div>
+          <div><dt>24h volume</dt><dd>{usdCompact(displayVolume24h)}</dd></div>
           <div>
             <dt>Rising, falling</dt>
             <dd><span className="is-up">{market.advancing}</span> / <span className="is-down">{market.declining}</span></dd>
           </div>
         </dl>
       </header>
-      <p className="tk-source">
-        <ProvenanceTag kind="simulated" label="Simulated market data" />
-        <span>Prices and volumes are illustrative until a live market feed is connected.</span>
-      </p>
+
+      {isLiveFeed ? (
+        <p className="tk-source">
+          <ProvenanceTag kind="onchain" label="Live CoinMarketCap Feed" />
+          <span>
+            Real-time cryptocurrency prices, 24h volume, and market capitalization provided by CoinMarketCap. HorizonX ecosystem tokens are highlighted alongside global markets.
+            {marketOverview?.lastUpdated && ` Last updated ${new Date(marketOverview.lastUpdated).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`}
+          </span>
+        </p>
+      ) : (
+        <p className="tk-source">
+          <ProvenanceTag kind="simulated" label="Simulated market data" />
+          <span>Prices and volumes are illustrative until a live market feed is connected.</span>
+        </p>
+      )}
 
       <section className="tk-section" aria-labelledby="trending-h">
         <header className="tk-section__head">
@@ -322,7 +381,7 @@ export function TokenExplore() {
       <section className="tk-section tk-cols3" aria-label="Market highlights">
         <RankedList title="Top gainers" items={lists.gainers.slice(0, 4)} metric={(t) => <ChangeCell value={t.market.priceChange24h} />} onAll={() => applyPreset("gainers")} />
         <RankedList title="Top volume" items={lists.volume.slice(0, 4)} metric={(t) => usdCompact(t.market.volume24h)} onAll={() => applyPreset("volume")} />
-        <RankedList title="Recently launched" items={lists.recent.slice(0, 4)} metric={(t) => <span className="mx-muted">{new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}</span>} onAll={() => applyPreset("new")} />
+        <RankedList title="Recently launched" items={lists.recent.slice(0, 4)} metric={(t) => <span className="mx-muted">{new Date(t.createdAt || t.updatedAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" })}</span>} onAll={() => applyPreset("new")} />
       </section>
 
       <section className="tk-section tk-directory" id="directory" aria-labelledby="directory-h">
@@ -352,7 +411,7 @@ export function TokenExplore() {
             ]}
             trailing={
               <>
-                <span aria-live="polite">{rows.length} of {TOKEN_CATALOG.length} tokens</span>
+                <span aria-live="polite">{rows.length} of {allTokens.length} tokens</span>
                 {filtersActive && <button type="button" className="mx-link" onClick={reset}>Clear filters</button>}
               </>
             }

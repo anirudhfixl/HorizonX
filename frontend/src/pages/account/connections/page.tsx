@@ -37,7 +37,7 @@ export default function AccountConnectionsPage() {
               <div className="account-wallet-card__icon"><Wallet className="h-5 w-5" /></div>
               <div className="account-wallet-card__details">
                 <div className="account-wallet-card__name">{walletProvider || "Connected wallet"} <span><CheckCircle2 className="h-3 w-3" /> Connected</span></div>
-                <code title={address}>{shortAddress || address}</code>
+                <code title={address || undefined}>{shortAddress || address}</code>
               </div>
               <Button size="sm" variant="ghost" onClick={() => openModal("WALLET_DETAILS")} className="gap-2">Details <ExternalLink className="h-3.5 w-3.5" /></Button>
             </div>

@@ -90,6 +90,14 @@ export interface Project {
   category?: string;
   ecosystem?: string;
   tokenIds: string[];
+  partnerIds?: string[];
+  tvl?: number;
+  mcap?: number;
+  chains?: string[];
+  isEcosystem?: boolean;
+  isExternal?: boolean;
+  origin?: 'ecosystem' | 'external' | 'session';
+  source?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -108,8 +116,10 @@ export type PresaleStatus =
 export interface Presale {
   id: string;
   title: string;
+  name?: string;
   description?: string;
   tokenId: string;
+  token?: string;
   projectId?: string;
   category?: string;
   ownerAddress: string;
@@ -118,12 +128,27 @@ export interface Presale {
   endTime?: string;
   hardCap?: string;
   softCap?: string;
+  fundraisingGoal?: string;
+  salePrice?: string;
+  allocation?: string;
   minContribution?: string;
   maxContribution?: string;
   totalRaised?: string;
   participantCount?: number;
   network: string;
   contractAddress?: string;
+  progress?: number;
+  launchType?: 'presale';
+  providerId?: string;
+  providerName?: string;
+  isEcosystem?: boolean;
+  isExternal?: boolean;
+  origin?: 'ecosystem' | 'external' | 'session';
+  source?: string;
+  saleType?: string;
+  launchpadName?: string;
+  externalUrl?: string;
+  lastUpdated?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -133,9 +158,11 @@ export interface Presale {
 export interface FairLaunch {
   id: string;
   title: string;
+  name?: string;
   description?: string;
   category?: string;
   tokenId: string;
+  token?: string;
   projectId?: string;
   ownerAddress: string;
   status: PresaleStatus;
@@ -143,12 +170,27 @@ export interface FairLaunch {
   endTime?: string;
   totalSelling?: string;
   softCap?: string;
+  fundraisingGoal?: string;
+  salePrice?: string;
+  allocation?: string;
   totalRaised?: string;
   participantCount?: number;
   minContribution?: string;
   maxContribution?: string;
   network: string;
   contractAddress?: string;
+  progress?: number;
+  launchType?: 'fair-launch';
+  providerId?: string;
+  providerName?: string;
+  isEcosystem?: boolean;
+  isExternal?: boolean;
+  origin?: 'ecosystem' | 'external' | 'session';
+  source?: string;
+  saleType?: string;
+  launchpadName?: string;
+  externalUrl?: string;
+  lastUpdated?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -168,6 +210,7 @@ export type AirdropCampaignType =
 export interface AirdropCampaign {
   id: string;
   title: string;
+  name?: string;
   description?: string;
   category?: string;
   type: AirdropCampaignType;
@@ -175,6 +218,7 @@ export interface AirdropCampaign {
   projectId?: string;
   ownerAddress: string;
   status: LifecycleStatus;
+  reward?: string;
   totalReward?: string;
   recipientCount?: number;
   claimedCount?: number;
@@ -183,6 +227,15 @@ export interface AirdropCampaign {
   network: string;
   contractAddress?: string;
   merkleRoot?: string;
+  officialUrl?: string;
+  providerId?: string;
+  providerName?: string;
+  isEcosystem?: boolean;
+  isExternal?: boolean;
+  origin?: 'ecosystem' | 'external' | 'session';
+  source?: string;
+  externalUrl?: string;
+  lastUpdated?: string;
   createdAt: string;
   updatedAt: string;
 }

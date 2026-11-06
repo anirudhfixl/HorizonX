@@ -4,22 +4,22 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import "./market-section-nav.css";
 
 const sections = [
-  { to: "/exchange", label: "Overview", end: true },
-  { to: "/exchange/markets", label: "All markets", end: true },
-  { to: "/exchange/watchlist", label: "Watchlist", end: true },
+  { to: "/tokens", label: "Dashboard", end: true },
+  { to: "/tokens/explore", label: "Explore Tokens", end: true },
+  { to: "/tokens/watchlist", label: "Watchlist", end: true },
 ];
 
 type Crumb = { label: string; to?: string };
 
 export function MarketSectionNav() {
   const { pathname } = useLocation();
-  const isAssetDetail = pathname.startsWith("/exchange/tokens/");
+  const isAssetDetail = pathname.startsWith("/tokens/");
   return (
     <WorkspaceNavPortal>
       <nav className="mk-section-nav hx-workspace-nav" aria-label="Markets workspace">
       <div className="mk-section-nav__links hx-workspace-nav__links">
         {sections.map((item) => {
-          const active = item.to === "/exchange/markets"
+          const active = item.to === "/tokens/explore"
             ? pathname === item.to || isAssetDetail
             : undefined;
           return (

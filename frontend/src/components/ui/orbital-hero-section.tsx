@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /* -------------------------------------------------------------------------- */
 /*  What this draws                                                           */
@@ -158,6 +158,64 @@ export const SOLAR_SYSTEM: Planet[] = [
 /** Just the four rocky ones, for a tighter frame. */
 export const INNER_PLANETS: Planet[] = SOLAR_SYSTEM.slice(0, 4);
 
+type OrbitalFeatureInfo = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  path: string;
+};
+
+const ORBITAL_FEATURES: Record<string, OrbitalFeatureInfo> = {
+  Mercury: {
+    eyebrow: "DIGITAL ASSETS",
+    title: "Tokens",
+    description: "Discover token profiles, compare market activity and explore digital assets across HorizonX.",
+    path: "/tokens",
+  },
+  Venus: {
+    eyebrow: "WEB3 DISCOVERY",
+    title: "Projects",
+    description: "Explore emerging Web3 projects, teams and the ecosystems building around them.",
+    path: "/projects",
+  },
+  Earth: {
+    eyebrow: "TOKEN LAUNCHES",
+    title: "Launchpad",
+    description: "Discover presales, fair launches and upcoming token opportunities.",
+    path: "/launchpad",
+  },
+  Mars: {
+    eyebrow: "COMMUNITY REWARDS",
+    title: "Airdrops",
+    description: "Explore airdrop campaigns and token distribution opportunities.",
+    path: "/airdrops",
+  },
+  Jupiter: {
+    eyebrow: "ON-CHAIN REWARDS",
+    title: "Staking",
+    description: "Discover staking opportunities and ways to participate in supported networks.",
+    path: "/staking",
+  },
+  Saturn: {
+    eyebrow: "MARKET INTELLIGENCE",
+    title: "Markets",
+    description: "Follow token prices, trading activity and market movements.",
+    path: "/markets",
+  },
+  Uranus: {
+    eyebrow: "ECOSYSTEM NETWORK",
+    title: "Partners",
+    description: "Meet the projects, protocols and teams connected to HorizonX.",
+    path: "/partners",
+  },
+  Neptune: {
+    eyebrow: "CONNECTED ECOSYSTEM",
+    title: "HorizonX",
+    description: "One connected destination for discovering the wider Web3 ecosystem.",
+    path: "/explore",
+  },
+};
+
 /**
  * Extra tilt and swing added to each orbit plane at planeSpread = 1, in
  * degrees. Fixed rather than random, so the rosette they make is the same
@@ -257,6 +315,15 @@ export function OrbitalHeroSection({
 }: OrbitalHeroSectionProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [hoveredFeature, setHoveredFeature] = useState<{
+    id: string;
+    title: string;
+    eyebrow: string;
+    description: string;
+    path: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const props = useRef({
     planets, yearSeconds, trailYears, compress, maxTurns, planeSpread, eccentricity, alignToCourse, driftSpeed, apex,
@@ -593,13 +660,119 @@ export function OrbitalHeroSection({
 
     /* --- pointer ---------------------------------------------------------- */
     let pointerX = 0, pointerY = 0, camX = 0, camY = 0;
+    let hoveredPlanetId: string | null = null;
+    let hitTargets: Array<{ id: string; name: string; x: number; y: number; radius: number }> = [];
+
     function onPointer(ev: PointerEvent) {
       if (!props.current.interactive) return;
+      const eventTarget = ev.target;
+      if (eventTarget instanceof Element && eventTarget.closest("[data-orbital-feature-panel]")) {
+        pointerX = 0;
+        pointerY = 0;
+        if (host) host.style.cursor = "default";
+        return;
+      }
       const rect = host!.getBoundingClientRect();
-      pointerX = ((ev.clientX - rect.left) / rect.width - 0.5) * 2;
-      pointerY = ((ev.clientY - rect.top) / rect.height - 0.5) * 2;
+      const localX = ev.clientX - rect.left;
+      const localY = ev.clientY - rect.top;
+
+      // The central HorizonX mark is the home-page link and shares the hover pause behavior.
+      const coreRadius = Math.max(38, Math.min(width, height) * 0.045);
+      if (Math.hypot(localX - cx, localY - cy) <= coreRadius) {
+        pointerX = 0;
+        pointerY = 0;
+        host!.style.cursor = "pointer";
+        if (hoveredPlanetId !== "HorizonX") {
+          hoveredPlanetId = "HorizonX";
+          setHoveredFeature({
+            id: "HorizonX",
+            title: "HorizonX",
+            eyebrow: "THE ECOSYSTEM HOME",
+            description: "Return to the HorizonX home page and discover the connected Web3 ecosystem.",
+            path: "/",
+            x: cx,
+            y: cy,
+          });
+        }
+        return;
+      }
+
+      let nearest: (typeof hitTargets)[number] | null = null;
+      let nearestDistance = Infinity;
+
+      for (const target of hitTargets) {
+        const distance = Math.hypot(localX - target.x, localY - target.y);
+        if (distance <= target.radius && distance < nearestDistance) {
+          nearest = target;
+          nearestDistance = distance;
+        }
+      }
+
+      if (nearest) {
+        host!.style.cursor = "pointer";
+        pointerX = 0;
+        pointerY = 0;
+        if (hoveredPlanetId !== nearest.id) {
+          hoveredPlanetId = nearest.id;
+          const feature = ORBITAL_FEATURES[nearest.name];
+          if (feature) {
+            setHoveredFeature({
+              id: nearest.id,
+              title: feature.title,
+              eyebrow: feature.eyebrow,
+              description: feature.description,
+              path: feature.path,
+              x: nearest.x,
+              y: nearest.y,
+            });
+          }
+        }
+        return;
+      }
+
+      if (hoveredPlanetId !== null) {
+        hoveredPlanetId = null;
+        setHoveredFeature(null);
+      }
+      host!.style.cursor = "default";
+      pointerX = (localX / rect.width - 0.5) * 2;
+      pointerY = (localY / rect.height - 0.5) * 2;
     }
-    function onLeave() { pointerX = 0; pointerY = 0; }
+
+    function onLeave() {
+      pointerX = 0;
+      pointerY = 0;
+      hoveredPlanetId = null;
+      setHoveredFeature(null);
+      if (host) host.style.cursor = "default";
+    }
+
+    function onClick(ev: MouseEvent) {
+      const rect = host!.getBoundingClientRect();
+      const localX = ev.clientX - rect.left;
+      const localY = ev.clientY - rect.top;
+
+      const coreRadius = Math.max(38, Math.min(width, height) * 0.045);
+      if (Math.hypot(localX - cx, localY - cy) <= coreRadius) {
+        window.location.assign("/");
+        return;
+      }
+
+      let nearest: (typeof hitTargets)[number] | null = null;
+      let nearestDistance = Infinity;
+
+      for (const target of hitTargets) {
+        const distance = Math.hypot(localX - target.x, localY - target.y);
+        if (distance <= target.radius && distance < nearestDistance) {
+          nearest = target;
+          nearestDistance = distance;
+        }
+      }
+
+      if (!nearest) return;
+      const feature = ORBITAL_FEATURES[nearest.name];
+      if (feature) window.location.assign(feature.path);
+    }
 
     /* --- the star at the centre ------------------------------------------ */
     function drawSun(k: number, t: number) {
@@ -656,8 +829,10 @@ export function OrbitalHeroSection({
       syncElements();
 
       // ease the camera toward the pointer
-      camX += (pointerX - camX) * 0.04;
-      camY += (pointerY - camY) * 0.04;
+      if (hoveredPlanetId === null) {
+        camX += (pointerX - camX) * 0.04;
+        camY += (pointerY - camY) * 0.04;
+      }
       setCamera(C.spin + camX * 7, C.tilt + camY * 5, C.roll);
 
       dist = C.driftSpeed * t;
@@ -861,6 +1036,17 @@ export function OrbitalHeroSection({
       /* bodies, back to front around the Sun -------------------------------- */
       shots.sort((p, q) => q.depth - p.depth);
       const sizeScale = Math.min(width, height) / 660;
+      hitTargets = shots.map((shot) => {
+        const depth = Math.min(1.3, Math.max(0.5, shot.s));
+        const size = shot.el.p.size * depth * sizeScale;
+        return {
+          id: shot.el.p.name,
+          name: shot.el.p.name,
+          x: shot.x,
+          y: shot.y,
+          radius: Math.max(13, size * 4.2),
+        };
+      });
       const drawShot = (o: Shot) => {
         const depth = Math.min(1.3, Math.max(0.5, o.s));
         const size = o.el.p.size * depth * sizeScale;
@@ -910,7 +1096,7 @@ export function OrbitalHeroSection({
       if (!visible) { lastFrame = now; return; }
       const dt = lastFrame ? Math.min(0.05, (now - lastFrame) / 1000) : 0;
       lastFrame = now;
-      if (!props.current.paused && !reduced) {
+      if (!props.current.paused && !reduced && hoveredPlanetId === null) {
         years += dt / Math.max(0.1, props.current.yearSeconds);
       }
       render(years);
@@ -936,6 +1122,7 @@ export function OrbitalHeroSection({
     document.addEventListener("visibilitychange", onVisibility);
     host.addEventListener("pointermove", onPointer);
     host.addEventListener("pointerleave", onLeave);
+    host.addEventListener("click", onClick);
 
     return () => {
       running = false;
@@ -945,6 +1132,7 @@ export function OrbitalHeroSection({
       document.removeEventListener("visibilitychange", onVisibility);
       host.removeEventListener("pointermove", onPointer);
       host.removeEventListener("pointerleave", onLeave);
+      host.removeEventListener("click", onClick);
     };
   }, []);
 
@@ -982,6 +1170,50 @@ export function OrbitalHeroSection({
           {children}
         </div>
       ) : null}
+      {hoveredFeature ? (
+        <a
+          data-orbital-feature-panel
+          href={hoveredFeature.path}
+          aria-label={`Open ${hoveredFeature.title}`}
+          onClick={(event) => event.stopPropagation()}
+          style={{
+            position: "absolute",
+            zIndex: 5,
+            left: `${Math.max(18, Math.min(hoveredFeature.x + 22, (hostRef.current?.clientWidth ?? 0) - 254))}px`,
+            top: `${Math.max(18, Math.min(hoveredFeature.y - 62, (hostRef.current?.clientHeight ?? 0) - 130))}px`,
+            width: "230px",
+            boxSizing: "border-box",
+            padding: "17px 18px 16px",
+            border: "1px solid rgba(190, 178, 255, .24)",
+            borderRadius: "14px",
+            color: "#f1eee8",
+            background: "linear-gradient(145deg, rgba(20, 19, 25, .94), rgba(8, 8, 10, .92))",
+            boxShadow: "0 18px 55px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.04)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+            pointerEvents: "auto",
+            textDecoration: "none",
+            cursor: "pointer",
+            animation: "orbitalFeatureReveal 180ms ease-out both",
+          }}
+        >
+          <div style={{ color: "#d0a0ff", fontSize: "9px", fontWeight: 800, letterSpacing: ".16em", marginBottom: "8px" }}>
+            {hoveredFeature.eyebrow}
+          </div>
+          <div style={{ fontSize: "20px", lineHeight: 1.15, fontWeight: 700, letterSpacing: "-.04em", marginBottom: "7px" }}>
+            {hoveredFeature.title}
+          </div>
+          <div style={{ color: "rgba(232,228,239,.68)", fontSize: "12px", lineHeight: 1.65 }}>
+            {hoveredFeature.description}
+          </div>
+        </a>
+      ) : null}
+      <style>{`
+        @keyframes orbitalFeatureReveal {
+          from { opacity: 0; transform: translateY(5px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

@@ -96,9 +96,9 @@ const SEARCH_ITEMS: SearchResultItem[] = [
   {
     id: "nav-exchange",
     category: "Navigation",
-    title: "Markets & Analytics",
-    subtitle: "Live trading charts, liquidity, and volume metrics",
-    href: "/exchange",
+    title: "Tokens & Markets",
+    subtitle: "Cryptocurrency market data, liquidity, and token catalog",
+    href: "/tokens/explore",
     icon: <LineChart className="h-4 w-4 text-sky-400" />,
   },
   // Docs

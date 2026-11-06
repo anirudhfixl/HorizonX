@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { TokenDetail } from "@/components/tokens/token-detail";
 import { PageMeta } from "@/components/seo/page-meta";
 import NotFoundPage from "@/pages/not-found/page";
-import { TOKENS } from "@/data";
+import { useToken } from "@/api";
 
 /**
  * Token details (/tokens/:id): market data, tokenomics, holders and every HorizonX
@@ -11,9 +11,16 @@ import { TOKENS } from "@/data";
  */
 export default function TokenDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
-  const token = TOKENS.find((t) => t.id === id);
+  const { data: token, isLoading } = useToken(id);
 
   if (!token) {
+    if (isLoading) {
+      return (
+        <div className="py-20 text-center text-sm text-muted-foreground animate-pulse">
+          Loading token details...
+        </div>
+      );
+    }
     return (
       <>
         <PageMeta title="Token not found" />
@@ -28,7 +35,7 @@ export default function TokenDetailPage() {
         title={`${token.name} (${token.symbol})`}
         description={`${token.name} on ${token.network}: simulated price, tokenomics, holders and linked HorizonX activity.`}
       />
-      <TokenDetail token={token} />
+      <TokenDetail token={token as any} />
     </>
   );
 }

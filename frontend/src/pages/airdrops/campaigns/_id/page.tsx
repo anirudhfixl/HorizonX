@@ -8,11 +8,8 @@ import { MetricCard } from "@/components/shared/metric-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { Button } from "@/components/ui/button";
-import { AIRDROPS, PROJECTS, TOKENS } from "@/data";
+import { useAirdrop, useToken, useProject } from "@/api";
 import {
-  readSessionAirdropsRaw,
-  subscribeSessionAirdrops,
-  parseSessionAirdrops,
   getAirdropProvenance,
   calculateClaimProgress,
 } from "@/lib/airdrop-storage";
@@ -27,18 +24,23 @@ function formatDate(value?: string) {
 
 export default function AirdropDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
-  const sessionRaw = useSyncExternalStore(subscribeSessionAirdrops, readSessionAirdropsRaw, () => "");
-  const airdrop = useMemo(() => {
-    const sessionItems = parseSessionAirdrops(sessionRaw);
-    return sessionItems.find((item) => item.id === id) ?? AIRDROPS.find((item) => item.id === id);
-  }, [id, sessionRaw]);
+  const { data: airdrop, isLoading: airdropLoading } = useAirdrop(id);
+  const { data: token } = useToken(airdrop?.tokenId);
+  const { data: project } = useProject(airdrop?.projectId);
 
-  if (!airdrop) return <NotFoundPage />;
+  if (!airdrop) {
+    if (airdropLoading) {
+      return (
+        <main className="airdrop-page entity-detail-page w-full max-w-none px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 space-y-7">
+          <div className="py-20 text-center text-sm text-muted-foreground">Loading airdrop campaign...</div>
+        </main>
+      );
+    }
+    return <NotFoundPage />;
+  }
 
-  const token = TOKENS.find((item) => item.id === airdrop.tokenId);
-  const project = airdrop.projectId ? PROJECTS.find((item) => item.id === airdrop.projectId) : undefined;
   const progress = calculateClaimProgress(airdrop.claimedCount, airdrop.recipientCount);
-  const provenance = getAirdropProvenance(airdrop);
+  const provenance = getAirdropProvenance(airdrop as any);
   const mark = token?.symbol?.slice(0, 4) || airdrop.tokenId.slice(0, 4).toUpperCase();
 
   return (
@@ -52,7 +54,10 @@ export default function AirdropDetailPage() {
             <div className="entity-detail-badges">
               <span className="entity-detail-type">Airdrop campaign</span>
               <StatusBadge status={airdrop.status} />
-              <ProvenanceBadge kind={provenance} />
+              <ProvenanceBadge
+                kind={airdrop.isExternal ? "simulated" : provenance}
+                label={airdrop.source || (airdrop.isExternal ? "DefiLlama / External Provider" : undefined)}
+              />
               <span className="entity-detail-meta-pill">{airdrop.network}</span>
               <span className="entity-detail-meta-pill">{airdrop.type}</span>
             </div>
@@ -66,15 +71,29 @@ export default function AirdropDetailPage() {
           </div>
         </div>
         <div className="entity-detail-header-actions">
+          {airdrop.officialUrl && (
+            <Button asChild size="sm" className="bg-primary text-primary-foreground font-semibold hover:bg-primary/90">
+              <a href={airdrop.officialUrl} target="_blank" rel="noopener noreferrer">
+                Official Portal <ExternalLink className="ml-1.5 h-3 w-3" />
+              </a>
+            </Button>
+          )}
           {project && <Button asChild size="sm" variant="outline"><Link to={`/projects/${project.id}`}>View project <ExternalLink className="ml-1.5 h-3 w-3" /></Link></Button>}
           <Button asChild size="sm" variant="outline"><Link to="/airdrops/campaigns">All campaigns <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" /></Link></Button>
         </div>
       </header>
 
-      <div className="flex items-start gap-3 border-l-2 border-amber-400/70 py-1 pl-3 text-xs leading-relaxed text-muted-foreground">
-        <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
-        <p><strong className="text-foreground">Demonstration data.</strong> This record is stored in the local catalog or browser session. It is not proof of a live on-chain distribution, allocation, or claim availability.</p>
-      </div>
+      {airdrop.isExternal ? (
+        <div className="flex items-start gap-3 border-l-2 border-cyan-400/70 py-1 pl-3 text-xs leading-relaxed text-muted-foreground">
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
+          <p><strong className="text-foreground">{airdrop.source || "Live External Provider"}.</strong> This campaign is synchronized live from {airdrop.source || "external registry"}. Always verify requirements and official protocol links before participating.</p>
+        </div>
+      ) : (
+        <div className="flex items-start gap-3 border-l-2 border-amber-400/70 py-1 pl-3 text-xs leading-relaxed text-muted-foreground">
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+          <p><strong className="text-foreground">Demonstration data.</strong> This record is stored in the local catalog or browser session. It is not proof of a live on-chain distribution, allocation, or claim availability.</p>
+        </div>
+      )}
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard title="Reward Pool" value={airdrop.totalReward || "Not specified"} subtitle="Campaign allocation" icon={<Gift className="h-4 w-4" />} />

@@ -9,19 +9,19 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { AIRDROPS } from "@/data";
-import { readSessionAirdropsRaw, subscribeSessionAirdrops, parseSessionAirdrops, getAirdropProvenance, calculateClaimProgress } from "@/lib/airdrop-storage";
+import { useAirdrops } from "@/api";
+import { getAirdropProvenance, calculateClaimProgress } from "@/lib/airdrop-storage";
 import { Gift, Plus, Wallet, ArrowUpRight, CalendarDays } from "lucide-react";
 
 export default function MyAirdropsPage() {
   const { isConnected, address } = useWallet();
   const { openModal } = useModal();
-  const sessionRaw = useSyncExternalStore(subscribeSessionAirdrops, readSessionAirdropsRaw, () => "");
+  const { data: allCampaigns = [] } = useAirdrops();
+
   const campaigns = useMemo(() => {
-    const all = [...parseSessionAirdrops(sessionRaw), ...AIRDROPS];
     if (!address) return [];
-    return all.filter((item) => item.ownerAddress?.toLowerCase() === address.toLowerCase());
-  }, [address, sessionRaw]);
+    return allCampaigns.filter((item) => item.ownerAddress?.toLowerCase() === address.toLowerCase());
+  }, [address, allCampaigns]);
 
   return (
     <main className="airdrop-page w-full max-w-none px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 space-y-7">

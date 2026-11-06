@@ -17,7 +17,7 @@ export function usdCompact(v?: number | null): string {
 export function usdPrice(v?: number | null): string {
   if (v == null || !Number.isFinite(v)) return "—";
   const a = Math.abs(v);
-  const digits = a >= 100 ? 2 : a >= 1 ? 3 : a >= 0.01 ? 4 : a >= 0.0001 ? 6 : 8;
+  const digits = a >= 1 ? 2 : a >= 0.01 ? 4 : a >= 0.0001 ? 6 : 8;
   return `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: digits })}`;
 }
 

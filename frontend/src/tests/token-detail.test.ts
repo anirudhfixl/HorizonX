@@ -38,7 +38,7 @@ console.log("==========================================\n");
 console.log("--- 1. Dynamic Route Static Params & Lookup ---");
 
 const staticParams = MOCK_TOKENS.map((token) => ({ id: token.id }));
-assert(staticParams.length === 9, "Static params generate all 9 catalog tokens");
+assert(staticParams.length === 27, "Static params generate all 27 catalog tokens");
 
 const expectedIds = [
   "prominers",
@@ -145,12 +145,12 @@ console.log("\n--- 7. Architecture Decision D-04 Sepolia Compliance & Explorer L
 const sepoliaTokens = MOCK_TOKENS.filter(
   (t) => t.network.toLowerCase().includes("sepolia") || t.network.toLowerCase() === "ethereum"
 );
-assert(sepoliaTokens.length === 5, "Exactly 5 Sepolia tokens cataloged under D-04");
+assert(sepoliaTokens.length === 15, "Exactly 15 Sepolia tokens cataloged under D-04");
 
 const crossChainTokens = MOCK_TOKENS.filter(
   (t) => !t.network.toLowerCase().includes("sepolia") && t.network.toLowerCase() !== "ethereum"
 );
-assert(crossChainTokens.length === 4, "Exactly 4 cross-chain discovery tokens cataloged");
+assert(crossChainTokens.length === 12, "Exactly 12 cross-chain discovery tokens cataloged");
 
 for (const t of sepoliaTokens) {
   const explorerUrl = `https://sepolia.etherscan.io/token/${t.contractAddress}`;

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import "./account-workspace.css";
 
-type AccountSection = "overview" | "profile" | "connections" | "preferences";
+type AccountSection = "overview" | "profile" | "connections" | "preferences" | "notifications";
 
 type AccountWorkspaceProps = {
   active: AccountSection;

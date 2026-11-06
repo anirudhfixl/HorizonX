@@ -16,8 +16,18 @@ export function RiskWarningModal() {
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && closeModal()}>
-      <DialogContent className="sm:max-w-md border-border/70 bg-card/95 backdrop-blur-xl shadow-2xl p-6">
-        <DialogHeader className="space-y-1.5 pb-2 border-b border-border/40">
+      <DialogContent
+        className="
+          fixed top-[calc(50%+28px)] left-1/2 -translate-x-1/2 -translate-y-1/2
+          flex w-[calc(100vw-24px)] sm:max-w-[560px]
+          max-h-[calc(100dvh-104px)] min-h-0 flex-col overflow-hidden
+          gap-3 rounded-2xl border border-white/10
+          bg-[#111322]/[0.98] p-4 text-[#f2f0ff]
+          shadow-[0_24px_80px_rgba(0,0,0,0.58)]
+          sm:p-5
+        "
+      >
+        <DialogHeader className="shrink-0 space-y-1.5 border-b border-white/[0.08] pb-3 pr-8">
           <div className="flex items-center gap-2 text-amber-500">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
               <ShieldAlert className="h-5 w-5" />
@@ -31,8 +41,8 @@ export function RiskWarningModal() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="my-3 space-y-3 text-xs leading-relaxed text-muted-foreground">
-          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-amber-200">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1 text-xs leading-relaxed text-[#aaa7bd]">
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.08] p-3 text-amber-200">
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
               <p>
@@ -52,7 +62,7 @@ export function RiskWarningModal() {
           </p>
         </div>
 
-        <div className="pt-3 border-t border-border/40 flex justify-end">
+        <div className="shrink-0 border-t border-white/[0.08] pt-3 flex justify-end">
           <Button
             size="sm"
             onClick={closeModal}

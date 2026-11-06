@@ -20,7 +20,7 @@ import { NetworkChip } from "@/components/shared/network-chip";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
-import { PRESALES, FAIR_LAUNCHES, TOKENS } from "@/data";
+import { usePresales, useFairLaunches, useTokens } from "@/api";
 import {
   readSessionLaunchesRaw,
   subscribeSessionLaunches,
@@ -31,8 +31,6 @@ import {
 } from "@/lib/launch-storage";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-
-const tokenById = new Map(TOKENS.map((token) => [token.id, token]));
 
 function catalogOwnerMatchesWallet(ownerAddress: string, walletAddress: string): boolean {
   const owner = ownerAddress.trim().toLowerCase();
@@ -77,6 +75,15 @@ export interface UnifiedCreatorLaunch {
 export function MyLaunchesHub() {
   const { isConnected, address, shortAddress, isDemoMode, connectDemo } = useWallet();
   const { openModal } = useModal();
+
+  const { data: presales = [] } = usePresales();
+  const { data: fairLaunches = [] } = useFairLaunches();
+  const { data: tokens = [] } = useTokens();
+  const PRESALES = presales as any[];
+  const FAIR_LAUNCHES = fairLaunches as any[];
+  const TOKENS = tokens as any[];
+
+  const tokenById = useMemo(() => new Map(TOKENS.map((token: any) => [token.id, token])), [TOKENS]);
 
   const [activeTab, setActiveTab] = useState<"created" | "contributions">("created");
   const [searchQuery, setSearchQuery] = useState("");
@@ -162,7 +169,7 @@ export function MyLaunchesHub() {
     });
 
     return list;
-  }, [address, isDemoMode]);
+  }, [address, isDemoMode, PRESALES, FAIR_LAUNCHES, tokenById]);
 
   // Map session launches (filtered by connected wallet or demo mode)
   const sessionCreatorLaunches = useMemo<UnifiedCreatorLaunch[]>(() => {

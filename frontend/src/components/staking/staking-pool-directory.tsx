@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { DataArtwork } from "@/components/shared/data-artwork";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { STAKING_POOLS, TOKENS, PROJECTS } from "@/data";
+import { useStakingPools, useTokens, useProjects } from "@/api";
 import { Token, Project } from "@/types";
 import {
   Layers,
@@ -81,18 +81,25 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(6);
 
+  const { data: pools = [] } = useStakingPools();
+  const { data: tokens = [] } = useTokens();
+  const { data: projects = [] } = useProjects();
+  const STAKING_POOLS = pools as any[];
+  const TOKENS = tokens as Token[];
+  const PROJECTS = projects as Project[];
+
   // Fast token and project metadata lookups
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
     TOKENS.forEach((t) => map.set(t.id, t));
     return map;
-  }, []);
+  }, [TOKENS]);
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
     PROJECTS.forEach((p) => map.set(p.id, p));
     return map;
-  }, []);
+  }, [PROJECTS]);
 
   // Unique categories derived from pools and linked tokens
   const uniqueCategories = useMemo(() => {
@@ -200,7 +207,7 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
 
       return true;
     });
-  }, [searchQuery, statusFilter, networkFilter, categoryFilter, lockFilter, tokenMap, projectMap]);
+  }, [STAKING_POOLS, searchQuery, statusFilter, networkFilter, categoryFilter, lockFilter, tokenMap, projectMap]);
 
   // Sorted pools
   const sortedPools = useMemo(() => {
@@ -678,6 +685,11 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
                           {pool.category}
                         </span>
                       )}
+                      {pool.source && (
+                        <span className={`rounded px-1.5 py-0.5 text-[10px] font-mono ${pool.origin === 'external' ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+                          {pool.source}
+                        </span>
+                      )}
                     </div>
                     <StatusBadge status={pool.status} />
                   </div>
@@ -725,8 +737,8 @@ export function StakingPoolDirectory({ mode = "canonical" }: StakingPoolDirector
                     <div>
                       <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
                         <span>Est. Reward APY</span>
-                        <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-400 font-mono">
-                          Simulated
+                        <span className={`text-[9px] px-1 py-0.2 rounded font-mono ${pool.origin === 'external' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                          {pool.origin === 'external' ? 'DefiLlama Yields' : 'Simulated'}
                         </span>
                       </div>
                       <div className="text-lg font-mono font-bold text-emerald-400 mt-0.5">

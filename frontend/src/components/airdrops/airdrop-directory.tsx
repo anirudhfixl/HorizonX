@@ -9,7 +9,7 @@ import { DataArtwork } from "@/components/shared/data-artwork";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { AIRDROPS, TOKENS, PROJECTS } from "@/data";
+import { useAirdrops, useTokens, useProjects, cryptoRankClient } from "@/api";
 import {
   readSessionAirdropsRaw,
   subscribeSessionAirdrops,
@@ -56,17 +56,12 @@ export interface AirdropDirectoryProps {
 export { calculateClaimProgress, parseRewardAmount };
 
 export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) {
-  // Session subscription for reactive airdrop catalog updates
-  const sessionRaw = useSyncExternalStore(
-    subscribeSessionAirdrops,
-    readSessionAirdropsRaw,
-    () => ""
-  );
-
-  const allAirdrops = useMemo(() => {
-    const sessionCampaigns = parseSessionAirdrops(sessionRaw);
-    return [...sessionCampaigns, ...AIRDROPS];
-  }, [sessionRaw]);
+  const { data: airdrops = [] } = useAirdrops();
+  const { data: tokens = [] } = useTokens();
+  const { data: projects = [] } = useProjects();
+  const allAirdrops = airdrops as any[];
+  const TOKENS = tokens as Token[];
+  const PROJECTS = projects as Project[];
 
   // Filter and view state
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,19 +73,30 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(6);
+  const [providerStatus, setProviderStatus] = useState<{ configured: boolean; planRestricted?: boolean } | null>(null);
+
+  React.useEffect(() => {
+    let active = true;
+    cryptoRankClient.getStatus().then((status) => {
+      if (active) setProviderStatus(status);
+    }).catch(() => {
+      if (active) setProviderStatus({ configured: false, planRestricted: false });
+    });
+    return () => { active = false; };
+  }, []);
 
   // Maps for fast token and project metadata lookups
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
     TOKENS.forEach((t) => map.set(t.id, t));
     return map;
-  }, []);
+  }, [TOKENS]);
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>();
     PROJECTS.forEach((p) => map.set(p.id, p));
     return map;
-  }, []);
+  }, [PROJECTS]);
 
   // Unique categories derived from airdrops and linked tokens
   const uniqueCategories = useMemo(() => {
@@ -344,6 +350,38 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
         </p>
       </div>
 
+      {/* 2b. External Provider Status Notice */}
+      {allAirdrops.some((air) => air.origin === 'external' || air.isExternal) ? (
+        <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-3.5 backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2 text-cyan-400 font-medium">
+            <Sparkles className="h-4 w-4 shrink-0" />
+            <span>
+              DefiLlama Airdrop Intelligence Active: Official Airdrop Registry &amp; Potential Tokenless Protocol Candidates synchronized.
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[11px] font-mono text-cyan-300/80 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+              {allAirdrops.filter((air) => air.category === 'Potential Airdrops').length} Potential Drops
+            </span>
+            <span className="text-[11px] font-mono text-cyan-300/80 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20">
+              {allAirdrops.filter((air) => air.category === 'Airdrop Registry').length} Registry Claims
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 backdrop-blur-sm flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-amber-400 font-medium">
+            <Info className="h-4 w-4 shrink-0" />
+            <span>
+              Displaying {allAirdrops.length} HorizonX Ecosystem (Simulated) campaigns.
+            </span>
+          </div>
+          <span className="text-[11px] font-mono text-amber-300/80 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+            Catalog Mode
+          </span>
+        </div>
+      )}
+
       {/* 3. Summary Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
@@ -359,46 +397,98 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
 
         <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Active Drops</span>
-            <Sparkles className="h-4 w-4 text-emerald-400" />
+            <span>Potential Airdrops</span>
+            <Sparkles className="h-4 w-4 text-cyan-400" />
+          </div>
+          <div className="text-2xl font-bold font-mono text-cyan-400">
+            {allAirdrops.filter((air) => air.category === "Potential Airdrops").length}
+          </div>
+          <p className="text-[11px] text-muted-foreground">Tokenless protocols (DefiLlama)</p>
+        </div>
+
+        <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Airdrop Registry</span>
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
           </div>
           <div className="text-2xl font-bold font-mono text-emerald-400">
-            {allAirdrops.filter((air) => air.status === "active").length}
+            {allAirdrops.filter((air) => air.category === "Airdrop Registry").length}
           </div>
-          <p className="text-[11px] text-muted-foreground">Marked active in catalogue</p>
+          <p className="text-[11px] text-muted-foreground">Verified snapshot claims</p>
         </div>
 
         <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Sepolia Listings (D-04)</span>
-            <CheckCircle2 className="h-4 w-4 text-primary" />
+            <span>Ecosystem (D-04)</span>
+            <Users className="h-4 w-4 text-primary" />
           </div>
           <div className="text-2xl font-bold font-mono text-primary">
-            {
-              allAirdrops.filter(
-                (air) =>
-                  air.network.toLowerCase().includes("sepolia") ||
-                  air.network.toLowerCase() === "ethereum"
-              ).length
-            }
+            {allAirdrops.filter((air) => air.isEcosystem || air.origin === "ecosystem").length}
           </div>
-          <p className="text-[11px] text-muted-foreground">Chain ID 11155111</p>
-        </div>
-
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Total Claimants</span>
-            <Users className="h-4 w-4 text-amber-400" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-amber-400">
-            {allAirdrops.reduce((acc, air) => acc + (air.recipientCount || 0), 0).toLocaleString()}
-          </div>
-          <p className="text-[11px] text-muted-foreground">Recorded eligible-address count</p>
+          <p className="text-[11px] text-muted-foreground">HorizonX Sepolia catalog</p>
         </div>
       </div>
 
       {/* 4. Controls Toolbar */}
-      <div className="rounded-2xl border border-border/60 bg-card/60 p-4 sm:p-5 backdrop-blur-md space-y-4">
+      <div className="rounded-2xl border border-border/60 bg-card/60 p-4 sm:p-5 backdrop-blur-md space-y-3">
+        {/* Quick Scope Filter Chips */}
+        <div className="flex flex-wrap items-center gap-1.5 pb-2 border-b border-border/30">
+          <Button
+            type="button"
+            size="sm"
+            variant={categoryFilter === "all" && networkFilter === "all" ? "default" : "outline"}
+            className={`h-7 text-xs px-2.5 rounded-full ${categoryFilter === "all" && networkFilter === "all" ? "bg-primary text-primary-foreground font-semibold" : "border-border/60"}`}
+            onClick={() => {
+              setCategoryFilter("all");
+              setNetworkFilter("all");
+              setCurrentPage(1);
+            }}
+          >
+            All Campaigns ({allAirdrops.length})
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={categoryFilter === "Potential Airdrops" ? "default" : "outline"}
+            className={`h-7 text-xs px-2.5 rounded-full border-cyan-500/40 ${categoryFilter === "Potential Airdrops" ? "bg-cyan-500 text-black font-semibold" : "text-cyan-300 hover:bg-cyan-500/15"}`}
+            onClick={() => {
+              setCategoryFilter("Potential Airdrops");
+              setNetworkFilter("all");
+              setCurrentPage(1);
+            }}
+          >
+            <Sparkles className="h-3 w-3 mr-1 text-cyan-400" />
+            Potential Airdrops ({allAirdrops.filter((a) => a.category === "Potential Airdrops").length})
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={categoryFilter === "Airdrop Registry" ? "default" : "outline"}
+            className={`h-7 text-xs px-2.5 rounded-full border-emerald-500/40 ${categoryFilter === "Airdrop Registry" ? "bg-emerald-500 text-black font-semibold" : "text-emerald-300 hover:bg-emerald-500/15"}`}
+            onClick={() => {
+              setCategoryFilter("Airdrop Registry");
+              setNetworkFilter("all");
+              setCurrentPage(1);
+            }}
+          >
+            <CheckCircle2 className="h-3 w-3 mr-1 text-emerald-400" />
+            Airdrop Registry ({allAirdrops.filter((a) => a.category === "Airdrop Registry").length})
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={networkFilter === "sepolia" ? "default" : "outline"}
+            className={`h-7 text-xs px-2.5 rounded-full ${networkFilter === "sepolia" ? "bg-primary text-primary-foreground font-semibold" : "border-border/60"}`}
+            onClick={() => {
+              setNetworkFilter("sepolia");
+              setCategoryFilter("all");
+              setCurrentPage(1);
+            }}
+          >
+            Sepolia Ecosystem ({allAirdrops.filter((a) => a.isEcosystem || a.origin === "ecosystem").length})
+          </Button>
+        </div>
+
         {/* Top bar: Search + View Mode */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <div className="relative flex-1 max-w-xl">
@@ -662,7 +752,10 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <ProvenanceBadge kind={getAirdropProvenance(air)} />
+                      <ProvenanceBadge
+                        kind={air.origin === "external" ? "simulated" : getAirdropProvenance(air)}
+                        label={air.source || (air.origin === "external" ? "CryptoRank Drophunting" : "HorizonX Ecosystem (Simulated)")}
+                      />
                       <StatusBadge status={air.status} />
                     </div>
                   </div>
@@ -919,7 +1012,10 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                       <td className="py-3.5 px-3">
                         <div className="flex flex-col items-start gap-1">
                           <StatusBadge status={air.status} />
-                          <ProvenanceBadge kind={getAirdropProvenance(air)} />
+                          <ProvenanceBadge
+                            kind={air.origin === "external" ? "simulated" : getAirdropProvenance(air)}
+                            label={air.source || (air.origin === "external" ? "CryptoRank Drophunting" : "HorizonX Ecosystem (Simulated)")}
+                          />
                         </div>
                       </td>
 

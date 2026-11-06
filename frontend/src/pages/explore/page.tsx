@@ -10,13 +10,19 @@ import { cn } from "@/lib/utils";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
 import {
-  TOKENS,
-  PROJECTS,
-  PRESALES,
-  FAIR_LAUNCHES,
-  AIRDROPS,
-  STAKING_POOLS,
-} from "@/data";
+  useTokens,
+  useProjects,
+  usePresales,
+  useFairLaunches,
+  useAirdrops,
+  useStakingPools,
+  type Token,
+  type Project,
+  type Presale,
+  type FairLaunch,
+  type AirdropCampaign,
+  type StakingPool,
+} from "@/api";
 import {
   Coins,
   Briefcase,
@@ -51,6 +57,13 @@ export default function ExploreHubPage() {
   const { isConnected } = useWallet();
   const { openModal } = useModal();
 
+  const { data: TOKENS = [] } = useTokens();
+  const { data: PROJECTS = [] } = useProjects();
+  const { data: PRESALES = [] } = usePresales();
+  const { data: FAIR_LAUNCHES = [] } = useFairLaunches();
+  const { data: AIRDROPS = [] } = useAirdrops();
+  const { data: STAKING_POOLS = [] } = useStakingPools();
+
   // Filter & Search State
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>("all");
@@ -74,7 +87,14 @@ export default function ExploreHubPage() {
         AIRDROPS.length +
         STAKING_POOLS.length,
     }),
-    []
+    [
+      TOKENS.length,
+      PROJECTS.length,
+      PRESALES.length,
+      FAIR_LAUNCHES.length,
+      AIRDROPS.length,
+      STAKING_POOLS.length,
+    ]
   );
 
   // Handle simulated refresh
@@ -245,14 +265,22 @@ export default function ExploreHubPage() {
 
   // Snapshot figures are derived from the same data sets that feed the cards below,
   // so they can never drift from what the page actually lists.
-  const topGainer = TOKENS.reduce((best, t) =>
-    (t.market.priceChange24h ?? -Infinity) > (best.market.priceChange24h ?? -Infinity) ? t : best
-  );
-  const topGainerChange = topGainer.market.priceChange24h ?? 0;
+  // Guard the hero snapshot against an empty or partially hydrated token catalog.
+  // A reduce without an initial value is unsafe when the catalog has no usable rows.
+  const topGainer = TOKENS
+    .filter((token) => Boolean(token && token.symbol && token.market))
+    .reduce<Token | null>((best, token) => {
+      if (!best) return token;
+      return (token.market.priceChange24h ?? -Infinity) >
+        (best.market.priceChange24h ?? -Infinity)
+        ? token
+        : best;
+    }, null);
+  const topGainerChange = topGainer?.market?.priceChange24h ?? 0;
   const livePresales = PRESALES.filter((p) => p.status === "live").length;
   const liveLaunches = FAIR_LAUNCHES.filter((l) => l.status === "live").length;
   const topPool = STAKING_POOLS.filter((p) => p.status === "active").reduce<
-    (typeof STAKING_POOLS)[number] | null
+    StakingPool | null
   >((best, p) => (!best || (parseFloat(p.apy ?? "0") || 0) > (parseFloat(best.apy ?? "0") || 0) ? p : best), null);
 
   const countActive = (items: { status: string }[], ...live: string[]) =>
@@ -277,7 +305,9 @@ export default function ExploreHubPage() {
       count: categoryCounts.tokens,
       noun: "tokens",
       description: "ERC-20 utility, governance, DePIN and AI compute tokens with contract details.",
-      note: `Top 24h: ${topGainer.symbol} ${topGainerChange >= 0 ? "+" : ""}${topGainerChange}%`,
+      note: topGainer
+        ? `Top 24h: ${topGainer.symbol} ${topGainerChange >= 0 ? "+" : ""}${topGainerChange}%`
+        : "Token market data will appear here",
     },
     {
       href: "/explore/projects",
@@ -366,26 +396,24 @@ export default function ExploreHubPage() {
               <TokenMarketRail tokens={TOKENS} direction="right" railLabel="Trending Tokens" />
               <div className="hx-project-spotlight">
                 <ProjectSpotlightWaves />
-                <div className="hx-project-spotlight__fade-x" />
-                <div className="hx-project-spotlight__fade-y" />
                 <div className="hx-project-spotlight__inner">
                   <div className="hx-project-spotlight__projects hx-project-spotlight__wheel">
                     <AxleBloom />
                   </div>
                   <div className="hx-project-spotlight__intro">
                     <p className="hx-project-spotlight__eyebrow">The network builders</p>
-                    <h2>Projects &amp; <span>Protocols</span></h2>
+                    <h2>Where Web3 <span>Takes Shape.</span></h2>
                     <p className="hx-project-spotlight__description">
-                      Discover the teams building the infrastructure, applications and protocols
-                      that connect the HorizonX ecosystem.
+                      Discover the protocols, teams and infrastructure powering the next
+                      generation of decentralized applications across the HorizonX ecosystem.
                     </p>
                     <div className="hx-project-spotlight__facts">
                       <div><span>Projects</span><strong>{categoryCounts.projects}</strong></div>
-                      <div><span>Audits available</span><strong>{PROJECTS.filter((project) => project.verificationStatus === "audit_available").length}</strong></div>
                       <div><span>Ecosystems</span><strong>{new Set(PROJECTS.map((project) => project.ecosystem).filter(Boolean)).size}</strong></div>
+                      <div><span>Audits available</span><strong>{PROJECTS.filter((project) => project.verificationStatus === "audit_available").length}</strong></div>
                     </div>
                     <Link to="/explore/projects" className="hx-project-spotlight__all">
-                      Explore all projects <ArrowUpRight className="h-4 w-4" />
+                      Explore the Ecosystem <ArrowUpRight className="h-4 w-4" />
                     </Link>
                   </div>
                 </div>
@@ -397,9 +425,9 @@ export default function ExploreHubPage() {
             <section className="hx-launchpad-opportunities" aria-labelledby="hx-launchpad-title">
               <div className="hx-launchpad-opportunities__header">
                 <div className="hx-launchpad-opportunities__heading">
-                  <span className="hx-launchpad-opportunities__kicker">Launchpad / Discover</span>
-                  <h2 id="hx-launchpad-title"><Rocket aria-hidden="true" /> Launchpad Opportunities</h2>
-                  <p>Capital raises, from capped presales to fair launches.</p>
+                  <span className="hx-section-eyebrow"><i aria-hidden="true" /> Launchpad <span>•</span> Opportunities</span>
+                  <h2 id="hx-launchpad-title">Launchpad Opportunities</h2>
+                  <p>Explore upcoming raises, active presales and fair launches across the ecosystem.</p>
                 </div>
                 <div className="hx-launchpad-opportunities__links">
                   <Link to="/explore/presales">All Presales <ArrowUpRight aria-hidden="true" /></Link>
@@ -524,7 +552,6 @@ function SectionHead({
   title,
   href,
   linkLabel,
-  large,
 }: {
   accent: Accent;
   icon: React.ReactNode;
@@ -534,12 +561,20 @@ function SectionHead({
   large?: boolean;
 }) {
   const a = ACCENTS[accent];
+  const eyebrow = title === "Airdrop Discovery"
+    ? "Rewards • Airdrop campaigns"
+    : title === "Staking Vaults"
+    ? "Earn • Staking pools"
+    : "Explore • Ecosystem";
   return (
-    <div className="flex flex-wrap items-end justify-between gap-2 pb-2">
-      <h2 className={cn("flex items-center gap-2 font-bold text-foreground", large ? "text-lg" : "text-base")}>
-        <span className={a.text}>{icon}</span>
-        {title}
-      </h2>
+    <div className="hx-discovery-section-head">
+      <div className="hx-discovery-section-head__copy">
+        <span className="hx-section-eyebrow"><i aria-hidden="true" />{eyebrow}</span>
+        <h2>{title}</h2>
+        <p>{title === "Airdrop Discovery"
+          ? "Find active reward campaigns, token distributions and community incentives."
+          : "Explore staking pools, compare APY and discover flexible or fixed-term opportunities."}</p>
+      </div>
       <Link to={href} className={cn("inline-flex items-center gap-1 text-xs font-medium hover:underline", a.text)}>
         {linkLabel} <ArrowUpRight className="h-3 w-3" />
       </Link>
@@ -552,7 +587,7 @@ function TokenMarketRail({
   direction,
   railLabel,
 }: {
-  tokens: (typeof TOKENS)[number][];
+  tokens: Token[];
   direction: "left" | "right";
   railLabel: string;
 }) {
@@ -564,7 +599,7 @@ function TokenMarketRail({
     return `$${value.toFixed(2)}`;
   };
 
-  const renderToken = (token: (typeof TOKENS)[number], duplicate = false) => {
+  const renderToken = (token: Token, duplicate = false) => {
     const change = token.market.priceChange24h ?? 0;
     const positive = change >= 0;
     const points = positive
@@ -582,13 +617,29 @@ function TokenMarketRail({
         >
           <span className="hx-token-rail__top">
             <span className="hx-token-rail__identity">
-              <span className="hx-token-rail__glyph" aria-hidden="true">{token.symbol.slice(0, 1)}</span>
+              <span className="hx-token-rail__glyph" aria-hidden="true">
+                {(token.logoUrl || token.logo || token.image) ? (
+                  <img
+                    src={token.logoUrl || token.logo || token.image}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <span>{token.symbol.slice(0, 1)}</span>
+                )}
+              </span>
               <span className="hx-token-rail__copy">
                 <span className="hx-token-rail__name">{token.name}</span>
                 <span className="hx-token-rail__symbol">${token.symbol}</span>
               </span>
             </span>
-            <svg className={`hx-token-rail__spark ${positive ? "is-positive" : "is-negative"}`} viewBox="0 0 50 30" aria-hidden="true">
+          </span>
+          <span className="hx-token-rail__spark-row" aria-hidden="true">
+            <svg className={`hx-token-rail__spark ${positive ? "is-positive" : "is-negative"}`} viewBox="0 0 50 30" preserveAspectRatio="none">
               <polyline points={points} fill="none" stroke={positive ? "#39d6a0" : "#fb7185"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
@@ -696,7 +747,7 @@ function ProjectSpotlightWaves() {
   return <canvas ref={canvasRef} className="hx-project-spotlight__canvas" aria-hidden="true" />;
 }
 
-function FeaturedRaise({ ps }: { ps: (typeof PRESALES)[number] }) {
+function FeaturedRaise({ ps }: { ps: Presale }) {
   const raised = amount(ps.totalRaised);
   const hard = amount(ps.hardCap);
   const soft = amount(ps.softCap);
@@ -807,7 +858,7 @@ function RowShell({
   );
 }
 
-function PresaleRow({ ps }: { ps: (typeof PRESALES)[number] }) {
+function PresaleRow({ ps }: { ps: Presale }) {
   const pct = ratio(amount(ps.totalRaised), amount(ps.hardCap));
   const start = shortDate(ps.startTime);
   return (
@@ -837,7 +888,7 @@ function PresaleRow({ ps }: { ps: (typeof PRESALES)[number] }) {
   );
 }
 
-function LaunchRow({ fl }: { fl: (typeof FAIR_LAUNCHES)[number] }) {
+function LaunchRow({ fl }: { fl: FairLaunch }) {
   return (
     <RowShell
       href={`/launchpad/launches/${fl.id}`}
@@ -871,7 +922,7 @@ function CampaignStatus({ status }: { status: string }) {
   );
 }
 
-function AirdropMosaic({ campaigns }: { campaigns: (typeof AIRDROPS)[number][] }) {
+function AirdropMosaic({ campaigns }: { campaigns: AirdropCampaign[] }) {
   return (
     <ul className="hx-nx-airdrop-grid" aria-label="Featured airdrop campaigns">
       {campaigns.map((air, index) => {
@@ -908,7 +959,7 @@ function AirdropMosaic({ campaigns }: { campaigns: (typeof AIRDROPS)[number][] }
   );
 }
 
-function StakingMosaic({ pools }: { pools: (typeof STAKING_POOLS)[number][] }) {
+function StakingMosaic({ pools }: { pools: StakingPool[] }) {
   return (
     <ul className="hx-nx-staking-grid" aria-label="Featured staking vaults">
       {pools.map((pool, index) => {
@@ -939,7 +990,7 @@ function StakingMosaic({ pools }: { pools: (typeof STAKING_POOLS)[number][] }) {
   );
 }
 
-function AirdropRow({ air }: { air: (typeof AIRDROPS)[number] }) {
+function AirdropRow({ air }: { air: AirdropCampaign }) {
   const claimed = ratio(air.claimedCount, air.recipientCount);
   return (
     <RowShell
@@ -969,7 +1020,7 @@ function AirdropRow({ air }: { air: (typeof AIRDROPS)[number] }) {
   );
 }
 
-function StakingRow({ pool }: { pool: (typeof STAKING_POOLS)[number] }) {
+function StakingRow({ pool }: { pool: StakingPool }) {
   const lock = (pool.lockPeriodDays ?? 0) > 0 ? `${pool.lockPeriodDays} days lock` : "Flexible unlock";
   return (
     <RowShell

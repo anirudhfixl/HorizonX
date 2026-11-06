@@ -3,17 +3,27 @@ import NotFoundPage from "@/pages/not-found/page";
 import React from "react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
-import { PROJECTS, TOKENS } from "@/data";
+import { useToken, useProject } from "@/api";
 import { ArrowDownUp, ExternalLink, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { MarketWorkspaceHeader } from "@/components/market/market-section-nav";
 
 export default function TokenExchangePage() {
   const { id = "" } = useParams<{ id: string }>();
-  const token = TOKENS.find((t) => t.id === id);
-  if (!token) return <NotFoundPage />;
+  const { data: token, isLoading: tokenLoading } = useToken(id);
+  const { data: project } = useProject(token?.projectId);
 
-  const project = token.projectId ? PROJECTS.find((item) => item.id === token.projectId) : undefined;
+  if (!token) {
+    if (tokenLoading) {
+      return (
+        <main className="entity-detail-page w-full max-w-none space-y-7 px-4 py-6 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+          <div className="py-20 text-center text-sm text-muted-foreground">Loading market details...</div>
+        </main>
+      );
+    }
+    return <NotFoundPage />;
+  }
+
   const change = token.market?.priceChange24h || 0;
   const positive = change >= 0;
   const mark = token.symbol.slice(0, 4).toUpperCase();

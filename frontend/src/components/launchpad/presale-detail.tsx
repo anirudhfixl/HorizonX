@@ -590,8 +590,9 @@ export function PresaleDetail({
       network={presale.network}
       category={presale.category}
       ownerAddress={presale.ownerAddress}
-      provenance={provenance}
-      isSimulated={true}
+      provenance={presale.isExternal ? "simulated" : provenance}
+      provenanceLabel={presale.source || (presale.isExternal ? "CryptoRank Public Sales" : "HorizonX Ecosystem (Simulated)")}
+      isSimulated={!presale.isExternal}
       token={token}
       project={project}
       contractAddress={presale.contractAddress}
@@ -612,18 +613,22 @@ export function PresaleDetail({
         <div className="lf-detail-content grid grid-cols-1 gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* Left Column: Raise, Timeline, Spotlights */}
           <div className="min-w-0 space-y-8">
-            {/* Simulation Disclosure Banner */}
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
+            {/* Disclosure Banner */}
+            <div className={cn("rounded-2xl border p-4 sm:p-5", presale.isExternal ? "border-cyan-500/20 bg-cyan-500/5" : "border-primary/20 bg-primary/5")}>
               <div className="flex items-start gap-3">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <Info className={cn("mt-0.5 h-4 w-4 shrink-0", presale.isExternal ? "text-cyan-400" : "text-primary")} />
                 <div className="space-y-1 text-xs">
                   <p className="font-semibold text-foreground">
-                    {provenance === "session"
+                    {presale.isExternal
+                      ? `CryptoRank Public Sale (${presale.saleType || "IDO"})`
+                      : provenance === "session"
                       ? "User-Created Launch Simulation"
                       : "Catalog Demonstration Presale"}
                   </p>
                   <p className="text-muted-foreground leading-relaxed">
-                    {provenance === "session"
+                    {presale.isExternal
+                      ? `This token sale offering is tracked live from CryptoRank v3. Launch details and allocations reflect public intelligence provided by ${presale.launchpadName || "the host launchpad"}.`
+                      : provenance === "session"
                       ? "This presale was configured and simulated during your local browser session. Saved in client storage (pm_session_launches_v1), under Ethereum Sepolia scope (D-04)."
                       : "This record is a pre-seeded demonstration launch from the HorizonX catalog. No real blockchain transactions or escrow deposits exist."}
                   </p>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ImageOff } from "lucide-react";
+import { resolveImageSource } from "@/lib/media/image-resolver";
 
 type DataArtworkProps = {
   src?: string;
@@ -11,6 +12,8 @@ type DataArtworkProps = {
 /** Same-origin catalog artwork with lazy loading and a deterministic visual fallback. */
 export function DataArtwork({ src, alt, className = "", fallbackLabel }: DataArtworkProps) {
   const [failed, setFailed] = useState(false);
+  const resolved = resolveImageSource(src, { kind: "project" });
+
   if (!src || failed) {
     return (
       <div className={`flex items-center justify-center bg-gradient-to-br from-primary/20 via-secondary/50 to-background ${className}`} role="img" aria-label={`${alt} artwork unavailable`}>
@@ -21,5 +24,5 @@ export function DataArtwork({ src, alt, className = "", fallbackLabel }: DataArt
       </div>
     );
   }
-  return <img src={src} alt={alt} loading="lazy" decoding="async" fetchPriority="low" onError={() => setFailed(true)} className={`block object-cover ${className}`} />;
+  return <img src={resolved} alt={alt} loading="lazy" decoding="async" fetchPriority="low" onError={() => setFailed(true)} className={`block object-cover ${className}`} />;
 }

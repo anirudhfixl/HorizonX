@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useSyncExternalStore } from "react";
 import { Search, Copy, Sparkles, Database, PlusCircle, AlertCircle, ArrowRight } from "lucide-react";
-import { TOKENS } from "@/data";
+import { useTokens } from "@/api";
 import { SESSION_TOKENS_STORAGE_KEY } from "@/lib/data-provenance";
 import type { SimulatedTokenReceipt } from "@/components/tokens/token-creation-wizard";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
@@ -64,10 +64,12 @@ export function TokenPicker({ value, onSelectToken, error }: TokenPickerProps) {
     }
   }, [sessionRaw]);
 
+  const { data: tokens = [] } = useTokens();
+
   // Combined token list
   const catalogList = useMemo(() => {
-    return TOKENS.filter((t) => !!t.contractAddress);
-  }, []);
+    return tokens.filter((t) => !!t.contractAddress);
+  }, [tokens]);
 
   // Filtered lists
   const filteredCatalog = useMemo(() => {

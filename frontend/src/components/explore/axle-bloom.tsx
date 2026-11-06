@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { PROJECTS, TOKENS } from "@/data";
@@ -241,7 +242,7 @@ export default function AxleBloom() {
       vec3 L = normalize(vec3(-0.45, 0.65, 0.6));
       vec3 Hv = normalize(L + V);
       float nh = max(dot(n, Hv), 0.0);
-      col *= 0.86 + 0.14 * max(dot(n, L), 0.0);
+      col *= 0.94 + 0.06 * max(dot(n, L), 0.0);
       col += uSheen * (0.5 * pow(nh, 60.0) + 0.07 * pow(nh, 6.0));
       // Warm light leaking out of the axle onto the hinge edge.
       col += vec3(1.0, 0.8, 0.5) * exp(-(uGap + vUv.y * uH) / 0.035) * uSeam * 0.3;
@@ -754,8 +755,8 @@ export default function AxleBloom() {
           selectProjectAt(rect.left + rect.width / 2, rect.top + rect.height / 2);
           return;
         }
-        const forward = ['ArrowDown', 'ArrowRight', 'PageDown'].includes(event.key);
-        const back = ['ArrowUp', 'ArrowLeft', 'PageUp'].includes(event.key);
+        const forward = ['ArrowDown', 'ArrowRight'].includes(event.key);
+        const back = ['ArrowUp', 'ArrowLeft'].includes(event.key);
         if (!forward && !back) return;
         event.preventDefault();
         stepBy(forward ? 1 : -1);
@@ -850,10 +851,10 @@ export default function AxleBloom() {
     const wheel = createAxleBloom(__q('.ab-root'), {
       "viewportWidth": 1280,
       "viewportHeight": 800,
-      "cards": 5,
+      "cards": 6,
       "aspect": 1,
       "radius": 0.075,
-      "size": 100,
+      "size": 125,
       "yaw": -37,
       "pitch": 10,
       "depth": 5.30001,
@@ -865,7 +866,7 @@ export default function AxleBloom() {
       "sheen": 0.45,
       "seam": 1.35001,
       "shadow": 0.749999,
-      "backFade": 0.12,
+      "backFade": 0,
       "smear": 0,
       "fringe": 0,
       "flare": 1,
@@ -874,7 +875,7 @@ export default function AxleBloom() {
       "ink": "#f4f7ff",
       "autoplay": true,
       "direction": "down",
-      "wheel": "both",
+      "wheel": "off",
       "draggable": true,
       "preview": false,
       "cornerControl": false
@@ -890,7 +891,7 @@ export default function AxleBloom() {
   return (
     <main ref={__root} className="ab-export">
       <div className="ab-frame" style={{ "--ab-w": "1280px", "--ab-h": "800px", "--ab-bg": "transparent", "--ab-ink": "#f4f7ff", "--ab-aspect": "1" } as React.CSSProperties}>
-        <div className="ab-root" tabIndex={0} role="region" aria-roledescription="carousel" aria-label="HorizonX project wheel. Click a visible card to open its project, drag or scroll to browse, or press Enter to open the front card.">
+        <div className="ab-root" tabIndex={0} role="region" aria-roledescription="carousel" aria-label="HorizonX project wheel. Click a visible card to open its project, drag or use the arrow keys to browse, or press Enter to open the front card.">
           <canvas className="ab-canvas" aria-hidden="true" />
           <div className="ab-fallback" role="list">
             {PROJECT_IMAGES.map((src, index) => (

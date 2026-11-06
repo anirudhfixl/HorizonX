@@ -194,13 +194,13 @@ export function hwfFitSize(measured: number, width: number): number {
 const HWF_CSS = `
 .hwf-root {
   position: relative; width: 100%; overflow: hidden; isolation: isolate;
-  background: var(--hwf-bg, var(--footer-bg, var(--page-bg, var(--background))));
+  background-color: var(--hwf-bg, var(--footer-bg, var(--page-bg, var(--background)))) !important;
+  background-image: none !important;
   color: var(--hwf-ink, var(--footer-text, var(--text-primary, var(--foreground))));
   border-top: 1px solid var(--footer-divider, var(--border-subtle, var(--border)));
   transition: background-color 420ms ease, color 420ms ease, border-color 420ms ease;
   -webkit-font-smoothing: antialiased;
 }
-.hwf-root canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; max-width: none; }
 .hwf-top {
   position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.25fr) repeat(3, minmax(0, 1fr));
   gap: 24px; padding: clamp(22px, 3.4vw, 40px) clamp(20px, 3.4vw, 44px) 0;
@@ -240,6 +240,7 @@ const HWF_CSS = `
 }
 .hwf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 720px) {
+  .hwf-root.route-themed-footer { height: auto !important; min-height: 300px; }
   .hwf-top { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 18px; }
   .hwf-brand { grid-column: 1 / -1; }
 }
@@ -585,7 +586,30 @@ export default function HalftoneWordmarkFooter({
   }, [key]);
 
   const toTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Explore pages can be hosted by either the document scroller or a route
+    // wrapper. Reset the known page-level scroll roots instead of assuming
+    // window is the only scrolling element.
+    const candidates: (HTMLElement | null)[] = [
+      document.scrollingElement as HTMLElement | null,
+      document.documentElement,
+      document.body,
+      document.getElementById("root"),
+      document.querySelector(".route-shell"),
+      document.querySelector(".route-main"),
+      document.querySelector(".route-page-transition"),
+      document.querySelector(".explore-page"),
+      document.querySelector(".explore-hero")?.parentElement ?? null,
+    ];
+
+    const unique = Array.from(new Set(candidates.filter(Boolean))) as HTMLElement[];
+    unique.forEach((element) => {
+      element.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+      // Explicitly reset scrollTop as a fallback for wrappers that don't
+      // expose a reliable scrollTo implementation.
+      element.scrollTop = 0;
+    });
+
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
   };
 
   return (
@@ -603,8 +627,6 @@ export default function HalftoneWordmarkFooter({
       }
     >
       <style>{HWF_CSS}</style>
-      <canvas ref={canvasRef} aria-hidden="true" />
-      <span className="hwf-sr">{wordmark}</span>
       <div className="hwf-top">
         <div className="hwf-brand">
           <strong>{label}</strong>

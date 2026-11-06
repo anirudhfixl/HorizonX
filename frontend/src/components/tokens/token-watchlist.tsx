@@ -10,21 +10,43 @@ import { sparkValues } from "@/lib/tokens/demo-data";
 import { num, pct, usdCompact, usdPrice } from "@/lib/tokens/format";
 import { useTokenWatchlist } from "@/lib/tokens/hooks";
 import type { TokenWithMarket } from "@/lib/tokens/model";
-import { discoveryLists, getToken } from "@/lib/tokens/selectors";
+import { discoveryLists, getToken, TOKEN_CATALOG, trendingScore } from "@/lib/tokens/selectors";
+import { useTokens } from "@/api";
 import { Link } from "react-router-dom";
 
 /**
  * Followed tokens. The list lives in this browser (see useTokenWatchlist), so it works
- * without a wallet and is shared by the Dashboard, Explore, Details and Markets pages.
+ * without a wallet and is shared across Dashboard, Explore, Details and watchlist views.
  */
 export function TokenWatchlist({ base = "/tokens" }: { base?: "/tokens" | "/exchange" }) {
   const watch = useTokenWatchlist();
-  const watched = useMemo(() => watch.ids.map(getToken).filter((t): t is TokenWithMarket => !!t), [watch.ids]);
-  const suggestions = useMemo(() => discoveryLists().trending.filter((t) => !watch.has(t.id)).slice(0, 5), [watch]);
+  const { data: apiTokens = [] } = useTokens();
+
+  const allTokens = useMemo<TokenWithMarket[]>(() => {
+    if (apiTokens && apiTokens.length > 0) {
+      return apiTokens as unknown as TokenWithMarket[];
+    }
+    return TOKEN_CATALOG;
+  }, [apiTokens]);
+
+  const tokenMap = useMemo(() => new Map(allTokens.map((t) => [t.id, t])), [allTokens]);
+
+  const watched = useMemo(
+    () => watch.ids.map((id) => tokenMap.get(id) || getToken(id)).filter((t): t is TokenWithMarket => !!t),
+    [watch.ids, tokenMap]
+  );
+
+  const suggestions = useMemo(() => {
+    const list = allTokens.length > 0 ? allTokens : discoveryLists().trending;
+    const sorted = [...list].sort((a, b) => trendingScore(b) - trendingScore(a));
+    return sorted.filter((t) => !watch.has(t.id)).slice(0, 5);
+  }, [allTokens, watch]);
 
   const ranked = [...watched].sort((a, b) => num(b.market.priceChange24h) - num(a.market.priceChange24h));
   const best = ranked[0];
   const worst = ranked.length > 1 ? ranked[ranked.length - 1] : undefined;
+
+  const isLiveFeed = watched.some((t) => t.market?.isLive || (t as any).isExternal);
 
   const columns: Column<TokenWithMarket>[] = [
     {
@@ -32,7 +54,11 @@ export function TokenWatchlist({ base = "/tokens" }: { base?: "/tokens" | "/exch
       header: "Token",
       cell: (t) => (
         <Link to={`/tokens/${t.id}`} className="mx-identity">
-          <AssetIdentity symbol={t.symbol} name={t.name} logoUrl={t.logoUrl} />
+          <AssetIdentity
+            symbol={t.symbol}
+            name={t.name}
+            logoUrl={t.logoUrl || (t as any).logo || (t as any).image}
+          />
         </Link>
       ),
     },
@@ -56,7 +82,7 @@ export function TokenWatchlist({ base = "/tokens" }: { base?: "/tokens" | "/exch
       align: "end",
       cell: (t) => (
         <span className="tk-row-actions">
-          {t.status === "active" && <Link to={`/exchange/tokens/${t.id}`} className="mx-link hide-md">Trade</Link>}
+          {t.status === "active" && <Link to={`/tokens/${t.id}#trade`} className="mx-link hide-md">Trade</Link>}
           <WatchButton name={t.symbol} watched onToggle={() => watch.remove(t.id)} />
         </span>
       ),
@@ -92,8 +118,15 @@ export function TokenWatchlist({ base = "/tokens" }: { base?: "/tokens" | "/exch
       </header>
 
       <p className="tk-watch-meta">
-        <ProvenanceTag kind="simulated" label="Simulated market data" />
-        <span>Saved in this browser, not tied to a wallet. Prices are illustrative until a live feed is connected.</span>
+        <ProvenanceTag
+          kind={isLiveFeed ? "onchain" : "simulated"}
+          label={isLiveFeed ? "Live CoinMarketCap feed" : "Simulated market data"}
+        />
+        <span>
+          {isLiveFeed
+            ? "Saved in this browser, not tied to a wallet. Followed asset prices reflect real-time market data."
+            : "Saved in this browser, not tied to a wallet. Prices are illustrative until a live feed is connected."}
+        </span>
       </p>
 
       <section className="tk-section" style={{ marginTop: "1.5rem" }} aria-label="Followed tokens">
@@ -122,7 +155,12 @@ export function TokenWatchlist({ base = "/tokens" }: { base?: "/tokens" | "/exch
             {suggestions.map((t) => (
               <li key={t.id}>
                 <Link to={`/tokens/${t.id}`} className="mx-identity">
-                  <AssetIdentity symbol={t.symbol} name={t.name} logoUrl={t.logoUrl} size="sm" />
+                  <AssetIdentity
+                    symbol={t.symbol}
+                    name={t.name}
+                    logoUrl={t.logoUrl || (t as any).logo || (t as any).image}
+                    size="sm"
+                  />
                 </Link>
                 <span className="tk-list__fig">
                   <b>{usdPrice(t.market.price)}</b>
@@ -136,7 +174,7 @@ export function TokenWatchlist({ base = "/tokens" }: { base?: "/tokens" | "/exch
       )}
       {base === "/exchange" && (
         <p className="tk-note">
-          Looking for markets? <Link to="/exchange/markets" className="mx-link">Browse the market directory</Link>.
+          Looking for markets? <Link to="/tokens/explore" className="mx-link">Browse all tokens</Link>.
         </p>
       )}
     </div>

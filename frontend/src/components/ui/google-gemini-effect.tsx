@@ -1,6 +1,10 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 import { motion, type MotionValue } from "motion/react";
+import {
+  Database, Rocket, Gift, Layers, Network, Box, Share2, Handshake, Users,
+} from "lucide-react";
 
 const transition = {
   duration: 0,
@@ -37,6 +41,115 @@ const paths = [
   },
 ] as const;
 
+const featureColors = ["#287BFF", "#65DDF7", "#A78BFA", "#F4CF83", "#F06FBE"] as const;
+
+function FeatureRow({
+  label,
+  icon: Icon,
+  color,
+  side,
+  href,
+  external = false,
+}: {
+  label: string;
+  icon: React.ElementType;
+  color: string;
+  side: "left" | "right";
+  href: string;
+  external?: boolean;
+}) {
+  const rowStyle: React.CSSProperties = {
+    display: "flex",
+    minWidth: 0,
+    width: "100%",
+    alignItems: "center",
+    transform: label === "Markets" || label === "Community" ? "translateY(-8px)" : undefined,
+    justifyContent: side === "right" ? "flex-end" : "flex-start",
+    gap: "14px",
+    color: "#f5f6ff",
+    fontFamily: "inherit",
+  };
+  const iconStyle: React.CSSProperties = {
+    position: "relative",
+    zIndex: 2,
+    display: "grid",
+    width: "42px",
+    height: "42px",
+    flex: "0 0 42px",
+    placeItems: "center",
+    color,
+    border: `1px solid ${color}`,
+    borderRadius: "12px",
+    background: "rgba(7, 10, 24, .88)",
+    boxShadow: `0 0 16px ${color}22, inset 0 0 12px ${color}0d`,
+  };
+  const labelStyle: React.CSSProperties = {
+    position: "relative",
+    zIndex: 2,
+    minWidth: 0,
+    color: "#f4f5fc",
+    fontSize: "14px",
+    fontWeight: 650,
+    lineHeight: 1.2,
+    whiteSpace: "nowrap",
+    textAlign: side === "right" ? "right" : "left",
+    padding: "4px 9px",
+    borderRadius: "5px",
+    background: "rgba(7, 10, 24, .92)",
+    textShadow: "0 1px 5px rgba(0,0,0,.7)",
+  };
+
+  const linkStyle: React.CSSProperties = {
+    ...rowStyle,
+    textDecoration: "none",
+    cursor: "pointer",
+    outlineOffset: "5px",
+    transition: "filter 180ms ease, transform 180ms ease",
+  };
+  const content = (
+    <>
+      {side === "left" ? (
+        <>
+          <span className="hx-gemini-feature-icon" style={iconStyle}><Icon aria-hidden="true" size={22} strokeWidth={1.9} /></span>
+          <strong className="hx-gemini-feature-label" style={labelStyle}>{label}</strong>
+        </>
+      ) : (
+        <>
+          <strong className="hx-gemini-feature-label" style={labelStyle}>{label}</strong>
+          <span className="hx-gemini-feature-icon" style={iconStyle}><Icon aria-hidden="true" size={22} strokeWidth={1.9} /></span>
+        </>
+      )}
+    </>
+  );
+
+  const className = `hx-gemini-feature-row hx-gemini-feature-row--${side}`;
+  return external ? (
+    <a className={className} href={href} target="_blank" rel="noopener noreferrer" aria-label={`Open ${label}`} style={linkStyle}>
+      {content}
+    </a>
+  ) : (
+    <Link className={className} to={href} aria-label={`Go to ${label}`} style={linkStyle}>
+      {content}
+    </Link>
+  );
+}
+
+const leftFeatures = [
+  { label: "Tokens", icon: Database, path: 4, href: "/tokens" },
+  { label: "Launchpad", icon: Rocket, path: 3, href: "/launchpad" },
+  { label: "Airdrops", icon: Gift, path: 2, href: "/airdrops" },
+  { label: "Staking", icon: Layers, path: 1, href: "/staking" },
+  { label: "Markets", icon: Network, path: 0, href: "/tokens/explore" },
+] as const;
+
+const rightFeatures = [
+  { label: "Projects", icon: Box, path: 4, href: "/projects" },
+  { label: "Protocols", icon: Layers, path: 3, href: "/explore/projects" },
+  { label: "Ecosystems", icon: Share2, path: 2, href: "/explore" },
+  { label: "Partners", icon: Handshake, path: 1, href: "/partners" },
+  { label: "Community", icon: Users, path: 0, href: "https://discord.gg/prominers", external: true },
+] as const;
+
 export function GoogleGeminiEffect({
   pathLengths,
   title = "Build with HorizonX",
@@ -44,7 +157,7 @@ export function GoogleGeminiEffect({
   className,
 }: GoogleGeminiEffectProps) {
   return (
-    <div className={cn("sticky top-24 mx-auto w-full translate-y-4 sm:translate-y-6", className)}>
+    <div className={cn("hx-gemini-effect sticky top-24 relative mx-auto w-full translate-y-4 sm:translate-y-6", className)}>
       <div className="relative z-10 px-5 pt-8 text-center sm:pt-12">
         <p
           className="bg-gradient-to-b from-white via-white to-violet-200 bg-clip-text pb-3 font-semibold tracking-[-.055em] text-transparent"
@@ -56,6 +169,133 @@ export function GoogleGeminiEffect({
           {description}
         </p>
       </div>
+
+      <div
+        className="hx-gemini-feature-rail--left"
+        aria-label="HorizonX platform features"
+        style={{
+          position: "absolute",
+          zIndex: 12,
+          top: "calc(5.8rem + 4.45vw)",
+          left: "clamp(1.5rem, 4.1vw, 4.5rem)",
+          display: "grid",
+          gap: "calc(5.17vw - 42px)",
+          width: "clamp(230px, 20.5vw, 300px)",
+        }}
+      >
+        {leftFeatures.map((feature) => (
+          <FeatureRow
+            key={feature.label}
+            label={feature.label}
+            icon={feature.icon}
+            color={featureColors[4 - feature.path]}
+            side="left"
+            href={feature.href}
+            external={"external" in feature ? Boolean((feature as any).external) : false}
+          />
+        ))}
+      </div>
+      <div
+        className="hx-gemini-feature-rail--right"
+        aria-label="HorizonX network features"
+        style={{
+          position: "absolute",
+          zIndex: 12,
+          top: "calc(5.8rem + 4.45vw)",
+          right: "clamp(1.5rem, 4.1vw, 4.5rem)",
+          display: "grid",
+          gap: "calc(5.17vw - 42px)",
+          width: "clamp(230px, 20.5vw, 300px)",
+        }}
+      >
+        {rightFeatures.map((feature) => (
+          <FeatureRow
+            key={feature.label}
+            label={feature.label}
+            icon={feature.icon}
+            color={featureColors[4 - feature.path]}
+            side="right"
+            href={feature.href}
+            external={"external" in feature ? Boolean((feature as any).external) : false}
+          />
+        ))}
+      </div>
+
+      <style>{`
+        .hx-gemini-feature-row:hover {
+          filter: brightness(1.22);
+          transform: translateY(-1px);
+        }
+        .hx-gemini-feature-row:focus-visible {
+          outline: 2px solid rgba(220, 225, 255, .9);
+          outline-offset: 5px;
+        }
+        @media (max-width: 1100px) {
+          .hx-gemini-feature-rail--left,
+          .hx-gemini-feature-rail--right {
+            width: min(24vw, 250px) !important;
+          }
+          .hx-gemini-feature-icon {
+            width: 36px !important;
+            height: 36px !important;
+            flex-basis: 36px !important;
+            border-radius: 10px !important;
+          }
+          .hx-gemini-feature-icon svg {
+            width: 19px;
+            height: 19px;
+          }
+          .hx-gemini-feature-row:hover {
+            filter: brightness(1.22);
+            transform: translateY(-1px);
+          }
+          .hx-gemini-feature-row:focus-visible {
+            outline: 2px solid rgba(220, 225, 255, .9);
+            outline-offset: 5px;
+          }
+          .hx-gemini-feature-label {
+            font-size: 12px !important;
+            padding: 3px 6px !important;
+          }
+        }
+        @media (max-width: 760px) {
+          .hx-gemini-feature-rail--left,
+          .hx-gemini-feature-rail--right {
+            top: calc(7.2rem + 4.45vw) !important;
+            width: min(28vw, 205px) !important;
+            gap: calc(5.17vw - 36px) !important;
+          }
+          .hx-gemini-feature-rail--left { left: .7rem !important; }
+          .hx-gemini-feature-rail--right { right: .7rem !important; }
+          .hx-gemini-feature-icon {
+            width: 32px !important;
+            height: 32px !important;
+            flex-basis: 32px !important;
+            border-radius: 9px !important;
+          }
+          .hx-gemini-feature-label {
+            font-size: 10px !important;
+            padding: 3px 5px !important;
+          }
+          .hx-gemini-feature-row { gap: 7px !important; }
+        }
+        @media (max-width: 520px) {
+          .hx-gemini-feature-rail--left,
+          .hx-gemini-feature-rail--right {
+            width: calc(50% - 1rem) !important;
+            gap: 1.2rem !important;
+          }
+          .hx-gemini-feature-rail--left { left: .35rem !important; }
+          .hx-gemini-feature-rail--right { right: .35rem !important; }
+          .hx-gemini-feature-icon {
+            width: 28px !important;
+            height: 28px !important;
+            flex-basis: 28px !important;
+          }
+          .hx-gemini-feature-icon svg { width: 16px; height: 16px; }
+          .hx-gemini-feature-label { font-size: 9px !important; }
+        }
+      `}</style>
 
       <div className="pointer-events-none absolute left-1/2 z-20 flex -translate-x-1/2 justify-center top-[clamp(17rem,20vw,21rem)]">
         <span className="rounded-full border border-white/15 bg-[#f5f2ff] px-5 py-2.5 text-xs font-bold tracking-wide text-[#171126] shadow-[0_8px_36px_rgba(139,92,246,.16)] sm:text-sm">
@@ -94,6 +334,10 @@ export function GoogleGeminiEffect({
             />
           </React.Fragment>
         ))}
+        {/* Hide only the outer tails before the feature labels: left-side lines begin
+            after their labels, while right-side lines end before their labels. */}
+        <rect x="0" y="300" width="170" height="400" fill="#080a17" />
+        <rect x="1270" y="300" width="170" height="400" fill="#080a17" />
         <defs>
           <filter id="horizonx-gemini-blur">
             <feGaussianBlur in="SourceGraphic" stdDeviation="5" />
