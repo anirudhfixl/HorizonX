@@ -3,18 +3,17 @@
  * Avoids JavaScript floating-point imprecision.
  */
 export function formatUnits(amount: bigint, decimals: number, maxDisplayDecimals = 4): string {
-  if (amount === 0n) return '0.0000';
+  if (amount === 0n) return `0.${'0'.repeat(maxDisplayDecimals)}`;
   const base = 10n ** BigInt(decimals);
   const integerPart = (amount / base).toString();
   const remainder = amount % base;
 
   if (remainder === 0n) {
-    return `${integerPart}.${'0'.repeat(Math.min(maxDisplayDecimals, 4))}`;
+    return `${integerPart}.${'0'.repeat(maxDisplayDecimals)}`;
   }
 
   const fractionString = remainder.toString().padStart(decimals, '0');
-  const trimmedFraction = fractionString.slice(0, maxDisplayDecimals).replace(/0+$/, '');
-  const displayFraction = trimmedFraction.length < 2 ? trimmedFraction.padEnd(2, '0') : trimmedFraction;
+  const displayFraction = fractionString.slice(0, maxDisplayDecimals).padEnd(maxDisplayDecimals, '0');
 
   return `${integerPart}.${displayFraction}`;
 }

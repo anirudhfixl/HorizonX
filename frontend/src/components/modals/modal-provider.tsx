@@ -13,6 +13,12 @@ const CommandPaletteModal = lazy(() =>
 const RiskWarningModal = lazy(() =>
   import("./risk-warning-modal").then((m) => ({ default: m.RiskWarningModal }))
 );
+const SendTransactionModal = lazy(() =>
+  import("./send-transaction-modal").then((m) => ({ default: m.SendTransactionModal }))
+);
+const ReceiveTransactionModal = lazy(() =>
+  import("./receive-transaction-modal").then((m) => ({ default: m.ReceiveTransactionModal }))
+);
 
 export function GlobalModalRenderer() {
   const { activeModal } = useModal();
@@ -25,6 +31,8 @@ export function GlobalModalRenderer() {
       {activeModal === "WALLET_DETAILS" && <WalletDetailsModal />}
       {activeModal === "COMMAND_PALETTE" && <CommandPaletteModal />}
       {activeModal === "RISK_WARNING" && <RiskWarningModal />}
+      {activeModal === "SEND_TRANSACTION" && <SendTransactionModal />}
+      {activeModal === "RECEIVE_TRANSACTION" && <ReceiveTransactionModal />}
     </Suspense>
   );
 }

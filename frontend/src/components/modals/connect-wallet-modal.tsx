@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
+import { useMultiWallet } from "@/web3";
 import {
   Dialog,
   DialogContent,
@@ -15,50 +16,60 @@ import {
   ExternalLink,
   Loader2,
   AlertCircle,
-  ArrowUpRight,
   X,
+  CheckCircle2,
 } from "lucide-react";
+import type { BlockchainEcosystem } from "@/web3/types/wallet.types";
 
-interface WalletOption {
-  id: string;
+interface EcosystemOption {
+  id: BlockchainEcosystem;
   name: string;
-  connectorId: string;
-  badge?: string;
+  networkName: string;
+  walletName: string;
   icon: string;
+  badge?: string;
 }
 
-const WALLET_OPTIONS: WalletOption[] = [
+const ECOSYSTEM_OPTIONS: EcosystemOption[] = [
   {
-    id: "metamask",
-    name: "MetaMask",
-    connectorId: "metaMask",
-    badge: "Popular",
+    id: "evm",
+    name: "Ethereum Sepolia",
+    networkName: "Sepolia Testnet (11155111)",
+    walletName: "MetaMask",
+    badge: "Preferred EVM",
     icon: "🦊",
   },
   {
-    id: "walletconnect",
-    name: "WalletConnect",
-    connectorId: "walletConnect",
-    icon: "🔗",
+    id: "solana",
+    name: "Solana Devnet",
+    networkName: "Devnet Cluster",
+    walletName: "Phantom",
+    badge: "Preferred Solana",
+    icon: "👻",
   },
   {
-    id: "coinbase",
-    name: "Coinbase Wallet",
-    connectorId: "coinbaseWallet",
-    icon: "🔷",
+    id: "ton",
+    name: "TON Testnet",
+    networkName: "Testnet Workchain (-3)",
+    walletName: "Tonkeeper",
+    badge: "Preferred TON",
+    icon: "💎",
   },
   {
-    id: "injected",
-    name: "Browser Injected",
-    connectorId: "injected",
+    id: "tron",
+    name: "TRON Shasta",
+    networkName: "Shasta Testnet",
+    walletName: "TronLink",
+    badge: "Preferred TRON",
     icon: "⚡",
   },
 ];
 
 export function ConnectWalletModal() {
-  const { connect, connectDemo, isConnecting } = useWallet();
+  const { connectDemo } = useWallet();
+  const multiWallet = useMultiWallet();
   const { isOpen, closeModal, openModal } = useModal();
-  const [pendingConnector, setPendingConnector] = useState<string | null>(null);
+  const [pendingEcosystem, setPendingEcosystem] = useState<BlockchainEcosystem | null>(null);
   const [connectError, setConnectError] = useState<string | null>(null);
 
   const open = isOpen("CONNECT_WALLET");
@@ -69,23 +80,32 @@ export function ConnectWalletModal() {
     return () => window.clearTimeout(timeoutId);
   }, [connectError]);
 
-  const handleSelectWallet = async (option: WalletOption) => {
+  const handleConnectEcosystem = async (eco: BlockchainEcosystem) => {
     setConnectError(null);
-    setPendingConnector(option.connectorId);
+    setPendingEcosystem(eco);
     try {
-      await connect(option.connectorId);
+      if (eco === "evm") {
+        await multiWallet.evm.connect();
+      } else if (eco === "solana") {
+        await multiWallet.solana.connect();
+      } else if (eco === "ton") {
+        await multiWallet.ton.connect();
+      } else if (eco === "tron") {
+        await multiWallet.tron.connect();
+      }
       closeModal();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Connection failed";
       if (
         !msg.includes("User rejected") &&
         !msg.includes("cancelled") &&
-        !msg.includes("User denied")
+        !msg.includes("User denied") &&
+        !msg.includes("declined")
       ) {
         setConnectError(msg);
       }
     } finally {
-      setPendingConnector(null);
+      setPendingEcosystem(null);
     }
   };
 
@@ -113,10 +133,12 @@ export function ConnectWalletModal() {
               <ShieldCheck className="h-[18px] w-[18px]" />
             </span>
             <DialogTitle className="text-lg font-semibold tracking-tight text-[#f4f1ff] sm:text-xl">
-              Connect a Wallet
+              Connect Multi-Chain Wallets
             </DialogTitle>
           </div>
-          <DialogDescription className="text-[11px] text-[#a7a5b8]">Sepolia Testnet · Chain ID 11155111</DialogDescription>
+          <DialogDescription className="text-[11px] text-[#a7a5b8]">
+            Four Independent Testnet Connections · Strict Testnet Isolation
+          </DialogDescription>
         </DialogHeader>
 
         {connectError && (
@@ -128,9 +150,7 @@ export function ConnectWalletModal() {
             <div className="min-w-0 flex-1">
               <p className="font-semibold">Connection failed</p>
               <p className="mt-0.5 break-words text-[11px] leading-4 text-red-200/80">
-                {connectError.includes("Provider not found")
-                  ? "Wallet provider unavailable. Check that the extension is installed and enabled."
-                  : connectError}
+                {connectError}
               </p>
             </div>
             <button
@@ -148,78 +168,110 @@ export function ConnectWalletModal() {
           <span className="flex h-8 w-8 shrink-0 items-center justify-center self-center rounded-lg bg-[#b7a2ff]/12 text-[#c7b7ff]">
             <Sparkles className="h-4 w-4" />
           </span>
-          <p className="flex min-h-8 min-w-0 flex-1 items-center self-center text-[13px] font-semibold leading-none text-[#f0ecff]">
-            Testing Sandbox
-          </p>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-semibold leading-none text-[#f0ecff]">
+              Sandbox Demo Mode
+            </p>
+            <p className="text-[11px] text-[#a7a5b8] mt-1">
+              Explore HorizonX without browser wallet extensions
+            </p>
+          </div>
           <Button
             size="sm"
             onClick={handleDemoConnect}
-            disabled={isConnecting}
             className="h-8 shrink-0 rounded-full bg-[#b7a2ff] px-3 text-[11px] font-semibold text-[#171326] shadow-none hover:bg-[#c7b8ff]"
           >
             Quick Sandbox
           </Button>
         </section>
 
-        <section aria-label="Available wallet providers" className="space-y-1.5">
+        <section aria-label="Available blockchain ecosystems" className="space-y-1.5">
           <div className="flex items-center justify-between px-0.5">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#85839a]">
-              Wallets
+              Independent Testnet Wallets ({multiWallet.connectedCount}/4 Connected)
             </p>
           </div>
 
-          <div className="space-y-1.5">
-            {WALLET_OPTIONS.map((wallet) => {
-              const isThisPending =
-                isConnecting && pendingConnector === wallet.connectorId;
+          <div className="space-y-2">
+            {ECOSYSTEM_OPTIONS.map((eco) => {
+              const state = multiWallet[eco.id];
+              const isThisPending = pendingEcosystem === eco.id || state.isConnecting;
+              const isConnected = state.isConnected;
 
               return (
-                <button
-                  key={wallet.id}
-                  type="button"
-                  disabled={isConnecting}
-                  onClick={() => handleSelectWallet(wallet)}
+                <div
+                  key={eco.id}
                   className="
-                    group flex min-h-[58px] w-full min-w-0 items-center gap-3
+                    group flex min-h-[62px] w-full min-w-0 items-center justify-between gap-3
                     rounded-xl border border-white/[0.08] bg-white/[0.025]
-                    px-3 py-2 text-left transition-colors duration-150
+                    px-3 py-2.5 text-left transition-colors duration-150
                     hover:border-[#b7a2ff]/35 hover:bg-[#b7a2ff]/[0.06]
-                    focus-visible:outline-none focus-visible:ring-2
-                    focus-visible:ring-[#b7a2ff]/60
-                    disabled:cursor-not-allowed disabled:opacity-55
                   "
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-[#1b1d30] text-[21px]">
-                    {wallet.icon}
-                  </span>
-
-                  <span className="min-w-0 flex-1">
-                    <span className="flex min-w-0 flex-wrap items-center gap-2">
-                      <span className="truncate text-[13px] font-semibold text-[#eeecf8] transition-colors group-hover:text-white">
-                        {wallet.name}
-                      </span>
-                      {wallet.badge && (
-                        <span className="rounded-full border border-[#b7a2ff]/20 bg-[#b7a2ff]/10 px-2 py-0.5 text-[9px] font-semibold text-[#c7b7ff]">
-                          {wallet.badge}
-                        </span>
-                      )}
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.07] bg-[#1b1d30] text-[21px]">
+                      {eco.icon}
                     </span>
-                  </span>
 
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[#77758a] transition-all group-hover:bg-[#b7a2ff]/10 group-hover:text-[#d5caff]">
-                    {isThisPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="truncate text-[13px] font-semibold text-[#eeecf8]">
+                          {eco.walletName}
+                        </span>
+                        {eco.badge && (
+                          <span className="rounded-full border border-[#b7a2ff]/20 bg-[#b7a2ff]/10 px-2 py-0.5 text-[9px] font-semibold text-[#c7b7ff]">
+                            {eco.badge}
+                          </span>
+                        )}
+                        {isConnected && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold text-emerald-400">
+                            <CheckCircle2 className="h-2.5 w-2.5" /> Connected
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#8e8ca0] truncate mt-0.5">
+                        {eco.networkName}
+                        {isConnected && state.shortAddress ? ` · ${state.shortAddress}` : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    {isConnected ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          closeModal();
+                          openModal("WALLET_DETAILS", { ecosystem: eco.id });
+                        }}
+                        className="h-8 rounded-lg border-white/20 bg-white/5 text-[11px] font-semibold text-[#eeecf8] hover:bg-white/10"
+                      >
+                        Manage
+                      </Button>
                     ) : (
-                      <ArrowUpRight className="h-4 w-4 opacity-60 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100" />
+                      <Button
+                        size="sm"
+                        disabled={isThisPending}
+                        onClick={() => handleConnectEcosystem(eco.id)}
+                        className="h-8 rounded-lg bg-[#b7a2ff] px-3 text-[11px] font-semibold text-[#171326] shadow-none hover:bg-[#c7b8ff]"
+                      >
+                        {isThisPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          "Connect"
+                        )}
+                      </Button>
                     )}
-                  </span>
-                </button>
+                  </div>
+                </div>
               );
             })}
           </div>
         </section>
 
-        <div className="flex justify-end border-t border-white/[0.08] pt-2 text-[10px] text-[#858398]">
+        <div className="flex items-center justify-between border-t border-white/[0.08] pt-2 text-[10px] text-[#858398]">
+          <span>Testnet Only · Mainnet Prohibited</span>
           <button
             type="button"
             onClick={() => {

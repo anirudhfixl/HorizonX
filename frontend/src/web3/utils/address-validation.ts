@@ -4,7 +4,7 @@ export const EVM_ADDRESS_REGEX = /^0x[0-9a-fA-F]{40}$/;
 export const SOLANA_ADDRESS_REGEX = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 export const TRON_ADDRESS_REGEX = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
 export const TON_RAW_ADDRESS_REGEX = /^-?[0-9]:[0-9a-fA-F]{64}$/;
-export const TON_TESTNET_FRIENDLY_REGEX = /^(0Q|kQ)[0-9a-zA-Z_-]{46}$/;
+export const TON_TESTNET_FRIENDLY_REGEX = /^(0Q|kQ)[0-9a-zA-Z_-]{46,48}$/;
 
 /**
  * Validates whether an address string is valid for the specified ecosystem.

@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataArtwork } from "@/components/shared/data-artwork";
+import { MOCK_PRESALES, MOCK_FAIR_LAUNCHES } from "@/data/catalog";
 import { usePresales, useFairLaunches } from "@/api";
 import { readSessionLaunchesRaw, subscribeSessionLaunches, sessionPresaleToPresale, sessionFairLaunchToFairLaunch } from "@/lib/launch-storage";
 import type { Presale, FairLaunch } from "@/types";
@@ -92,8 +93,8 @@ export function parseAmount(raw?: string): Amount | null {
 }
 
 export function buildLaunchEntries(
-  presalesList: Presale[] = [],
-  fairList: FairLaunch[] = []
+  presalesList: Presale[] = MOCK_PRESALES,
+  fairList: FairLaunch[] = MOCK_FAIR_LAUNCHES
 ): LaunchEntry[] {
   const presales: LaunchEntry[] = presalesList.map((p) => ({
     kind: "presale",

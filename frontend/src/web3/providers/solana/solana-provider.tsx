@@ -70,8 +70,9 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
     const phantom = getPhantom();
     if (!phantom) return;
 
-    const handleConnect = (pubKey?: { toString: () => string }) => {
-      const addr = pubKey ? pubKey.toString() : phantom.publicKey?.toString() || null;
+    const handleConnect = (...args: unknown[]) => {
+      const pubKey = args[0] as { toString?: () => string } | undefined;
+      const addr = pubKey && typeof pubKey.toString === 'function' ? pubKey.toString() : phantom.publicKey?.toString() || null;
       if (addr) {
         setAddress(addr);
         try {
@@ -88,15 +89,16 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       setNativeBalanceRaw(null);
       setTokens([]);
       try {
-        localStorage.removeItem(SOLANA_LOCAL_STORAGE_KEY, 'false');
+        localStorage.removeItem(SOLANA_LOCAL_STORAGE_KEY);
       } catch {
         // ignore
       }
     };
 
-    const handleAccountChanged = (pubKey: unknown) => {
+    const handleAccountChanged = (...args: unknown[]) => {
+      const pubKey = args[0];
       if (pubKey && typeof (pubKey as { toString?: () => string }).toString === 'function') {
-        handleConnect(pubKey as { toString: () => string });
+        handleConnect(pubKey);
       } else {
         handleDisconnect();
       }
@@ -111,7 +113,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
     if (wasConnected && phantom.publicKey) {
       setAddress(phantom.publicKey.toString());
     } else if (wasConnected) {
-      phantom.connect({ onlyIfTrusted: true }).then(handleConnect).catch(() => {});
+      phantom.connect({ onlyIfTrusted: true }).then((res) => handleConnect(res?.publicKey)).catch(() => {});
     }
 
     return () => {

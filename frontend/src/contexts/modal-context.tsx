@@ -5,7 +5,9 @@ export type ModalType =
   | "WALLET_DETAILS"
   | "COMMAND_PALETTE"
   | "RISK_WARNING"
-  | "QUICK_CREATE";
+  | "QUICK_CREATE"
+  | "SEND_TRANSACTION"
+  | "RECEIVE_TRANSACTION";
 
 export interface ModalContextType {
   activeModal: ModalType | null;
