@@ -6,14 +6,16 @@ export function GoogleGeminiEffectDemo() {
   const ref = React.useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ["start end", "end start"],
+    // Start as Tokens enters the viewport; finish as Projects approaches the top.
+    // This ties the draw sequence to the visible feature rail, not the full section.
+    offset: ["start 82%", "start 8%"],
   });
 
-  const pathLengthFirst = useTransform(scrollYProgress, [0, 0.78], [0, 1]);
-  const pathLengthSecond = useTransform(scrollYProgress, [0, 0.78], [0, 1]);
-  const pathLengthThird = useTransform(scrollYProgress, [0, 0.78], [0, 1]);
-  const pathLengthFourth = useTransform(scrollYProgress, [0, 0.78], [0, 1]);
-  const pathLengthFifth = useTransform(scrollYProgress, [0, 0.78], [0, 1]);
+  const pathLengthFirst = useTransform(scrollYProgress, [0, 0.75, 1], [0, 0.5, 1]);
+  const pathLengthSecond = useTransform(scrollYProgress, [0, 0.75, 1], [0, 0.5, 1]);
+  const pathLengthThird = useTransform(scrollYProgress, [0, 0.75, 1], [0, 0.5, 1]);
+  const pathLengthFourth = useTransform(scrollYProgress, [0, 0.75, 1], [0, 0.5, 1]);
+  const pathLengthFifth = useTransform(scrollYProgress, [0, 0.75, 1], [0, 0.5, 1]);
 
   return (
     <section

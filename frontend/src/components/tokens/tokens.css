@@ -434,3 +434,20 @@
 /* Shared workspace navigation owns the bounded divider. */
 .tk-section-nav { border-top-color: var(--border); border-bottom-color: var(--border); }
 .tk-section-nav::before, .tk-section-nav::after { content: none !important; display: none !important; }
+
+
+/* Dashboard wallet-empty state: remove its trailing divider above workspace grid. */
+.tk-page > .tk-portfolio:has(> .mx-state),
+.tk-page > .tk-portfolio > .mx-state {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+
+/* Dashboard workspace now uses the full row; activity is a table tab. */
+.tk-grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+.tk-grid--single .tk-main {
+  width: 100%;
+}

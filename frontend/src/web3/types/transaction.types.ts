@@ -32,3 +32,4 @@ export interface SendTransactionResult {
   explorerUrl: string;
   status: TransactionStatus;
 }
+

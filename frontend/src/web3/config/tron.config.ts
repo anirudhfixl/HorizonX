@@ -19,3 +19,4 @@ export const TRON_CONFIG = {
   preferredWallet: 'TronLink',
   supportedTokens: TRON_SUPPORTED_TOKENS,
 };
+

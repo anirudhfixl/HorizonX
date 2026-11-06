@@ -37,6 +37,7 @@ export const routes: RouteObject[] = [
           { path: "account/security", ...page(() => import("@/pages/account/security/page")) },
           { path: "account/verification", ...page(() => import("@/pages/account/verification/page")) },
           { path: "account/wallets", ...page(() => import("@/pages/account/wallets/page")) },
+          { path: "account/connections", ...page(() => import("@/pages/account/connections/page")) },
           { path: "airdrops", ...page(() => import("@/pages/airdrops/page")) },
           { path: "airdrops/campaigns", ...page(() => import("@/pages/airdrops/campaigns/page")) },
           { path: "airdrops/campaigns/:id", ...page(() => import("@/pages/airdrops/campaigns/_id/page")) },

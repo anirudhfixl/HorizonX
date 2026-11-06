@@ -7,19 +7,76 @@ import type { EcosystemWalletState, TokenHolding, WalletConnectionStatus } from 
 
 const TonWalletContext = createContext<EcosystemWalletState | undefined>(undefined);
 
-interface TonInjectedProvider {
-  isTonkeeper?: boolean;
-  account?: { address: string; chain: string | number };
-  send?: (method: string, params?: unknown[]) => Promise<unknown>;
-  connect?: () => Promise<{ address: string }>;
-  disconnect?: () => Promise<void>;
-  on?: (event: string, callback: (...args: unknown[]) => void) => void;
+interface TonConnectItem {
+  name: string;
+  address?: string;
+  network?: string | number;
+  publicKey?: string;
 }
 
-function getTonProvider(): TonInjectedProvider | null {
+interface TonConnectResponse {
+  event: 'connect';
+  payload: {
+    items: TonConnectItem[];
+    device?: unknown;
+  };
+}
+
+export interface GramWalletBridge {
+  deviceInfo?: {
+    platform?: string;
+    appName?: string;
+    appVersion?: string;
+    maxProtocolVersion?: number;
+    features?: unknown[];
+  };
+  walletInfo?: {
+    name?: string;
+    app_name?: string;
+    image?: string;
+    about_url?: string;
+  };
+  protocolVersion?: number;
+  connect?: (
+    protocolVersion: number,
+    message?: { manifestUrl?: string; items?: Array<{ name: string }> }
+  ) => Promise<TonConnectResponse | { address: string; chain?: string | number }>;
+  restoreConnection?: () => Promise<unknown>;
+  disconnect?: () => Promise<void>;
+  send?: (message: unknown) => Promise<unknown>;
+  sendTransaction?: (tx: unknown) => Promise<{ boc: string }>;
+  listen?: (callback: (event: unknown) => void) => () => void;
+  // Convenience direct properties
+  account?: { address: string; chain?: string | number };
+}
+
+/**
+ * Official TON Connect wallet discovery for Gram Wallet.
+ * Identified by registry jsBridgeKey "gramwallet" at window.tonconnect.gramwallet or window.gramwallet.
+ * Does NOT assume window.ton identifies Gram Wallet.
+ */
+function getGramWalletBridge(): GramWalletBridge | null {
   if (typeof window === 'undefined') return null;
-  const anyWin = window as unknown as { tonkeeper?: TonInjectedProvider; ton?: TonInjectedProvider };
-  return anyWin?.tonkeeper || anyWin?.ton || null;
+  const anyWin = window as unknown as {
+    tonconnect?: Record<string, GramWalletBridge>;
+    gramwallet?: GramWalletBridge;
+    gramWallet?: GramWalletBridge;
+  };
+
+  // 1. Official TON Connect JS Bridge standard: window.tonconnect.gramwallet
+  if (anyWin?.tonconnect?.gramwallet) {
+    return anyWin.tonconnect.gramwallet;
+  }
+
+  // 2. Direct JS bridge injection under its official jsBridgeKey: window.gramwallet / window.gramWallet
+  if (anyWin?.gramwallet) {
+    return anyWin.gramwallet;
+  }
+  if (anyWin?.gramWallet) {
+    return anyWin.gramWallet;
+  }
+
+  return null;
 }
 
 const TON_LOCAL_STORAGE_KEY = 'horizonx_ton_connected';
@@ -76,44 +133,62 @@ export function TonWalletProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     setIsConnecting(true);
     try {
-      const provider = getTonProvider();
-      if (provider) {
-        if (provider.connect) {
-          const res = await provider.connect();
-          if (res?.address) {
-            setAddress(res.address);
-            localStorage.setItem(TON_LOCAL_STORAGE_KEY, res.address);
-            return;
+      const bridge = getGramWalletBridge();
+      if (bridge) {
+        let resolvedAddress: string | null = null;
+        let resolvedNetwork: string | number | null = null;
+
+        // 1. Official TON Connect 2.0 JS Bridge connect protocol
+        if (typeof bridge.connect === 'function') {
+          const res = await bridge.connect(2, {
+            manifestUrl: TON_CONFIG.manifestUrl,
+            items: [{ name: 'ton_addr' }],
+          });
+
+          if (res && 'payload' in res && Array.isArray(res.payload?.items)) {
+            const addrItem = res.payload.items.find((it) => it.name === 'ton_addr');
+            if (addrItem?.address) {
+              resolvedAddress = addrItem.address;
+              resolvedNetwork = addrItem.network ?? null;
+            }
+          } else if (res && 'address' in res && typeof res.address === 'string') {
+            resolvedAddress = res.address;
+            resolvedNetwork = res.chain ?? null;
           }
         }
-        if (provider.account?.address) {
-          const chain = String(provider.account.chain);
-          if (chain && chain !== '-3' && chain !== 'testnet') {
-            setIsUnsupportedNetwork(true);
-            throw new Error('Tonkeeper is connected to mainnet. Please switch to TON Testnet.');
+
+        // 2. Direct account property if already authorized
+        if (!resolvedAddress && bridge.account?.address) {
+          resolvedAddress = bridge.account.address;
+          resolvedNetwork = bridge.account.chain ?? null;
+        }
+
+        if (resolvedAddress) {
+          // Strictly enforce TON Testnet (-3); reject Mainnet (-239)
+          if (resolvedNetwork !== null) {
+            const netStr = String(resolvedNetwork);
+            if (netStr === '-239' || netStr === 'mainnet') {
+              setIsUnsupportedNetwork(true);
+              throw new Error('Gram Wallet is connected to TON Mainnet. Mainnet is strictly prohibited. Please switch to TON Testnet (-3).');
+            }
           }
-          setAddress(provider.account.address);
-          localStorage.setItem(TON_LOCAL_STORAGE_KEY, provider.account.address);
+
+          setIsUnsupportedNetwork(false);
+          setAddress(resolvedAddress);
+          try {
+            localStorage.setItem(TON_LOCAL_STORAGE_KEY, resolvedAddress);
+          } catch {
+            // ignore
+          }
           return;
         }
       }
 
-      // If no extension injected, open prompt or provide testnet connection
-      const promptAddress = window.prompt(
-        'Tonkeeper Web / Extension: Enter your TON Testnet address (starts with 0Q or kQ):'
-      );
-      if (promptAddress && promptAddress.trim()) {
-        const clean = promptAddress.trim();
-        if (!clean.startsWith('0Q') && !clean.startsWith('kQ')) {
-          throw new Error('Only TON Testnet addresses (starting with 0Q or kQ) are permitted.');
-        }
-        setAddress(clean);
-        localStorage.setItem(TON_LOCAL_STORAGE_KEY, clean);
-      } else {
-        throw new Error('Tonkeeper connection cancelled.');
-      }
+      // If no Gram Wallet extension injected, reject with clean actionable error
+      // Never use window.prompt or accept unauthenticated manual addresses
+      throw new Error('Gram Wallet extension is not installed. Please connect via TON Connect QR or install Gram Wallet.');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Tonkeeper connection rejected';
+      const msg = err instanceof Error ? err.message : 'Gram Wallet connection rejected';
       if (!/reject|cancel|denied/i.test(msg)) {
         setError(msg);
       }
@@ -126,15 +201,19 @@ export function TonWalletProvider({ children }: { children: React.ReactNode }) {
   const disconnect = useCallback(async () => {
     setError(null);
     try {
-      const provider = getTonProvider();
-      if (provider?.disconnect) {
-        await provider.disconnect();
+      const bridge = getGramWalletBridge();
+      if (bridge?.disconnect && typeof bridge.disconnect === 'function') {
+        await bridge.disconnect();
       }
       setAddress(null);
       setNativeBalance('0.0000');
       setNativeBalanceRaw(null);
       setTokens([]);
-      localStorage.removeItem(TON_LOCAL_STORAGE_KEY);
+      try {
+        localStorage.removeItem(TON_LOCAL_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'TON disconnect failed';
       setError(msg);
@@ -200,3 +279,4 @@ export function useTonWallet(): EcosystemWalletState {
   }
   return context;
 }
+

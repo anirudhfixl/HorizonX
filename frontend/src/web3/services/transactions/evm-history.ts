@@ -77,3 +77,4 @@ export async function fetchEvmTransactionHistory(address: string): Promise<Trans
 
   return sessionTxs;
 }
+

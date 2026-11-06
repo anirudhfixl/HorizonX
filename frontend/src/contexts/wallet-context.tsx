@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   useAccount,
   useBalance,
@@ -30,6 +30,8 @@ export type ConnectionStatus = "disconnected" | "connecting" | "connected" | "un
 export interface WalletContextType {
   // Connection states
   isConnected: boolean;
+  isRealConnected: boolean;
+  isDemoActive: boolean;
   isConnecting: boolean;
   isReconnecting: boolean;
   isUnsupportedNetwork: boolean;
@@ -37,6 +39,8 @@ export interface WalletContextType {
 
   // Account data
   address: string | null;
+  realAddress: string | null;
+  demoAddress: string;
   shortAddress: string | null;
   balance: string;
   balanceRaw?: bigint;
@@ -54,6 +58,7 @@ export interface WalletContextType {
   connect: (connectorIdOrName?: string) => Promise<void>;
   connectDemo: () => void;
   disconnect: () => void;
+  disconnectDemo: () => void;
   switchNetwork: (chainIdOrId?: number | string) => Promise<void>;
   isDemoMode: boolean;
 }
@@ -77,21 +82,27 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const { disconnect: wagmiDisconnect } = useDisconnect();
   const { switchChainAsync } = useSwitchChain();
 
-  // Retrieve native Sepolia ETH balance for connected address
+  // Retrieve native Sepolia ETH balance for connected address only.
+  // Gating with `enabled` avoids unnecessary background reads when disconnected.
   const { data: balanceData, refetch: refetchBalance } = useBalance({
     address: wagmiAddress,
     chainId: sepolia.id,
+    query: {
+      enabled: Boolean(wagmiAddress && wagmiIsConnected),
+      staleTime: 10_000,
+      refetchOnWindowFocus: false,
+    },
   });
 
   // Demo fallback state (for testing sandbox without Web3 extension)
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [demoConnected, setDemoConnected] = useState(false);
 
-  // Load persisted demo session if active
+  // Load persisted demo session on mount independently of real Web3 state
   useEffect(() => {
     try {
       const savedDemo = localStorage.getItem("prominers_demo_wallet_active");
-      if (savedDemo === "true" && !wagmiIsConnected) {
+      if (savedDemo === "true") {
         queueMicrotask(() => {
           setIsDemoMode(true);
           setDemoConnected(true);
@@ -100,22 +111,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
-  }, [wagmiIsConnected]);
-
-  // If real wallet connects, immediately clear demo mode
-  useEffect(() => {
-    if (wagmiIsConnected) {
-      queueMicrotask(() => {
-        setIsDemoMode(false);
-        setDemoConnected(false);
-      });
-      try {
-        localStorage.removeItem("prominers_demo_wallet_active");
-      } catch {
-        // ignore
-      }
-    }
-  }, [wagmiIsConnected]);
+  }, []);
 
   // Track previous connection state to trigger friendly toast notifications
   const prevConnectedRef = useRef(wagmiIsConnected);
@@ -169,9 +165,14 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   }, [address]);
 
-  const isConnected = wagmiIsConnected || (isDemoMode && demoConnected);
+  const isRealConnected = wagmiIsConnected;
+  const isDemoActive = isDemoMode && demoConnected;
+  const isConnected = wagmiIsConnected || isDemoActive;
   const isConnecting = wagmiIsConnecting;
   const isReconnecting = wagmiIsReconnecting;
+
+  const realAddress = wagmiIsConnected && wagmiAddress ? wagmiAddress : null;
+  const demoAddress = DEMO_ADDRESS;
 
   // Formatted balance
   const balance = useMemo(() => {
@@ -213,8 +214,21 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     return null;
   }, [isDemoMode, activeConnector]);
 
+  const connectDemo = useCallback(() => {
+    setIsDemoMode(true);
+    setDemoConnected(true);
+    try {
+      localStorage.setItem("prominers_demo_wallet_active", "true");
+    } catch {
+      // ignore
+    }
+    toast.success("Wallet Connected (Demo Sandbox)", {
+      description: `Simulated session as Demo Tester (${DEMO_ADDRESS.slice(0, 6)}...${DEMO_ADDRESS.slice(-4)}) on Sepolia.`,
+    });
+  }, []);
+
   // Real connector dispatch
-  const connect = async (connectorIdOrName?: string) => {
+  const connect = useCallback(async (connectorIdOrName?: string) => {
     // If demo connection requested
     if (connectorIdOrName === "demo" || connectorIdOrName === "Demo Account (Tester)") {
       connectDemo();
@@ -257,35 +271,31 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       }
       throw err;
     }
-  };
+  }, [connectors, connectAsync, connectDemo]);
 
-  const connectDemo = () => {
-    setIsDemoMode(true);
-    setDemoConnected(true);
-    try {
-      localStorage.setItem("prominers_demo_wallet_active", "true");
-    } catch {
-      // ignore
-    }
-    toast.success("Wallet Connected (Demo Sandbox)", {
-      description: `Simulated session as Demo Tester (${DEMO_ADDRESS.slice(0, 6)}...${DEMO_ADDRESS.slice(-4)}) on Sepolia.`,
-    });
-  };
-
-  const disconnect = () => {
-    if (wagmiIsConnected) {
-      wagmiDisconnect();
-    }
+  const disconnectDemo = useCallback(() => {
     setIsDemoMode(false);
     setDemoConnected(false);
     try {
       localStorage.removeItem("prominers_demo_wallet_active");
+      localStorage.removeItem("horizonx_demo_wallet");
     } catch {
       // ignore
     }
-  };
+    toast.info("Demo Wallet Disconnected", {
+      description: "Simulated sandbox session has ended.",
+    });
+  }, []);
 
-  const switchNetwork = async (chainIdOrId?: number | string) => {
+  const disconnect = useCallback(() => {
+    if (wagmiIsConnected) {
+      wagmiDisconnect();
+    } else if (isDemoActive) {
+      disconnectDemo();
+    }
+  }, [wagmiIsConnected, wagmiDisconnect, isDemoActive, disconnectDemo]);
+
+  const switchNetwork = useCallback(async (chainIdOrId?: number | string) => {
     if (isDemoMode) {
       toast.info("Demo Network Active", {
         description: "Simulated sandbox is fixed on Sepolia Testnet (Chain ID: 11155111).",
@@ -322,34 +332,65 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         });
       }
     }
-  };
+  }, [isDemoMode, switchChainAsync]);
+
+  const contextValue: WalletContextType = useMemo(
+    () => ({
+      isConnected,
+      isRealConnected,
+      isDemoActive,
+      isConnecting,
+      isReconnecting,
+      isUnsupportedNetwork,
+      status,
+      address,
+      realAddress,
+      demoAddress,
+      shortAddress,
+      balance,
+      balanceRaw: balanceData?.value,
+      balanceFormatted: balanceData
+        ? formatUnits(balanceData.value, balanceData.decimals)
+        : undefined,
+      chainId: activeChainId,
+      network,
+      walletProvider,
+      connectors,
+      connect,
+      connectDemo,
+      disconnect,
+      disconnectDemo,
+      switchNetwork,
+      isDemoMode: isDemoActive,
+    }),
+    [
+      isConnected,
+      isRealConnected,
+      isDemoActive,
+      isConnecting,
+      isReconnecting,
+      isUnsupportedNetwork,
+      status,
+      address,
+      realAddress,
+      demoAddress,
+      shortAddress,
+      balance,
+      balanceData,
+      activeChainId,
+      network,
+      walletProvider,
+      connectors,
+      connect,
+      connectDemo,
+      disconnect,
+      disconnectDemo,
+      switchNetwork,
+    ]
+  );
 
   return (
-    <WalletContext.Provider
-      value={{
-        isConnected,
-        isConnecting,
-        isReconnecting,
-        isUnsupportedNetwork,
-        status,
-        address,
-        shortAddress,
-        balance,
-        balanceRaw: balanceData?.value,
-        balanceFormatted: balanceData
-          ? formatUnits(balanceData.value, balanceData.decimals)
-          : undefined,
-        chainId: activeChainId,
-        network,
-        walletProvider,
-        connectors,
-        connect,
-        connectDemo,
-        disconnect,
-        switchNetwork,
-        isDemoMode,
-      }}
-    >
+    <WalletContext.Provider value={contextValue}>
       {children}
     </WalletContext.Provider>
   );

@@ -51,11 +51,21 @@ export async function sendTonTransfer(
 
   // 4. Request Signature & Broadcast via TON Connect
   if (!tonConnectSender) {
-    // Check if window.ton or window.tonkeeper is injected
-    const anyWin = typeof window !== 'undefined' ? (window as unknown as { tonkeeper?: TonConnectSender; ton?: TonConnectSender }) : null;
-    const provider = anyWin?.tonkeeper || anyWin?.ton;
+    // Official TON Connect JS Bridge discovery for Gram Wallet (jsBridgeKey: gramwallet)
+    const anyWin = typeof window !== 'undefined'
+      ? (window as unknown as {
+          tonconnect?: Record<string, TonConnectSender>;
+          gramwallet?: TonConnectSender;
+          gramWallet?: TonConnectSender;
+        })
+      : null;
+    const provider =
+      anyWin?.tonconnect?.gramwallet ||
+      anyWin?.gramwallet ||
+      anyWin?.gramWallet;
+
     if (!provider) {
-      throw new Error('Tonkeeper or TON Connect provider not connected. Please connect Tonkeeper.');
+      throw new Error('Gram Wallet provider not connected. Please connect Gram Wallet.');
     }
     tonConnectSender = provider;
   }
@@ -85,8 +95,9 @@ export async function sendTonTransfer(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     if (/reject|cancel|declined/i.test(msg)) {
-      throw new Error('Transaction was declined in Tonkeeper.');
+      throw new Error('Transaction was declined in Gram Wallet.');
     }
     throw new Error(`TON transfer failed: ${msg}`);
   }
 }
+

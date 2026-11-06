@@ -12,7 +12,7 @@ import {
 import { useWallet } from "@/contexts/wallet-context";
 import { useModal } from "@/contexts/modal-context";
 import { StatefulButton } from "@/components/ui/stateful-button";
-import { HorizonXGlowMark } from "@/components/home/horizonx-glow-mark";
+import { HorizonXStaticLogo } from "@/components/home/horizonx-glow-mark";
 
 export function WalletConnectSection() {
   const {
@@ -137,7 +137,9 @@ export function WalletConnectSection() {
 
             <div className="flex min-h-[180px] flex-col items-center justify-center py-4 text-center sm:min-h-[190px]">
               <div className="relative mb-4 grid h-[88px] w-[88px] place-items-center rounded-[24px] border border-white/[.10] bg-[linear-gradient(145deg,rgba(35,31,54,.78),rgba(13,12,24,.92))] text-violet-100 shadow-[inset_0_1px_0_rgba(255,255,255,.045)]">
-                <HorizonXGlowMark compact />
+                <span className="h-16 w-16" style={{ filter: "grayscale(1) brightness(0) invert(1)" }}>
+                  <HorizonXStaticLogo />
+                </span>
                 <span className="absolute -bottom-1 -right-1 grid h-7 w-7 place-items-center rounded-lg border border-[#100d1b] bg-[#e7ddff] text-[#171126] shadow-[0_5px_18px_rgba(167,139,250,.22)]">
                   {connected ? (
                     <Check className="h-3.5 w-3.5" strokeWidth={2.2} />

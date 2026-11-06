@@ -153,3 +153,4 @@ export function useEvmWallet(): EcosystemWalletState {
   }
   return context;
 }
+

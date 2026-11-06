@@ -23,7 +23,7 @@ export const TOP_NAV_ITEMS: NavItem[] = [
   },
   {
     label: "Tokens",
-    href: "/tokens",
+    href: "/tokens/explore",
     description: "Token directory, creation and management",
     children: [
       { label: "Dashboard", href: "/tokens", description: "Token ecosystem overview" },

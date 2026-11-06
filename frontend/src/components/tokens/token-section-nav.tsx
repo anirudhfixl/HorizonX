@@ -32,11 +32,9 @@ export function TokenSectionNav() {
           </NavLink>
         ))}
       </div>
-      <div className="hx-workspace-nav__actions">
-        <NavLink to="/tokens/create" className={({ isActive }) => `tk-section-nav__create${isActive ? " is-active" : ""}`}>
-          Create token <span aria-hidden="true">＋</span>
-        </NavLink>
-      </div>
+      <Link to="/tokens/create" className="tk-section-nav__create">
+        Create token <span aria-hidden="true">＋</span>
+      </Link>
     </nav>
     </WorkspaceNavPortal>
   );

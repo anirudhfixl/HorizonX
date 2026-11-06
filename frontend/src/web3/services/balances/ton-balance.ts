@@ -57,3 +57,4 @@ export async function fetchTonTokenHoldings(address: string): Promise<TokenHoldi
 
   return holdings;
 }
+

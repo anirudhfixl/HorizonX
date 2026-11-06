@@ -32,6 +32,8 @@ export function TopNav() {
   const pathname = useLocation().pathname;
   const {
     isConnected,
+    isRealConnected,
+    isDemoActive,
     isConnecting,
     isReconnecting,
     isUnsupportedNetwork,
@@ -173,7 +175,9 @@ export function TopNav() {
           {TOP_NAV_ITEMS.map((item) => {
             const hasChildren = Boolean(item.children && item.children.length > 0);
             const isMenuOpen = activeMenu === item.label;
-            const isCurrent = item.href ? pathname.startsWith(item.href) : false;
+            const isCurrent = item.label === "Tokens"
+              ? pathname.startsWith("/tokens")
+              : item.href ? pathname.startsWith(item.href) : false;
 
             if (PRIMARY_ENTRY_LABELS.has(item.label)) {
               return (
@@ -289,13 +293,49 @@ export function TopNav() {
           ) : displayConnected ? (
             <button
               type="button"
-              className="wallet-btn wallet-btn-connected"
-              onClick={() => openModal("WALLET_DETAILS")}
-              title="View wallet details"
+              className={`wallet-btn wallet-btn-connected ${
+                isDemoActive && !isRealConnected
+                  ? "border-amber-500/40 bg-amber-500/10 text-amber-200"
+                  : ""
+              }`}
+              onClick={() =>
+                openModal("WALLET_DETAILS", {
+                  isDemo: isDemoActive && !isRealConnected,
+                })
+              }
+              title={
+                isDemoActive && !isRealConnected
+                  ? "View Demo Sandbox details"
+                  : "View wallet details"
+              }
             >
-              <span className="wallet-dot" />
-              <span className="wallet-balance">{displayBalance} ETH</span>
-              <span className="wallet-address">{displayAddress}</span>
+              {isDemoActive && !isRealConnected ? (
+                <>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-amber-500/25 text-amber-400 border border-amber-500/40">
+                    DEMO
+                  </span>
+                  <span className="wallet-balance text-amber-200/90">
+                    {displayBalance} (Simulated)
+                  </span>
+                  <span className="wallet-address text-muted-foreground">
+                    {displayAddress}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="wallet-dot" />
+                  <span className="wallet-balance">{displayBalance} ETH</span>
+                  <span className="wallet-address">{displayAddress}</span>
+                  {isDemoActive && (
+                    <span
+                      className="ml-1 px-1 rounded text-[8px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                      title="Demo Sandbox is also active in background"
+                    >
+                      DEMO
+                    </span>
+                  )}
+                </>
+              )}
             </button>
           ) : (
             <button

@@ -442,3 +442,4 @@ export function SendTransactionModal() {
     </Dialog>
   );
 }
+

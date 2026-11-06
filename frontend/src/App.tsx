@@ -6,7 +6,7 @@ import { router } from "@/app/router";
 /**
  * HorizonX Application Root Component.
  * Establishes provider composition, state persistence across navigation,
- * smooth scrolling, and route coordination.
+ * native browser scrolling, and route coordination.
  */
 export function App() {
   return (
@@ -17,4 +17,3 @@ export function App() {
 }
 
 export default App;
-

@@ -75,12 +75,11 @@ export default defineConfig(({ mode }) => {
             ) {
               return "react-vendor";
             }
-            // Animation engine (Motion, GSAP, Lenis)
+            // Animation engine (Motion, GSAP)
             if (
               id.includes("node_modules/motion") ||
               id.includes("node_modules/framer-motion") ||
-              id.includes("node_modules/gsap") ||
-              id.includes("node_modules/lenis")
+              id.includes("node_modules/gsap")
             ) {
               return "animation-vendor";
             }

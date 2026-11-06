@@ -14,7 +14,7 @@ import { useWallet } from "@/contexts/wallet-context";
 import { sparkValues } from "@/lib/tokens/demo-data";
 import { compactNumber, formatDate, num, pct, shortAddress, usdCompact, usdPrice } from "@/lib/tokens/format";
 import { useSessionReceipts, useTokenWatchlist } from "@/lib/tokens/hooks";
-import type { HoldingRow, SessionReceipt, TokenWithMarket } from "@/lib/tokens/model";
+import type { ActivityItem, HoldingRow, SessionReceipt, TokenWithMarket } from "@/lib/tokens/model";
 import {
   createdBy,
   discoveryLists,
@@ -91,7 +91,7 @@ export function TokenDashboard() {
   const { openModal } = useModal();
   const watch = useTokenWatchlist();
   const receipts = useSessionReceipts();
-  const [tab, setTab] = useState<"holdings" | "created">("holdings");
+  const [tab, setTab] = useState<"watchlist" | "activity" | "holdings" | "created">("watchlist");
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
@@ -195,7 +195,7 @@ export function TokenDashboard() {
     [watch.ids, tokenMap]
   );
   const activeTab = tab === "holdings" && !ws.rows.length && createdCount ? "created" : tab;
-  const activeRows = activeTab === "holdings" ? ws.rows : createdRows;
+  const activeRows = activeTab === "watchlist" ? watched : activeTab === "activity" ? ws.activity : activeTab === "holdings" ? ws.rows : createdRows;
   const totalPages = Math.max(1, Math.ceil(activeRows.length / pageSize));
   const safePage = Math.min(page, totalPages);
   const pagedRows = activeRows.slice((safePage - 1) * pageSize, safePage * pageSize);
@@ -208,6 +208,33 @@ export function TokenDashboard() {
     { key: "change", header: "24h", align: "end", hideBelow: "sm", cell: (r) => <span className={num(r.token.market.priceChange24h) >= 0 ? "is-up" : "is-down"}>{pct(r.token.market.priceChange24h)}</span> },
     { key: "value", header: "Value", align: "end", cell: (r) => <b>{usdCompact(r.value)}</b> },
     { key: "act", header: <span className="mx-sr">Actions</span>, align: "end", cell: (r) => <span className="tk-row-actions"><Link to={`/tokens/${r.token.id}`} className="mx-link">View</Link></span> },
+  ];
+
+  const watchlistCols: Column<TokenWithMarket>[] = [
+    { key: "token", header: "Token", cell: (t) => <Link to={`/tokens/${t.id}`} className="mx-identity"><AssetIdentity symbol={t.symbol} name={t.name} logoUrl={t.logoUrl || (t as any).logo || (t as any).image} /></Link> },
+    { key: "network", header: "Network", hideBelow: "md", cell: (t) => <span className="mx-muted">{t.network}</span> },
+    { key: "balance", header: "Balance", align: "end", cell: () => <span className="mx-muted">—</span> },
+    { key: "price", header: "Price", align: "end", hideBelow: "sm", cell: (t) => usdPrice(t.market.price) },
+    { key: "change", header: "24h", align: "end", hideBelow: "sm", cell: (t) => <span className={num(t.market.priceChange24h) >= 0 ? "is-up" : "is-down"}>{pct(t.market.priceChange24h)}</span> },
+    { key: "value", header: "Value", align: "end", cell: () => <span className="mx-muted">—</span> },
+    { key: "act", header: <span className="mx-sr">Actions</span>, align: "end", cell: (t) => <span className="tk-row-actions"><Link to={`/tokens/${t.id}`} className="mx-link">View</Link><button type="button" className="mx-link" onClick={() => watch.remove(t.id)}>Remove</button></span> },
+  ];
+
+  const activityCols: Column<ActivityItem>[] = [
+    {
+      key: "activity",
+      header: "Activity",
+      cell: (a) => (
+        <div className="min-w-0">
+          <div className="font-semibold text-foreground">
+            {a.href ? <Link to={a.href} className="tk-activity__link">{a.text}</Link> : a.text}
+          </div>
+          {a.detail && <div className="mt-0.5 text-xs text-muted-foreground">{a.detail}</div>}
+        </div>
+      ),
+    },
+    { key: "date", header: "Date", hideBelow: "sm", cell: (a) => <span className="mx-muted">{formatDate(a.time)}</span> },
+    { key: "source", header: "Source", align: "end", cell: (a) => <ProvenanceTag kind={a.provenance} /> },
   ];
 
   const createdCols: Column<CreatedRow>[] = [
@@ -353,7 +380,7 @@ export function TokenDashboard() {
         )}
       </section>
 
-      <div className="tk-grid">
+      <div className="tk-grid tk-grid--single">
         <section className="tk-main" aria-label="My tokens">
           <TabBar
             idPrefix="mytokens"
@@ -361,12 +388,41 @@ export function TokenDashboard() {
             active={activeTab}
             onChange={(id) => { setTab(id as "holdings" | "created"); setPage(1); }}
             tabs={[
+              { id: "watchlist", label: "Watchlist", count: watched.length },
+              { id: "activity", label: "Recent activity", count: ws.activity.length },
               { id: "holdings", label: "Holdings", count: ws.rows.length },
               { id: "created", label: "Created", count: createdCount },
             ]}
           />
           <div role="tabpanel" id={`mytokens-panel-${activeTab}`} aria-labelledby={`mytokens-tab-${activeTab}`}>
-            {activeTab === "holdings" ? (
+            {activeTab === "watchlist" ? (
+              <DataTable
+                caption="Tokens on your watchlist"
+                columns={watchlistCols}
+                rows={pagedRows as TokenWithMarket[]}
+                rowKey={(t) => t.id}
+                empty={
+                  <EmptyState
+                    title="Nothing on your watchlist"
+                    body="Star a token in Explore and it will appear here with its latest price."
+                    action={<Link to="/tokens/explore" className="mx-btn">Find tokens</Link>}
+                  />
+                }
+              />
+            ) : activeTab === "activity" ? (
+              <DataTable
+                caption="Recent activity"
+                columns={activityCols}
+                rows={pagedRows as ActivityItem[]}
+                rowKey={(a) => a.id}
+                empty={
+                  <EmptyState
+                    title="No activity yet"
+                    body={isConnected ? "Creating, deploying or receiving a token will be listed here." : "Connect a wallet to see activity for your tokens."}
+                  />
+                }
+              />
+            ) : activeTab === "holdings" ? (
               <DataTable
                 caption="Tokens you hold"
                 columns={holdingCols}
@@ -397,7 +453,7 @@ export function TokenDashboard() {
             )}
           </div>
           {activeRows.length > 0 && (
-            <nav className="tk-pagination" aria-label={`${activeTab === "holdings" ? "Holdings" : "Created tokens"} pagination`}>
+            <nav className="tk-pagination" aria-label={`${activeTab === "watchlist" ? "Watchlist" : activeTab === "activity" ? "Recent activity" : activeTab === "holdings" ? "Holdings" : "Created tokens"} pagination`}>
               <span className="tk-pagination__meta">Page {safePage} / {totalPages} · Showing {(safePage - 1) * pageSize + 1}–{Math.min(safePage * pageSize, activeRows.length)} of {activeRows.length}</span>
               <div className="tk-pagination__controls">
                 <button type="button" className="tk-page-btn" onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={safePage <= 1}>Previous</button>
@@ -405,57 +461,10 @@ export function TokenDashboard() {
               </div>
             </nav>
           )}
-          <section id="watchlist" className="tk-block tk-watchlist-under-table" aria-labelledby="watch-h">
-            <header className="tk-section__head">
-              <h2 id="watch-h">Watchlist</h2>
-              <span className="mx-muted tk-count">{watched.length}</span>
-              <Link to="/tokens/watchlist" className="mx-link">View all</Link>
-            </header>
-            {watched.length ? (
-              <ul className="tk-list">
-                {watched.map((t) => (
-                  <li key={t.id}>
-                    <Link to={`/tokens/${t.id}`} className="mx-identity"><AssetIdentity symbol={t.symbol} name={t.name} logoUrl={t.logoUrl} size="sm" /></Link>
-                    <span className="tk-list__fig">
-                      <b>{usdPrice(t.market.price)}</b>
-                      <small className={num(t.market.priceChange24h) >= 0 ? "is-up" : "is-down"}>{pct(t.market.priceChange24h)}</small>
-                    </span>
-                    <button type="button" className="mx-icon-btn" onClick={() => watch.remove(t.id)} aria-label={`Remove ${t.symbol} from watchlist`} title="Remove from watchlist">
-                      <X />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyState title="Nothing on your watchlist" body="Star a token in Explore and it will show up here with its price." action={<Link to="/tokens/explore" className="mx-btn">Find tokens</Link>} />
-            )}
-          </section>
+
         </section>
 
-        <aside className="tk-side">
-          <section className="tk-block" aria-labelledby="act-h">
-            <header className="tk-section__head">
-              <h2 id="act-h">Recent activity</h2>
-            </header>
-            {ws.activity.length ? (
-              <ol className="tk-activity">
-                {ws.activity.map((a) => (
-                  <li key={a.id}>
-                    <p>
-                      {a.href ? <Link to={a.href} className="tk-activity__link">{a.text}</Link> : a.text}
-                    </p>
-                    <small>{a.detail}</small>
-                    <small className="tk-activity__when">
-                      {formatDate(a.time)} <ProvenanceTag kind={a.provenance} />
-                    </small>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <EmptyState title="No activity yet" body={isConnected ? "Creating, deploying or receiving a token will be listed here." : "Connect a wallet to see activity for your tokens."} />
-            )}
-          </section>
-        </aside>
+
       </div>
 
       <section className="tk-section" aria-labelledby="mkt-h">
@@ -471,7 +480,7 @@ export function TokenDashboard() {
           </span>
           <Link to="/tokens/explore" className="mx-link">Explore all tokens</Link>
         </header>
-        <TrendingRail items={rail} label="Trending tokens" />
+        <TrendingRail items={rail} label="Trending tokens" continuous />
 
         <div className="tk-cols3" style={{ marginTop: "2rem" }}>
           <RankedList

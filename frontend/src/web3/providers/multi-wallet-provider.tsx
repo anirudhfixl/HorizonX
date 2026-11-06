@@ -31,3 +31,4 @@ export function MultiWalletProvider({ children }: { children: React.ReactNode })
     </EvmWalletProvider>
   );
 }
+

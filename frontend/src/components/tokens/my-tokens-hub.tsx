@@ -72,7 +72,7 @@ export {
 /* ─── Main Component ─────────────────────────────────────────────────────── */
 
 export function MyTokensHub() {
-  const { isConnected, isConnecting, isReconnecting, address, shortAddress, isDemoMode, connectDemo } = useWallet();
+  const { isConnected, isConnecting, isReconnecting, address, shortAddress, connectDemo } = useWallet();
   const { openModal } = useModal();
 
   // Search & Filter state
@@ -335,10 +335,6 @@ export function MyTokensHub() {
 
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              <Shield className="h-3.5 w-3.5" aria-hidden />
-              <span>Owner &amp; Creator Workspace · Ethereum Sepolia (D-04)</span>
-            </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
               My Tokens
             </h1>
@@ -346,81 +342,8 @@ export function MyTokensHub() {
               Inspect, manage, and simulate administrative operations for tokens deployed by or associated with your connected wallet.
             </p>
           </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <Button asChild size="sm" className="h-10 gap-2 bg-primary px-4 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90">
-              <Link to="/tokens/create">
-                <Plus className="h-4 w-4" aria-hidden />
-                <span>Deploy New Token</span>
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm" className="h-10 border-border/60 text-xs font-medium text-foreground hover:bg-secondary/40">
-              <Link to="/tokens">
-                <span>Token Directory</span>
-                <ArrowRight className="ml-1.5 h-3.5 w-3.5" aria-hidden />
-              </Link>
-            </Button>
-          </div>
         </div>
 
-        {/* Connected Wallet Identity Strip */}
-        <div className="flex flex-col gap-3 rounded-2xl border border-border/40 bg-card/40 p-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Wallet className="h-5 w-5" aria-hidden />
-            </span>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">Connected Account:</span>
-                {isConnected ? (
-                  <span className="font-mono text-xs font-semibold text-foreground">
-                    {shortAddress || address}
-                  </span>
-                ) : (
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {walletPending ? "Checking connection…" : "Not Connected"}
-                  </span>
-                )}
-                {isConnected && address && (
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(address)}
-                    aria-label="Copy connected address"
-                    className="inline-flex items-center gap-1 rounded text-[11px] text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-                  >
-                    {copiedAddress === address ? (
-                      <Check className="h-3 w-3 text-emerald-400" />
-                    ) : (
-                      <Copy className="h-3 w-3" />
-                    )}
-                  </button>
-                )}
-                {isDemoMode && (
-                  <span className="rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
-                    Demo Mode Sandbox
-                  </span>
-                )}
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                {isConnected
-                  ? "Ownership matched locally: tokens are listed when creatorAddress equals this connected account."
-                  : "Connect your Web3 wallet or activate the demo sandbox to view and manage deployed tokens."}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-[11px] font-medium text-primary">
-              Sepolia Testnet (11155111)
-            </span>
-            {!isConnected && !walletPending && (
-              <Button size="sm" variant="outline" onClick={connectDemo} className="border-primary/40 text-xs font-medium text-primary hover:bg-primary/10">
-                <Sparkles className="mr-1.5 h-3.5 w-3.5 text-primary" />
-                Use Demo Wallet
-              </Button>
-            )}
-          </div>
-        </div>
       </header>
 
       {/* ─── 2. States ────────────────────────────────────────────────────── */}

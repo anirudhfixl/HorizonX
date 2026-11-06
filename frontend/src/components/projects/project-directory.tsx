@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from "react";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { DataArtwork } from "@/components/shared/data-artwork";
 import { Button } from "@/components/ui/button";
@@ -13,13 +12,11 @@ import {
   LayoutGrid,
   List,
   ShieldCheck,
-  ExternalLink,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
   ChevronUp,
   ChevronDown,
-  ArrowUpRight,
   SlidersHorizontal,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -40,7 +37,6 @@ export interface ProjectDirectoryProps {
 type FilterState = {
   searchQuery: string;
   category: string;
-  ecosystem: string;
   status: string;
   verification: string;
 };
@@ -49,13 +45,12 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [ecosystemFilter, setEcosystemFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [verificationFilter, setVerificationFilter] = useState("all");
   const [sortBy, setSortBy] = useState<ProjectSortOption>("name-asc");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(6);
+  const pageSize = viewMode === "table" ? 8 : 6;
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { data: projects = [] } = useProjects();
@@ -90,11 +85,6 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     setCurrentPage(1);
   };
 
-  const handleEcosystemChange = (value: string) => {
-    setEcosystemFilter(value);
-    setCurrentPage(1);
-  };
-
   const handleStatusChange = (value: string) => {
     setStatusFilter(value);
     setCurrentPage(1);
@@ -105,15 +95,9 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     setCurrentPage(1);
   };
 
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(1);
-  };
-
   const handleResetFilters = () => {
     setSearchQuery("");
     setCategoryFilter("all");
-    setEcosystemFilter("all");
     setStatusFilter("all");
     setVerificationFilter("all");
     setSortBy("name-asc");
@@ -141,14 +125,6 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     // 2. Category Filter
     if (f.category !== "all" && p.category !== f.category) return false;
 
-    // 3. Ecosystem Filter (D-04 Scope: Sepolia only or all)
-    if (f.ecosystem === "sepolia") {
-      const eco = (p.ecosystem || "").toLowerCase();
-      if (!eco.includes("sepolia") && eco !== "ethereum") return false;
-    } else if (f.ecosystem !== "all") {
-      if (p.ecosystem !== f.ecosystem) return false;
-    }
-
     // 4. Status Filter
     if (f.status !== "all" && p.status !== f.status) return false;
 
@@ -169,7 +145,6 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
   const currentFilters: FilterState = {
     searchQuery,
     category: categoryFilter,
-    ecosystem: ecosystemFilter,
     status: statusFilter,
     verification: verificationFilter,
   };
@@ -180,12 +155,11 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
       projectMatches(p, {
         searchQuery,
         category: categoryFilter,
-        ecosystem: ecosystemFilter,
         status: statusFilter,
         verification: verificationFilter,
       })
     );
-  }, [PROJECTS, searchQuery, categoryFilter, ecosystemFilter, statusFilter, verificationFilter, tokenMap]);
+  }, [PROJECTS, searchQuery, categoryFilter, statusFilter, verificationFilter, tokenMap]);
 
   // Facet counts: how many projects each option would show given the *other* active filters.
   const facetCount = (key: keyof FilterState, value: string) =>
@@ -223,11 +197,10 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
   const hasActiveFilters =
     searchQuery.trim() !== "" ||
     categoryFilter !== "all" ||
-    ecosystemFilter !== "all" ||
     statusFilter !== "all" ||
     verificationFilter !== "all";
 
-  const activeFilterCount = [categoryFilter, ecosystemFilter, statusFilter, verificationFilter].filter(
+  const activeFilterCount = [categoryFilter, statusFilter, verificationFilter].filter(
     (v) => v !== "all"
   ).length;
 
@@ -269,11 +242,6 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     { value: "active", label: "Active" },
     { value: "pending", label: "Pending" },
   ].map((o) => ({ ...o, count: facetCount("status", o.value) }));
-  const ecosystemOptions = [
-    { value: "all", label: "All ecosystems" },
-    { value: "sepolia", label: "Ethereum Sepolia (11155111)" },
-  ].map((o) => ({ ...o, count: facetCount("ecosystem", o.value) }));
-
   const activeChips: { label: string; clear: () => void }[] = [];
   if (categoryFilter !== "all") activeChips.push({ label: categoryFilter, clear: () => handleCategoryChange("all") });
   if (verificationFilter !== "all")
@@ -283,7 +251,6 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
     });
   if (statusFilter !== "all")
     activeChips.push({ label: `${statusFilter === "active" ? "Active" : "Pending"} only`, clear: () => handleStatusChange("all") });
-  if (ecosystemFilter !== "all") activeChips.push({ label: "Ethereum Sepolia", clear: () => handleEcosystemChange("all") });
 
   const sepoliaCount = PROJECTS.filter(isSepoliaProject).length;
 
@@ -335,7 +302,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-12">
         {/* 2. Facet rail */}
-        <aside aria-label="Filters" className="lg:sticky lg:top-24 lg:self-start">
+        <aside aria-label="Filters" className="lg:sticky lg:top-[9.125rem] lg:self-start">
           <button
             type="button"
             onClick={() => setFiltersOpen((o) => !o)}
@@ -357,73 +324,64 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
             <FacetGroup label="Category" ariaLabel="Filter by category" options={categoryOptions} value={categoryFilter} onChange={handleCategoryChange} />
             <FacetGroup label="Verification" ariaLabel="Filter by verification" options={verificationOptions} value={verificationFilter} onChange={handleVerificationChange} />
             <FacetGroup label="Status" ariaLabel="Filter by status" options={statusOptions} value={statusFilter} onChange={handleStatusChange} />
-            <FacetGroup label="Ecosystem" ariaLabel="Filter by ecosystem" options={ecosystemOptions} value={ecosystemFilter} onChange={handleEcosystemChange} />
           </div>
         </aside>
 
         {/* 3. Results column */}
         <div className="min-w-0 space-y-6">
-          <section aria-label="Search" className="space-y-3">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search by project name, description, or token ($PMIN)..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                aria-label="Search projects"
-                className="h-12 rounded-2xl border-border/60 bg-secondary/40 pl-12 pr-11 text-sm text-foreground placeholder:text-muted-foreground/70"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => handleSearchChange("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  aria-label="Clear search"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            {activeChips.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
-                {activeChips.map((c) => (
+          <div className="flex flex-col gap-3 border-b border-border/50 pb-3 xl:flex-row xl:items-center xl:justify-between">
+            <section aria-label="Search" className="w-full space-y-3 xl:max-w-[min(58%,38rem)]">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search by project name, description, or token ($PMIN)..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  aria-label="Search projects"
+                  className="h-12 rounded-2xl border-border/60 bg-secondary/40 pl-12 pr-11 text-sm text-foreground placeholder:text-muted-foreground/70"
+                />
+                {searchQuery && (
                   <button
-                    key={c.label}
-                    onClick={c.clear}
-                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary ring-1 ring-primary/30 transition-colors hover:bg-primary/20"
-                    aria-label={`Remove filter ${c.label}`}
+                    onClick={() => handleSearchChange("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    aria-label="Clear search"
                   >
-                    {c.label} <X className="h-3 w-3" />
+                    <X className="h-4 w-4" />
                   </button>
-                ))}
+                )}
               </div>
-            )}
-          </section>
 
-          {/* Results bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 pb-3 text-xs text-muted-foreground">
-            <div aria-live="polite">
-              Showing <span className="font-semibold text-foreground">{totalItems === 0 ? 0 : startIndex + 1}</span> to{" "}
-              <span className="font-semibold text-foreground">{Math.min(startIndex + pageSize, totalItems)}</span> of{" "}
-              <span className="font-semibold text-foreground">{totalItems}</span> projects
-              {hasActiveFilters && " (filtered)"}
-            </div>
+              {activeChips.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2" aria-label="Active filters">
+                  {activeChips.map((c) => (
+                    <button
+                      key={c.label}
+                      onClick={c.clear}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary ring-1 ring-primary/30 transition-colors hover:bg-primary/20"
+                      aria-label={`Remove filter ${c.label}`}
+                    >
+                      {c.label} <X className="h-3 w-3" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex w-full flex-wrap items-center justify-end gap-3 text-xs text-muted-foreground xl:w-auto xl:flex-nowrap">
               {hasActiveFilters && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleResetFilters}
-                  className="h-8 gap-1 px-2 text-xs text-muted-foreground hover:text-primary"
+                  className="h-8 shrink-0 gap-1 px-2 text-xs text-muted-foreground hover:text-primary"
                   title="Reset all filters"
                 >
                   <X className="h-3 w-3" /> Reset
                 </Button>
               )}
 
-              <label className="flex items-center gap-1.5">
+              <label className="flex shrink-0 items-center gap-1.5">
                 <span>Sort</span>
                 <select
                   value={sortBy}
@@ -439,28 +397,9 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                 </select>
               </label>
 
-              <div className="flex items-center gap-1.5">
-                <span>Per page:</span>
-                {[6, 12, 24].map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => handlePageSizeChange(size)}
-                    aria-pressed={pageSize === size}
-                    className={cn(
-                      "rounded px-2 py-1 text-xs transition-colors",
-                      pageSize === size
-                        ? "bg-primary font-semibold text-primary-foreground"
-                        : "bg-secondary/40 text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center rounded-lg border border-border/70 bg-secondary/30 p-0.5" role="group" aria-label="View mode">
+              <div className="flex shrink-0 items-center rounded-lg border border-border/70 bg-secondary/30 p-0.5" role="group" aria-label="View mode">
                 <button
-                  onClick={() => setViewMode("grid")}
+                  onClick={() => { setViewMode("grid"); setCurrentPage(1); }}
                   aria-pressed={viewMode === "grid"}
                   className={cn(
                     "rounded-md p-1.5 text-xs transition-colors",
@@ -472,7 +411,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                   <LayoutGrid className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={() => setViewMode("table")}
+                  onClick={() => { setViewMode("table"); setCurrentPage(1); }}
                   aria-pressed={viewMode === "table"}
                   className={cn(
                     "rounded-md p-1.5 text-xs transition-colors",
@@ -506,16 +445,16 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
               }
             />
           ) : viewMode === "grid" ? (
-            <ul className="grid grid-cols-1 gap-x-12 2xl:grid-cols-2">
+            <ul className="grid grid-cols-1 items-stretch gap-x-12 2xl:auto-rows-fr 2xl:grid-cols-2">
               {paginatedProjects.map((proj) => {
                 const linkedTokens = linkedTokensOf(proj);
                 const tone = toneOf(proj);
                 return (
-                  <li key={proj.id} className="group relative border-b border-border/40 py-7 first:pt-2 transition-colors">
-                    <div className="flex gap-5">
+                  <li key={proj.id} className="group relative flex h-full flex-col self-stretch border-b border-border/40 py-7 transition-colors">
+                    <div className="flex h-full flex-1 items-start gap-5">
                       <DataArtwork src={(proj as typeof proj & { image?: string }).image} alt={`${proj.name} project`} className="h-28 w-36 shrink-0 rounded-xl border border-border/50" fallbackLabel="Project" />
-                      <div className="min-w-0 flex-1 space-y-3">
-                        <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 flex-1 flex-col gap-3">
+                        <div className="flex min-h-[3rem] items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <h3 className="truncate text-xl font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
@@ -523,18 +462,6 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                                   {proj.name}
                                 </Link>
                               </h3>
-                              {proj.websiteUrl && (
-                                <a
-                                  href={proj.websiteUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="relative z-10 shrink-0 text-muted-foreground transition-colors hover:text-primary"
-                                  title="Official Website"
-                                  aria-label={`Official website for ${proj.name}`}
-                                >
-                                  <ExternalLink className="h-3.5 w-3.5" />
-                                </a>
-                              )}
                             </div>
                             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                               {proj.category && <span className={cn("font-semibold", tone.text)}>{proj.category}</span>}
@@ -548,24 +475,24 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                                   </span>
                                 </>
                               ) : null}
-                              {proj.source && (
+                              {proj.source && !proj.source.toLowerCase().includes("simulated") && (
                                 <>
                                   <span aria-hidden>·</span>
-                                  <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-mono", proj.isExternal ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20")}>
+                                  <span className={cn("text-[10px] font-mono", proj.isExternal ? "text-cyan-400" : "text-amber-400")}>
                                     {proj.source}
                                   </span>
                                 </>
                               )}
                             </p>
                           </div>
-                          <StatusBadge status={proj.status} />
+                          <ProjectStatusText status={proj.status} />
                         </div>
 
-                        <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                        <p className="line-clamp-2 min-h-[3rem] text-sm leading-relaxed text-muted-foreground">
                           {proj.description || "No description provided."}
                         </p>
 
-                        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-1">
+                        <div className="flex min-h-6 flex-wrap items-center gap-x-5 gap-y-2">
                           <VerificationMark status={proj.verificationStatus} />
                           {linkedTokens.length > 0 ? (
                             <span className="relative z-10 flex flex-wrap items-center gap-1.5">
@@ -583,16 +510,11 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                           ) : (
                             <span className="text-[11px] italic text-muted-foreground/70">No tokens currently associated</span>
                           )}
+                          <span className="shrink-0 font-mono text-[11px] text-muted-foreground">Listed {proj.createdAt}</span>
                         </div>
 
-                        <div className="flex items-center justify-between gap-3 pt-1 font-mono text-[11px] text-muted-foreground">
-                          <span title="Project owner">{proj.ownerAddress}</span>
-                          <span className="flex items-center gap-3">
-                            <span>Listed {proj.createdAt}</span>
-                            <span className="inline-flex items-center gap-0.5 font-sans font-semibold text-primary">
-                              Overview <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                            </span>
-                          </span>
+                        <div className="mt-auto min-w-0 pt-1 font-mono text-[11px] text-muted-foreground">
+                          <span className="block break-all" title="Project owner">{proj.ownerAddress}</span>
                         </div>
                       </div>
                     </div>
@@ -609,7 +531,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                     <th
                       scope="col"
                       aria-sort={sortBy === "name-asc" ? "ascending" : sortBy === "name-desc" ? "descending" : "none"}
-                      className="px-3 py-3.5"
+                      className="px-3 py-2.5"
                     >
                       <button onClick={() => handleSortClick("name")} className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground">
                         <span>Project</span>
@@ -622,10 +544,10 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                         )}
                       </button>
                     </th>
-                    <th scope="col" className="px-3 py-3.5">Category</th>
-                    <th scope="col" className="px-3 py-3.5">Ecosystem</th>
-                    <th scope="col" className="px-3 py-3.5">Status & Verification</th>
-                    <th scope="col" aria-sort={sortBy === "tokens-desc" ? "descending" : "none"} className="px-3 py-3.5">
+                    <th scope="col" className="px-3 py-2.5">Category</th>
+                    <th scope="col" className="px-3 py-2.5">Ecosystem</th>
+                    <th scope="col" className="px-3 py-2.5">Status & Verification</th>
+                    <th scope="col" aria-sort={sortBy === "tokens-desc" ? "descending" : "none"} className="px-3 py-2.5">
                       <button onClick={() => handleSortClick("tokens")} className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground">
                         <span>Linked Tokens</span>
                         {sortBy === "tokens-desc" ? (
@@ -638,7 +560,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                     <th
                       scope="col"
                       aria-sort={sortBy === "date-desc" ? "descending" : sortBy === "date-asc" ? "ascending" : "none"}
-                      className="px-3 py-3.5"
+                      className="px-3 py-2.5"
                     >
                       <button onClick={() => handleSortClick("date")} className="flex items-center gap-1 uppercase tracking-wider hover:text-foreground">
                         <span>Created</span>
@@ -651,7 +573,7 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                         )}
                       </button>
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-right">Action</th>
+                    <th scope="col" className="px-3 py-2.5 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
@@ -660,42 +582,30 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                     const tone = toneOf(proj);
                     return (
                       <tr key={proj.id} className="group transition-colors hover:bg-secondary/20">
-                        <td className="px-3 py-3.5">
+                        <td className="px-3 py-2.5">
                           <div className="flex items-center gap-3">
                             <Avatar name={proj.name} className={cn("h-9 w-9 rounded-lg text-xs", tone.tile)} />
                             <div className="min-w-0">
-                              <div className="flex items-center gap-1.5 font-bold text-foreground transition-colors group-hover:text-primary">
+                              <div className="flex items-center gap-1.5 font-bold leading-tight text-foreground transition-colors group-hover:text-primary">
                                 <Link to={`/projects/${proj.id}`}>{proj.name}</Link>
-                                {proj.websiteUrl && (
-                                  <a
-                                    href={proj.websiteUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-muted-foreground hover:text-primary"
-                                    title="Official Website"
-                                    aria-label={`Official website for ${proj.name}`}
-                                  >
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
-                                )}
                               </div>
-                              <span className="font-mono text-[10px] text-muted-foreground">{proj.ownerAddress}</span>
+                              <span className="mt-0.5 block font-mono text-[10px] leading-tight text-muted-foreground">{proj.ownerAddress}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-3 py-3.5">
+                        <td className="px-3 py-2.5">
                           {proj.category ? <span className={cn("text-xs font-semibold", tone.text)}>{proj.category}</span> : "—"}
                         </td>
-                        <td className="px-3 py-3.5">
+                        <td className="px-3 py-2.5">
                           {proj.ecosystem ? <EcosystemMark proj={proj} isSepolia={isSepoliaProject(proj)} /> : "—"}
                         </td>
-                        <td className="px-3 py-3.5">
+                        <td className="px-3 py-2.5">
                           <div className="flex flex-wrap items-center gap-2">
-                            <StatusBadge status={proj.status} />
+                            <ProjectStatusText status={proj.status} />
                             <VerificationMark status={proj.verificationStatus} compact />
                           </div>
                         </td>
-                        <td className="px-3 py-3.5">
+                        <td className="px-3 py-2.5">
                           {linkedTokens.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {linkedTokens.map((t) => (
@@ -712,8 +622,8 @@ export function ProjectDirectory({ mode = "canonical" }: ProjectDirectoryProps) 
                             <span className="text-[10px] italic text-muted-foreground/70">None</span>
                           )}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-3.5 font-mono text-[11px] text-muted-foreground">{proj.createdAt}</td>
-                        <td className="px-3 py-3.5 text-right">
+                        <td className="whitespace-nowrap px-3 py-2.5 font-mono text-[11px] text-muted-foreground">{proj.createdAt}</td>
+                        <td className="px-3 py-2.5 text-right">
                           <Button asChild size="sm" variant="outline" className="h-8 border-border/60 text-xs hover:border-primary">
                             <Link to={`/projects/${proj.id}`}>Inspect</Link>
                           </Button>
@@ -859,6 +769,29 @@ function Avatar({ name, className }: { name: string; className?: string }) {
     >
       {initials}
     </div>
+  );
+}
+
+function ProjectStatusText({ status }: { status: string }) {
+  const normalized = status.toLowerCase();
+  const isActive = normalized === "active" || normalized === "live";
+  const isPending = normalized === "pending" || normalized === "scheduled";
+  const colorClass = isActive
+    ? "text-emerald-400"
+    : isPending
+      ? "text-amber-400"
+      : "text-muted-foreground";
+  const dotClass = isActive
+    ? "bg-emerald-400"
+    : isPending
+      ? "bg-amber-400"
+      : "bg-muted-foreground/60";
+
+  return (
+    <span className={cn("inline-flex shrink-0 items-center gap-1.5 text-[11px] font-medium", colorClass)}>
+      <span aria-hidden="true" className={cn("h-1.5 w-1.5 rounded-full", dotClass)} />
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </span>
   );
 }
 

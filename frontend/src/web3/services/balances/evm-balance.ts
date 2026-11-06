@@ -83,3 +83,4 @@ export async function fetchEvmTokenHoldings(address: string): Promise<TokenHoldi
 
   return holdings;
 }
+

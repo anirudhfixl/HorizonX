@@ -90,3 +90,4 @@ export async function fetchSolanaTransactionHistory(address: string): Promise<Tr
 
   return sessionTxs;
 }
+

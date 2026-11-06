@@ -272,7 +272,7 @@ function LiveRow({ e }: { e: LaunchEntry }) {
         className="group grid min-w-0 gap-x-6 gap-y-3 rounded-lg px-3 py-4 transition-colors hover:bg-foreground/[0.035] sm:-mx-3 sm:grid-cols-[minmax(250px,1.25fr)_minmax(220px,1fr)_minmax(120px,.55fr)] sm:items-center lg:grid-cols-[minmax(280px,1.35fr)_minmax(260px,1.15fr)_minmax(130px,.55fr)]"
       >
         <div className="min-w-0 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={cn("flex flex-nowrap items-center gap-1.5 overflow-hidden", draft && "[&>*]:shrink-0")}>
             <KindTag kind={e.kind} />
             <StatusBadge status={e.status} />
             <ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} />
@@ -310,88 +310,120 @@ function ScheduleRow({ e, draft }: { e: LaunchEntry; draft?: boolean }) {
     <li>
       <Link
         to={e.href}
-        className="lp-draft-card group grid min-w-0 gap-4 rounded-xl border border-border/70 bg-card/35 p-4 transition-all duration-200 hover:-translate-y-px hover:border-primary/45 hover:bg-card/65 hover:shadow-[0_12px_28px_rgba(0,0,0,.14)] sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(220px,280px)] lg:items-center lg:gap-6"
+        className={cn(
+          "lp-concluded-row lp-draft-card group grid h-[116px] min-h-[116px] max-h-[116px] min-w-0 box-border grid-cols-[minmax(0,1fr)_auto] items-center gap-3 overflow-hidden rounded-xl border border-border/60 bg-card/25 px-4 py-3.5 transition-all duration-200 hover:-translate-y-px hover:border-primary/40 hover:bg-card/55 sm:px-5 lg:items-center lg:gap-4",
+          draft
+            ? "lg:grid-cols-[minmax(0,1.8fr)_minmax(82px,.45fr)_minmax(100px,.55fr)_16px]"
+            : "lg:grid-cols-[minmax(0,1.45fr)_minmax(110px,.55fr)_minmax(170px,.8fr)_minmax(130px,.6fr)] lg:gap-5"
+        )}
       >
-        <div className="flex min-w-0 items-start gap-4">
-          <div className="hidden w-[92px] shrink-0 flex-col border-r border-border/70 pr-4 sm:flex">
-            <span className="text-[9px] font-semibold uppercase tracking-[.16em] text-muted-foreground">Planned start</span>
-            <span className="mt-1.5 text-sm font-semibold leading-snug text-foreground">{formatUtc(e.startTime, false)}</span>
+        <div className="min-w-0">
+          <div className="flex flex-nowrap items-center gap-1.5 overflow-hidden">
+            <KindTag kind={e.kind} />
+            {draft ? <StatusBadge status="draft" /> : <StatusBadge status={e.status} />}
+            <ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} />
+            <NetworkChip network={e.network} />
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <KindTag kind={e.kind} />
-              {draft && <StatusBadge status="draft" />}
-              <ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} />
-              <NetworkChip network={e.network} />
+          <h3 className="mt-2 truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary sm:text-base">{e.title}</h3>
+          <p className="mt-1 truncate text-[11px] text-muted-foreground">
+            <span>{e.category || "Launch record"}</span>
+            <span className="px-1 text-border">·</span>
+            <span className="font-mono">{e.tokenId.toUpperCase()}</span>
+          </p>
+        </div>
+        <div className="min-w-0">
+          <p className="text-[9px] font-semibold uppercase tracking-[.14em] text-muted-foreground">{draft ? capLabel : "Raised"}</p>
+          <p className="mt-1 truncate text-sm font-semibold text-foreground">
+            {draft ? capValue : e.raised ? `${e.raised.value.toLocaleString("en-US")} ${e.raised.unit}`.trim() : "—"}
+          </p>
+        </div>
+        <div className="min-w-0">
+          {draft ? (
+            <>
+              <p className="text-[9px] font-semibold uppercase tracking-[.14em] text-muted-foreground">Closes</p>
+              <p className="mt-1 truncate text-xs font-medium text-foreground">{formatUtc(e.endTime, false)}</p>
+            </>
+          ) : (
+            <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+              <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", softCapMet(e) === true ? "bg-emerald-400" : softCapMet(e) === false ? "bg-amber-400" : "bg-muted-foreground/60")} />
+              <span className="truncate">{softCapMet(e) === null ? "Outcome not recorded" : softCapMet(e) ? "Soft cap met" : "Soft cap not met"}</span>
             </div>
-            <h3 className="mt-2 truncate text-base font-semibold tracking-tight text-foreground transition-colors group-hover:text-primary sm:text-lg">{e.title}</h3>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-              <span className="font-mono font-medium text-foreground/80">{e.tokenId.toUpperCase()}</span>
-              {e.category ? ` · ${e.category}` : ""}
-              <span className="sm:hidden"> · Planned {formatUtc(e.startTime, false)}</span>
-            </p>
-          </div>
+          )}
         </div>
-        <div className="grid min-w-0 grid-cols-2 gap-3 border-t border-border/60 pt-3 sm:gap-4 lg:border-l lg:border-t-0 lg:pl-5 lg:pt-0">
-          <div className="min-w-0">
-            <p className="text-[9px] font-semibold uppercase tracking-[.15em] text-muted-foreground">{capLabel}</p>
-            <p className="mt-1 truncate text-sm font-semibold text-foreground">{capValue}</p>
-          </div>
-          <div className="min-w-0">
-            <p className="text-[9px] font-semibold uppercase tracking-[.15em] text-muted-foreground">Closes</p>
-            <p className="mt-1 truncate text-sm font-semibold text-foreground">{formatUtc(e.endTime, false)}</p>
-          </div>
-          <span className="col-span-2 inline-flex items-center justify-end gap-1 text-xs font-semibold text-primary">Open draft <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span>
+        <div className="hidden min-w-0 items-center justify-between gap-3 lg:flex">
+          {!draft && (
+            <div className="min-w-0">
+              <p className="text-[9px] font-semibold uppercase tracking-[.14em] text-muted-foreground">Closed</p>
+              <p className="mt-1 truncate text-xs font-medium text-foreground">{formatUtc(e.endTime, false)}</p>
+            </div>
+          )}
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
         </div>
+        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary lg:hidden" />
       </Link>
     </li>
   );
 }
 
-function ConcludedRow({ e }: { e: LaunchEntry }) {
-  const met = softCapMet(e);
-  const outcome = met === null ? "Outcome not recorded" : met ? "Soft cap met" : "Soft cap not met";
+function LaunchTableHeader({ draft }: { draft: boolean }) {
   return (
-    <li>
-      <Link
-        to={e.href}
-        className="lp-concluded-row group grid min-w-0 gap-3 rounded-xl border border-border/60 bg-card/25 px-4 py-3.5 transition-all duration-200 hover:border-primary/40 hover:bg-card/55 sm:px-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(110px,.55fr)_minmax(170px,.8fr)_minmax(130px,.6fr)] lg:items-center lg:gap-5"
-      >
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <KindTag kind={e.kind} />
-            <StatusBadge status={e.status} />
-            <ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} />
-            <NetworkChip network={e.network} />
-          </div>
-          <h3 className="mt-2 truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary sm:text-base">{e.title}</h3>
-          <p className="mt-1 truncate text-[11px] text-muted-foreground">{e.category || "Launch record"} <span className="px-1 text-border">·</span> <span className="font-mono">{e.tokenId.toUpperCase()}</span></p>
-        </div>
-        <div className="grid grid-cols-2 gap-3 lg:block">
-          <div>
-            <p className="text-[9px] font-semibold uppercase tracking-[.14em] text-muted-foreground">Raised</p>
-            <p className="mt-1 text-sm font-semibold text-foreground">{e.raised ? `${e.raised.value.toLocaleString("en-US")} ${e.raised.unit}`.trim() : "—"}</p>
-          </div>
-          <div className="lg:hidden">
-            <p className="text-[9px] font-semibold uppercase tracking-[.14em] text-muted-foreground">Closed</p>
-            <p className="mt-1 text-xs font-medium text-foreground">{formatUtc(e.endTime, false)}</p>
-          </div>
-        </div>
-        <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-          <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", met === true ? "bg-emerald-400" : met === false ? "bg-amber-400" : "bg-muted-foreground/60")} />
-          <span className="truncate">{outcome}</span>
-        </div>
-        <div className="hidden items-center justify-between gap-3 lg:flex">
-          <div className="min-w-0">
-            <p className="text-[9px] font-semibold uppercase tracking-[.14em] text-muted-foreground">Closed</p>
-            <p className="mt-1 truncate text-xs font-medium text-foreground">{formatUtc(e.endTime, false)}</p>
-          </div>
-          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
-        </div>
-        <span className="inline-flex items-center justify-end gap-1 text-xs font-semibold text-primary lg:hidden">View record <ArrowRight className="h-3.5 w-3.5" /></span>
-      </Link>
-    </li>
+    <div role="row" className="grid min-w-[760px] grid-cols-[minmax(210px,1.7fr)_minmax(90px,.65fr)_minmax(105px,.8fr)_minmax(120px,.9fr)_minmax(100px,.75fr)_minmax(100px,.75fr)] gap-4 border-b border-border/60 px-4 py-3 text-[10px] font-semibold uppercase tracking-[.14em] text-muted-foreground sm:px-5">
+      <span role="columnheader">Launch</span>
+      <span role="columnheader">Type / Status</span>
+      <span role="columnheader">Network</span>
+      <span role="columnheader">{draft ? "Cap" : "Raised"}</span>
+      <span role="columnheader">{draft ? "Allocation" : "Participants"}</span>
+      <span role="columnheader">{draft ? "Opens / Closes" : "Closed"}</span>
+    </div>
   );
+}
+
+function LaunchTableRow({ e, draft }: { e: LaunchEntry; draft: boolean }) {
+  const cap = e.kind === "presale" ? e.hardCap : e.softCap;
+  const capValue = cap ? `${cap.value.toLocaleString("en-US")} ${cap.unit}`.trim() : "—";
+  return (
+    <Link
+      role="row"
+      to={e.href}
+      className="group grid min-w-[760px] grid-cols-[minmax(210px,1.7fr)_minmax(90px,.65fr)_minmax(105px,.8fr)_minmax(120px,.9fr)_minmax(100px,.75fr)_minmax(100px,.75fr)] items-center gap-4 border-b border-border/50 px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-foreground/[0.035] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/60 sm:px-5"
+    >
+      <span role="cell" className="min-w-0">
+        <span className="block truncate text-sm font-semibold text-foreground group-hover:text-primary">{e.title}</span>
+        <span className="mt-1 block truncate text-[11px] text-muted-foreground">{e.category || "Uncategorized"} <span className="px-1 text-border">·</span><span className="font-mono">{e.tokenId.toUpperCase()}</span></span>
+        {e.description && <span className="mt-1 block truncate text-[11px] text-muted-foreground/80">{e.description}</span>}
+      </span>
+      <span role="cell" className="min-w-0">
+        <span className="block text-xs font-semibold text-foreground">{e.kind === "presale" ? "Presale" : "Fair launch"}</span>
+        <span className="mt-1 block text-[11px] text-muted-foreground">{draft ? "Draft" : "Concluded"}</span>
+      </span>
+      <span role="cell" className="min-w-0 truncate text-xs text-muted-foreground">{e.network}</span>
+      <span role="cell" className="min-w-0">
+        <span className="block text-xs font-semibold text-foreground">{draft ? capValue : e.raised ? `${e.raised.value.toLocaleString("en-US")} ${e.raised.unit}`.trim() : "Not recorded"}</span>
+        <span className="mt-1 block text-[10px] text-muted-foreground">{draft ? (e.kind === "presale" ? "Hard cap" : "Soft cap") : "Total raised"}</span>
+      </span>
+      <span role="cell" className="min-w-0">
+        <span className="block text-xs font-medium text-foreground">{draft ? (e.allocation || "Not set") : (typeof e.participants === "number" ? e.participants.toLocaleString("en-US") : "—")}</span>
+        <span className="mt-1 block text-[10px] text-muted-foreground">{draft ? "Allocation" : "Participants"}</span>
+      </span>
+      <span role="cell" className="min-w-0">
+        <span className="block text-xs font-medium text-foreground">{draft ? (e.startTime ? formatUtc(e.startTime, false) : "Not scheduled") : formatUtc(e.endTime, false)}</span>
+        <span className="mt-1 block text-[10px] text-muted-foreground">{draft ? "Planned start" : "Closed"}</span>
+      </span>
+    </Link>
+  );
+}
+
+function LaunchTable({ entries, draft }: { entries: LaunchEntry[]; draft: boolean }) {
+  return (
+    <div role="table" aria-label={draft ? "Your launch drafts" : "Recently concluded launches"} className="overflow-x-auto rounded-xl border border-border/60 bg-card/20">
+      <LaunchTableHeader draft={draft} />
+      {entries.map((entry) => <LaunchTableRow key={entry.id} e={entry} draft={draft} />)}
+    </div>
+  );
+}
+
+function ConcludedRow({ e }: { e: LaunchEntry }) {
+  return <ScheduleRow e={e} />;
 }
 
 function SectionHead({ id, title, note, count }: { id: string; title: string; note?: string; count?: number }) {
@@ -416,6 +448,10 @@ export function LaunchpadHub() {
   const [networkFilter, setNetworkFilter] = useState("all");
   const [liveOnly, setLiveOnly] = useState(false);
   const [sepoliaOnly, setSepoliaOnly] = useState(false);
+  const [visibleUpcomingCount, setVisibleUpcomingCount] = useState(8);
+  const [concludedPage, setConcludedPage] = useState(0);
+  const [draftsPage, setDraftsPage] = useState(0);
+  const [launchTableTab, setLaunchTableTab] = useState<"concluded" | "drafts">("concluded");
 
   const { data: presales = [] } = usePresales();
   const { data: fairLaunches = [] } = useFairLaunches();
@@ -500,9 +536,8 @@ export function LaunchpadHub() {
       <div className="mt-8 space-y-10 lg:space-y-12">
       {/* Overview masthead + campaign pipeline */}
       <section className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(520px,1.08fr)] xl:items-stretch">
-        <div className="flex min-w-0 flex-col justify-between gap-7 py-2">
+        <div className="flex min-w-0 flex-col justify-start gap-6 py-2">
           <div className="space-y-4">
-            <p className="font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">Launchpad overview</p>
             <h1 className="max-w-3xl text-4xl font-bold leading-[1.04] tracking-tight text-foreground sm:text-5xl xl:text-[3.65rem]">
               Launch a token. <span className="text-muted-foreground">Or join one.</span>
             </h1>
@@ -510,7 +545,7 @@ export function LaunchpadHub() {
               Discover active presales and fair launches, track upcoming windows, and manage your own launches from one place.
             </p>
           </div>
-          <div className="flex flex-wrap gap-x-7 gap-y-4 border-t border-border/60 pt-5">
+          <div className="flex flex-wrap gap-x-7 gap-y-4 border-t border-border/60 pt-4">
             <div className="flex items-center gap-3">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-400/10 text-emerald-400">●</span>
               <div><p className="text-sm font-semibold text-foreground">Live launches</p><p className="text-xs text-muted-foreground">Open for participation</p></div>
@@ -523,6 +558,52 @@ export function LaunchpadHub() {
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-400/10 text-sky-400">⌕</span>
               <div><p className="text-sm font-semibold text-foreground">Launch discovery</p><p className="text-xs text-muted-foreground">Compare both launch types</p></div>
             </div>
+          </div>
+          <div className="flex w-full min-w-0 flex-nowrap items-center gap-1.5 overflow-x-auto pb-0.5">
+            <button
+              type="button"
+              onClick={() => setHubTab("launches")}
+              aria-pressed={hubTab === "launches"}
+              className={cn(
+                "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-2.5 text-[10px] font-semibold whitespace-nowrap transition-colors",
+                hubTab === "launches"
+                  ? "border-primary/60 bg-primary text-primary-foreground shadow-sm"
+                  : "border-border/70 bg-card/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              )}
+            >
+              <Rocket className="h-4 w-4" />
+              Launchpad Overview
+            </button>
+            <button
+              type="button"
+              onClick={() => setHubTab("coingecko")}
+              aria-pressed={hubTab === "coingecko"}
+              className={cn(
+                "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-2.5 text-[10px] font-semibold whitespace-nowrap transition-colors",
+                hubTab === "coingecko"
+                  ? "border-primary/60 bg-primary text-primary-foreground shadow-sm"
+                  : "border-border/70 bg-card/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              )}
+            >
+              <Sparkles className="h-4 w-4 text-sky-400" />
+              CoinGecko Platforms &amp; Tokens
+              <span className="rounded-full bg-sky-400/15 px-2 py-0.5 text-[10px] font-semibold text-sky-400">Live</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setHubTab("new-pools")}
+              aria-pressed={hubTab === "new-pools"}
+              className={cn(
+                "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-2.5 text-[10px] font-semibold whitespace-nowrap transition-colors",
+                hubTab === "new-pools"
+                  ? "border-primary/60 bg-primary text-primary-foreground shadow-sm"
+                  : "border-border/70 bg-card/50 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              )}
+            >
+              <Layers className="h-4 w-4 text-emerald-400" />
+              GeckoTerminal New Pools
+              <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">DEX Stream</span>
+            </button>
           </div>
         </div>
 
@@ -553,52 +634,7 @@ export function LaunchpadHub() {
         </aside>
       </section>
 
-      {/* Sector Navigation Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-border/50 pb-3">
-        <button
-          type="button"
-          onClick={() => setHubTab("launches")}
-          className={cn(
-            "flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all",
-            hubTab === "launches"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "bg-secondary/40 text-muted-foreground hover:bg-secondary hover:text-foreground"
-          )}
-        >
-          <Rocket className="h-3.5 w-3.5" />
-          <span>Launchpad Overview ({all.length})</span>
-        </button>
 
-        <button
-          type="button"
-          onClick={() => setHubTab("coingecko")}
-          className={cn(
-            "flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all border",
-            hubTab === "coingecko"
-              ? "border-sky-500/60 bg-sky-500/15 text-sky-300 font-bold shadow-sm"
-              : "border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary hover:text-foreground"
-          )}
-        >
-          <Sparkles className="h-3.5 w-3.5 text-sky-400" />
-          <span>CoinGecko Platforms &amp; Tokens</span>
-          <span className="rounded-full bg-sky-500/20 px-1.5 py-0.2 text-[10px] text-sky-300 font-mono">Live</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setHubTab("new-pools")}
-          className={cn(
-            "flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all border",
-            hubTab === "new-pools"
-              ? "border-emerald-500/60 bg-emerald-500/15 text-emerald-300 font-bold shadow-sm"
-              : "border-border/60 bg-secondary/30 text-muted-foreground hover:bg-secondary hover:text-foreground"
-          )}
-        >
-          <Layers className="h-3.5 w-3.5 text-emerald-400" />
-          <span>GeckoTerminal New Pools</span>
-          <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.2 text-[10px] text-emerald-300 font-mono">DEX Stream</span>
-        </button>
-      </div>
 
       {hubTab === "coingecko" ? (
         <CoinGeckoLaunchpadSection />
@@ -648,11 +684,12 @@ export function LaunchpadHub() {
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,1fr)]">
             {(() => {
               const e = g.live[0];
-              return <Link to={e.href} onPointerMove={handleLaunchCardPointerMove} onPointerLeave={handleLaunchCardPointerLeave} className="lp-tilt-card group relative flex min-h-[320px] min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-border/80 bg-card/60 p-5 transition-colors hover:border-primary/60 sm:p-7">
-                <div data-tilt-depth="1" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_85%_15%,hsl(var(--primary)/.16),transparent_55%)]" />
-                <DataArtwork src={e.image} alt={`${e.title} launch`} className="relative h-32 w-full rounded-xl border border-border/40" fallbackLabel="Launch artwork" />
-                <div data-tilt-depth="2" className="relative flex flex-wrap items-center justify-between gap-2"><div className="flex flex-wrap items-center gap-2"><StatusBadge status={e.status} /><KindTag kind={e.kind} /><NetworkChip network={e.network} /></div><ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} /></div>
-                <div data-tilt-depth="3" className="relative mt-12 space-y-4">
+              return <Link to={e.href} onPointerMove={handleLaunchCardPointerMove} onPointerLeave={handleLaunchCardPointerLeave} className="lp-tilt-card group relative flex min-h-[520px] xl:min-h-[600px] min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-border/80 bg-card/60 p-5 transition-colors hover:border-primary/60 sm:p-7">
+                <div data-tilt-depth="1" className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/95 via-black/35 to-black/5" />
+                <div data-tilt-depth="1" className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_85%_15%,hsl(var(--primary)/.12),transparent_60%)]" />
+                <DataArtwork src={e.image} alt={`${e.title} launch`} className="pointer-events-none absolute inset-0 z-0 h-full w-full rounded-none object-cover" fallbackLabel="Launch artwork" />
+                <div data-tilt-depth="2" className="relative z-10 flex flex-wrap items-center justify-between gap-2"><div className="flex flex-nowrap items-center gap-1.5 overflow-hidden"><StatusBadge status={e.status} /><KindTag kind={e.kind} /><NetworkChip network={e.network} /></div><ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} /></div>
+                <div data-tilt-depth="3" className="relative z-10 mt-auto pt-24 space-y-4">
                   <div><p className="font-mono text-xs text-muted-foreground">{e.tokenId.toUpperCase()} {e.category ? `· ${e.category}` : ""}</p><h3 className="mt-2 max-w-2xl text-2xl font-bold tracking-tight text-foreground sm:text-3xl group-hover:text-primary">{e.title}</h3><p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{e.description || "Explore this launch and review its recorded terms."}</p></div>
                   <div className="grid gap-4 border-t border-border/60 pt-4 sm:grid-cols-3"><div><p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Raised</p><p className="mt-1 text-lg font-semibold text-foreground">{e.raised ? `${e.raised.value.toLocaleString("en-US")} ${e.raised.unit}`.trim() : "Not recorded"}</p></div><div><p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{e.hardCap ? "Hard cap" : "Soft cap"}</p><p className="mt-1 text-lg font-semibold text-foreground">{(e.hardCap || e.softCap) ? `${(e.hardCap || e.softCap)!.value.toLocaleString("en-US")} ${(e.hardCap || e.softCap)!.unit}`.trim() : "Not recorded"}</p></div><div><p className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Participants</p><p className="mt-1 text-lg font-semibold text-foreground">{typeof e.participants === "number" ? e.participants.toLocaleString("en-US") : "Not recorded"}</p></div></div>
                   <ProgressBar entry={e} />
@@ -661,10 +698,13 @@ export function LaunchpadHub() {
               </Link>;
             })()}
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              {g.live.slice(1, 4).map((e) => <Link key={e.id} to={e.href} onPointerMove={handleLaunchCardPointerMove} onPointerLeave={handleLaunchCardPointerLeave} className="lp-tilt-card group flex min-w-0 flex-col justify-between rounded-2xl border border-border/70 bg-card/45 p-4 transition-colors hover:border-primary/50">
-                <div data-tilt-depth="2" className="flex items-center justify-between gap-2"><div className="flex flex-wrap items-center gap-2"><StatusBadge status={e.status} /><NetworkChip network={e.network} /></div><span className="text-xs text-muted-foreground">{e.kind === "presale" ? "Presale" : "Fair launch"}</span></div>
-                <div data-tilt-depth="3" className="mt-5 min-w-0"><h3 className="truncate text-base font-semibold text-foreground group-hover:text-primary">{e.title}</h3><p className="mt-1 font-mono text-xs text-muted-foreground">{e.tokenId.toUpperCase()} · {e.raised ? `${e.raised.value.toLocaleString("en-US")} ${e.raised.unit} raised` : "Raise not recorded"}</p></div>
-                <div data-tilt-depth="2" className="mt-4 flex items-center justify-between border-t border-border/60 pt-3 text-xs"><span className="text-muted-foreground">Closes {formatUtc(e.endTime, false)}</span><span className="font-semibold text-primary">Details ↗</span></div>
+              {g.live.slice(1, 4).map((e) => <Link key={e.id} to={e.href} onPointerMove={handleLaunchCardPointerMove} onPointerLeave={handleLaunchCardPointerLeave} className="lp-tilt-card group relative flex min-h-[185px] min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-border/70 bg-card/45 p-4 transition-colors hover:border-primary/50">
+                <DataArtwork src={e.image} alt={`${e.title} launch`} className="pointer-events-none absolute inset-0 z-0 h-full w-full rounded-none object-cover" fallbackLabel="Launch artwork" />
+                <div data-tilt-depth="1" className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-black/90 via-black/45 to-black/20" />
+                <div data-tilt-depth="1" className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(ellipse_at_85%_10%,hsl(var(--primary)/.14),transparent_60%)]" />
+                <div data-tilt-depth="2" className="relative z-10 flex items-center justify-between gap-2"><div className="flex flex-nowrap items-center gap-1.5 overflow-hidden"><StatusBadge status={e.status} /><NetworkChip network={e.network} /></div><span className="text-xs text-white/75">{e.kind === "presale" ? "Presale" : "Fair launch"}</span></div>
+                <div data-tilt-depth="3" className="relative z-10 mt-5 min-w-0"><h3 className="truncate text-base font-semibold text-white group-hover:text-primary">{e.title}</h3><p className="mt-1 font-mono text-xs text-white/70">{e.tokenId.toUpperCase()} · {e.raised ? `${e.raised.value.toLocaleString("en-US")} ${e.raised.unit} raised` : "Raise not recorded"}</p></div>
+                <div data-tilt-depth="2" className="relative z-10 mt-4 flex items-center justify-between border-t border-white/20 pt-3 text-xs"><span className="text-white/70">Closes {formatUtc(e.endTime, false)}</span><span className="font-semibold text-white">Details ↗</span></div>
               </Link>)}
             </div>
           </div>
@@ -676,7 +716,7 @@ export function LaunchpadHub() {
         <SectionHead id="board-upcoming" title="Upcoming" count={g.upcoming.length} note="Scheduled to open" />
         {g.upcoming.length ? (
           <div className="relative space-y-3 before:absolute before:bottom-8 before:left-[88px] before:top-8 before:w-px before:bg-gradient-to-b before:from-primary/55 before:via-border before:to-transparent sm:before:left-[116px] lg:before:left-[120px]">
-            {g.upcoming.map((e) => {
+            {g.upcoming.slice(0, visibleUpcomingCount).map((e) => {
               const target = e.kind === "presale" ? e.hardCap : e.softCap;
               const targetLabel = e.kind === "presale" ? "Hard cap" : "Soft cap";
               const targetValue = target ? `${target.value.toLocaleString("en-US")} ${target.unit}`.trim() : "Not recorded";
@@ -695,7 +735,7 @@ export function LaunchpadHub() {
                     <div className="pointer-events-none absolute inset-y-0 left-0 w-[2px] bg-gradient-to-b from-primary/70 via-primary/20 to-transparent opacity-70 transition-opacity group-hover:opacity-100" />
                     <div className="flex min-w-0 flex-col justify-between gap-4 pl-1">
                       <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-nowrap items-center gap-1.5 overflow-hidden">
                           <KindTag kind={e.kind} />
                           <NetworkChip network={e.network} />
                           <ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} />
@@ -728,20 +768,77 @@ export function LaunchpadHub() {
             })}
           </div>
         ) : <p className="rounded-xl border border-dashed border-border/70 px-5 py-8 text-sm text-muted-foreground">No scheduled launches match the current filters.</p>}
+        {(visibleUpcomingCount > 8 || g.upcoming.length > 8) && (
+          <div className="flex justify-center gap-3 pt-2">
+            {g.upcoming.length > visibleUpcomingCount && (
+              <button
+                type="button"
+                onClick={() => setVisibleUpcomingCount((count) => count + 8)}
+                className="inline-flex items-center justify-center rounded-lg border border-border/70 bg-card/40 px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
+              >
+                Load more
+              </button>
+            )}
+            {visibleUpcomingCount > 8 && (
+              <button
+                type="button"
+                onClick={() => setVisibleUpcomingCount(8)}
+                className="inline-flex items-center justify-center rounded-lg border border-border/70 bg-card/40 px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 hover:text-primary"
+              >
+                Show less
+              </button>
+            )}
+          </div>
+        )}
       </section>
 
-      {/* Secondary overview sections: historical results on the left, creator workspace on the right. */}
-      <section className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <section className="min-w-0 space-y-4">
-          <SectionHead id="board-concluded" title="Recently concluded" count={g.concluded.length} note="Historical launch results" />
-          {g.concluded.length ? <ul className="grid min-w-0 list-none gap-2 p-0">{g.concluded.map((e) => <ConcludedRow key={e.id} e={e} />)}</ul> : <p className="rounded-xl border border-dashed border-border/70 px-5 py-8 text-sm text-muted-foreground">No concluded launches match the current filters.</p>}
-        </section>
+      {/* Unified launch records table with two views. */}
+      <section className="min-w-0 space-y-5">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-border/60">
+          <div className="flex items-center gap-6" role="tablist" aria-label="Launch records">
+            <button type="button" role="tab" aria-selected={launchTableTab === "concluded"} onClick={() => setLaunchTableTab("concluded")} className={cn("relative -mb-px inline-flex items-center gap-2 border-b-2 px-0 pb-3 text-sm font-semibold transition-colors", launchTableTab === "concluded" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}>
+              Recently concluded <span className="font-mono text-xs font-normal text-muted-foreground">{g.concluded.length}</span>
+            </button>
+            <button type="button" role="tab" aria-selected={launchTableTab === "drafts"} onClick={() => setLaunchTableTab("drafts")} className={cn("relative -mb-px inline-flex items-center gap-2 border-b-2 px-0 pb-3 text-sm font-semibold transition-colors", launchTableTab === "drafts" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}>
+              Your drafts <span className="font-mono text-xs font-normal text-muted-foreground">{g.drafts.length}</span>
+            </button>
+          </div>
+          <p className="pb-3 text-xs text-muted-foreground">{launchTableTab === "concluded" ? "Historical launch results" : "Planned · not yet open"}</p>
+        </div>
 
-        <section className="min-w-0 space-y-4">
-          <SectionHead id="board-drafts" title="Your drafts" count={g.drafts.length} note="Planned · not yet open" />
-          {g.drafts.length ? <ul className="grid min-w-0 list-none gap-3 p-0">{g.drafts.map((e) => <ScheduleRow key={e.id} e={e} draft />)}</ul> : <p className="rounded-xl border border-dashed border-border/70 px-5 py-8 text-sm text-muted-foreground">No saved drafts yet. Start a launch below.</p>}
+        {launchTableTab === "concluded" ? (
+          g.concluded.length ? (
+            <>
+              <LaunchTable entries={g.concluded.slice(concludedPage * 5, concludedPage * 5 + 5)} draft={false} />
+              {g.concluded.length > 5 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <span className="text-xs text-muted-foreground">Page {concludedPage + 1} / {Math.ceil(g.concluded.length / 5)} · Showing {concludedPage * 5 + 1}–{Math.min((concludedPage + 1) * 5, g.concluded.length)} of {g.concluded.length}</span>
+                  <div className="flex gap-2">
+                    <button type="button" disabled={concludedPage === 0} onClick={() => setConcludedPage((page) => Math.max(0, page - 1))} className="inline-flex items-center justify-center rounded-lg border border-border/70 bg-card/40 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 disabled:pointer-events-none disabled:opacity-40">Previous</button>
+                    <button type="button" disabled={(concludedPage + 1) * 5 >= g.concluded.length} onClick={() => setConcludedPage((page) => page + 1)} className="inline-flex items-center justify-center rounded-lg border border-border/70 bg-card/40 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 disabled:pointer-events-none disabled:opacity-40">Next</button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : <p className="rounded-xl border border-dashed border-border/70 px-5 py-8 text-sm text-muted-foreground">No concluded launches match the current filters.</p>
+        ) : (
+          g.drafts.length ? (
+            <>
+              <LaunchTable entries={g.drafts.slice(draftsPage * 5, draftsPage * 5 + 5)} draft />
+              {g.drafts.length > 5 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                  <span className="text-xs text-muted-foreground">Page {draftsPage + 1} / {Math.ceil(g.drafts.length / 5)} · Showing {draftsPage * 5 + 1}–{Math.min((draftsPage + 1) * 5, g.drafts.length)} of {g.drafts.length}</span>
+                  <div className="flex gap-2">
+                    <button type="button" disabled={draftsPage === 0} onClick={() => setDraftsPage((page) => Math.max(0, page - 1))} className="inline-flex items-center justify-center rounded-lg border border-border/70 bg-card/40 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 disabled:pointer-events-none disabled:opacity-40">Previous</button>
+                    <button type="button" disabled={(draftsPage + 1) * 5 >= g.drafts.length} onClick={() => setDraftsPage((page) => page + 1)} className="inline-flex items-center justify-center rounded-lg border border-border/70 bg-card/40 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 disabled:pointer-events-none disabled:opacity-40">Next</button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : <p className="rounded-xl border border-dashed border-border/70 px-5 py-8 text-sm text-muted-foreground">No saved drafts yet. Start a launch below.</p>
+        )}
 
-          <div className="grid gap-2.5 pt-1">
+        <div className="grid grid-cols-1 gap-2.5 pt-1 sm:grid-cols-2">
             <Link
               to="/launchpad/presales/create"
               className="group relative flex min-h-[88px] items-center gap-3 overflow-hidden rounded-xl border border-primary/30 bg-gradient-to-r from-primary/[0.13] via-primary/[0.07] to-card/40 px-3.5 py-3.5 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/60 hover:from-primary/[0.19] hover:to-primary/[0.06] hover:shadow-[0_10px_30px_-18px_hsl(var(--primary)/0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:px-4"
@@ -775,11 +872,11 @@ export function LaunchpadHub() {
               </span>
             </Link>
           </div>
+
           <div className="flex flex-wrap gap-x-4 gap-y-2 px-1 text-xs font-medium">
             <Link to="/launchpad/presales" className="text-muted-foreground transition-colors hover:text-primary">Browse all presales</Link>
             <Link to="/launchpad/launches" className="text-muted-foreground transition-colors hover:text-primary">Browse all fair launches</Link>
           </div>
-        </section>
       </section>
         </>
       )}

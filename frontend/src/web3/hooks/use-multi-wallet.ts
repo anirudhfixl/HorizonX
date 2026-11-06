@@ -24,3 +24,4 @@ export function useMultiWallet(): MultiWalletState {
     totalEcosystems: 4,
   };
 }
+

@@ -5,6 +5,7 @@ export * from './config/evm.config';
 export * from './config/solana.config';
 export * from './config/ton.config';
 export * from './config/tron.config';
+export * from './config/appkit.config';
 export * from './utils/address-validation';
 export * from './utils/network-validation';
 export * from './utils/formatters';
@@ -26,3 +27,4 @@ export * from './hooks/use-solana-wallet';
 export * from './hooks/use-ton-wallet';
 export * from './hooks/use-tron-wallet';
 export * from './hooks/use-multi-wallet';
+

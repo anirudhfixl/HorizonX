@@ -117,6 +117,7 @@
 .mx-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .mx-table th { position: sticky; top: 0; padding: 0.65rem 0.75rem; text-align: left; font-size: 0.8125rem; font-weight: 500; color: var(--muted-foreground); background: var(--background); border-bottom: 1px solid var(--border); white-space: nowrap; }
 .mx-table th.is-end, .mx-table td.is-end { text-align: right; }
+.mx-table th.is-end > button { width: 100%; justify-content: flex-end; }
 .mx-table th button { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0; font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 .mx-table th button:hover, .mx-table th button[data-sorted="true"] { color: var(--foreground); }
 .mx-table th button i { display: inline-block; width: 0.7rem; font-style: normal; }
@@ -152,6 +153,20 @@
 /* ── trending rail ─────────────────────────────────────────────────────── */
 .mx-rail { position: relative; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .mx-rail__track { display: flex; margin: 0; padding: 0; list-style: none; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; }
+.mx-rail--continuous { overflow: hidden; }
+.mx-rail__track--continuous {
+  width: max-content;
+  overflow: visible;
+  animation: mx-rail-marquee 105s linear infinite;
+  will-change: transform;
+}
+.mx-rail--continuous:hover .mx-rail__track--continuous,
+.mx-rail--continuous:focus-within .mx-rail__track--continuous { animation-play-state: paused; }
+.mx-rail__track--continuous > li[aria-hidden="true"] { pointer-events: none; }
+@keyframes mx-rail-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
 .mx-rail__track::-webkit-scrollbar { display: none; }
 .mx-rail__track > li { flex: none; scroll-snap-align: start; border-left: 1px solid var(--border); }
 .mx-rail__track > li:first-child { border-left: 0; }
@@ -171,6 +186,11 @@
 .mx-rail__nav svg { width: 1rem; height: 1rem; }
 @media (hover: none) { .mx-rail__nav { display: none; } }
 @media (max-width: 640px) { .mx-rail__item { width: 13.5rem; padding: 0.8rem 0.9rem; } }
+@media (prefers-reduced-motion: reduce) {
+  .mx-rail__track--continuous { animation: none; transform: none; }
+  .mx-rail--continuous { overflow-x: auto; }
+  .mx-rail--continuous .mx-rail__track--continuous { width: max-content; }
+}
 
 /* ── featured carousel ─────────────────────────────────────────────────── */
 .mx-feature { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
@@ -237,3 +257,28 @@
 .mx-alloc [data-i="3"] { --k: var(--chart-3); }
 .mx-alloc [data-i="4"] { --k: color-mix(in srgb, var(--chart-1) 45%, var(--muted-foreground)); }
 .mx-alloc [data-i="5"] { --k: var(--muted-foreground); }
+
+/* Explore token directory: let the browser's native table algorithm size each
+   column from its header and cell content. This guarantees that header and
+   body share identical column boundaries without squeezing the token identity. */
+.tk-page--explore .mx-table {
+  width: 100%;
+  table-layout: auto;
+}
+.tk-page--explore .mx-table td:nth-child(2) .mx-identity {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+}
+.tk-page--explore .mx-table td.is-end,
+.tk-page--explore .mx-table th.is-end {
+  text-align: right;
+  white-space: nowrap;
+}
+.tk-page--explore .mx-table th.is-end > button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  text-align: right;
+}

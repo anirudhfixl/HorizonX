@@ -4,7 +4,6 @@ import { AssetIdentity } from "@/components/market/asset-identity";
 import { DataTable, type Column } from "@/components/market/data-table";
 import { FeaturedCarousel, type FeaturedSlide } from "@/components/market/featured-carousel";
 import { FilterToolbar } from "@/components/market/filter-toolbar";
-import { ProvenanceTag } from "@/components/market/provenance-tag";
 import { Sparkline } from "@/components/market/sparkline";
 import { EmptyState } from "@/components/market/state-views";
 import { TrendingRail, type RailItem } from "@/components/market/trending-rail";
@@ -328,7 +327,7 @@ export function TokenExplore() {
   const shown = rows.slice(0, visible);
 
   return (
-    <div className="tk-page">
+    <div className="tk-page tk-page--explore">
       <TokenSectionNav />
       <TokenBreadcrumb current="Explore tokens" />
       <header className="tk-head">
@@ -348,27 +347,13 @@ export function TokenExplore() {
         </dl>
       </header>
 
-      {isLiveFeed ? (
-        <p className="tk-source">
-          <ProvenanceTag kind="onchain" label="Live CoinMarketCap Feed" />
-          <span>
-            Real-time cryptocurrency prices, 24h volume, and market capitalization provided by CoinMarketCap. HorizonX ecosystem tokens are highlighted alongside global markets.
-            {marketOverview?.lastUpdated && ` Last updated ${new Date(marketOverview.lastUpdated).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}.`}
-          </span>
-        </p>
-      ) : (
-        <p className="tk-source">
-          <ProvenanceTag kind="simulated" label="Simulated market data" />
-          <span>Prices and volumes are illustrative until a live market feed is connected.</span>
-        </p>
-      )}
 
       <section className="tk-section" aria-labelledby="trending-h">
         <header className="tk-section__head">
           <h2 id="trending-h">Trending now</h2>
           <button type="button" className="mx-link" onClick={() => applyPreset("trending")}>Open trending list</button>
         </header>
-        <TrendingRail items={railItems} label="Trending tokens" />
+        <TrendingRail items={railItems} label="Trending tokens" continuous />
       </section>
 
       <section className="tk-section" aria-labelledby="featured-h">
@@ -387,7 +372,6 @@ export function TokenExplore() {
       <section className="tk-section tk-directory" id="directory" aria-labelledby="directory-h">
         <header className="tk-section__head">
           <h2 id="directory-h">All tokens</h2>
-          <Link to="/tokens/create" className="mx-btn">Create token</Link>
         </header>
 
         <div className="mx-tabs" role="group" aria-label="Token lists">

@@ -50,3 +50,4 @@ export interface MultiWalletState {
   connectedCount: number;
   totalEcosystems: 4;
 }
+

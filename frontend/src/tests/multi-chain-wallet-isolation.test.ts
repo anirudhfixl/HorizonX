@@ -115,7 +115,7 @@ interface MockWalletConnection {
 const mockWallets: Record<string, MockWalletConnection> = {
   evm: { isConnected: false, address: null, walletName: 'MetaMask' },
   solana: { isConnected: false, address: null, walletName: 'Phantom' },
-  ton: { isConnected: false, address: null, walletName: 'Tonkeeper' },
+  ton: { isConnected: false, address: null, walletName: 'Gram Wallet' },
   tron: { isConnected: false, address: null, walletName: 'TronLink' },
 };
 
@@ -165,12 +165,12 @@ assert.strictEqual(mockWallets.solana.isConnected, false);
 assert.strictEqual(mockWallets.evm.isConnected, true, 'MetaMask MUST REMAIN connected when Phantom disconnects!');
 console.log('✅ PASSED: Step 5 - Disconnecting Phantom does NOT disconnect MetaMask');
 
-// Step 6: Connect TON (Tonkeeper)
+// Step 6: Connect TON (Gram Wallet)
 connectWallet('ton', '0QC7q-154_mD9Hn73_K_839h3892_example_jetton_testn');
 assert.strictEqual(mockWallets.ton.isConnected, true);
 assert.strictEqual(mockWallets.evm.isConnected, true, 'MetaMask must remain connected');
 assert.strictEqual(mockWallets.solana.isConnected, false, 'Solana remains disconnected');
-console.log('✅ PASSED: Step 6 - Connecting Tonkeeper does NOT change EVM or Solana state');
+console.log('✅ PASSED: Step 6 - Connecting Gram Wallet does NOT change EVM or Solana state');
 
 // Step 7: Connect TRON (TronLink)
 connectWallet('tron', 'TG3XXyExBkPp9nzdajDZsozEu4BkaSJozs');

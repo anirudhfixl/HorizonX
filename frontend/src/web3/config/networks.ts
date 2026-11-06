@@ -122,3 +122,4 @@ export const PROHIBITED_MAINNET_IDENTIFIERS = new Set<string | number>([
   '0x2b6653dc', // TRON Mainnet chain ID
   'tron-mainnet',
 ]);
+

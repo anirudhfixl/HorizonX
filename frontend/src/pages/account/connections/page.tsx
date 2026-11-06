@@ -14,14 +14,47 @@ import {
   AlertTriangle,
   LogOut,
 } from "lucide-react";
+import {
+  MetaMaskLogo,
+  PhantomLogo,
+  GramWalletLogo,
+  TronLinkLogo,
+} from "@/components/shared/wallet-icons";
 import { SUPPORTED_TESTNETS } from "@/web3/config/networks";
 import type { BlockchainEcosystem } from "@/web3/types/wallet.types";
 
-const ECOSYSTEM_CONFIGS: Array<{ id: BlockchainEcosystem; name: string; icon: string }> = [
-  { id: "evm", name: "Ethereum Sepolia (MetaMask)", icon: "🦊" },
-  { id: "solana", name: "Solana Devnet (Phantom)", icon: "👻" },
-  { id: "ton", name: "TON Testnet (Tonkeeper)", icon: "💎" },
-  { id: "tron", name: "TRON Shasta (TronLink)", icon: "⚡" },
+interface EcosystemConnectionConfig {
+  id: BlockchainEcosystem;
+  name: string;
+  renderIcon: (props: { className?: string }) => React.JSX.Element;
+  iconBg: string;
+}
+
+const ECOSYSTEM_CONFIGS: EcosystemConnectionConfig[] = [
+  {
+    id: "evm",
+    name: "Ethereum Sepolia (MetaMask)",
+    iconBg: "bg-[#e2761b]/10 border-[#e2761b]/25",
+    renderIcon: (props) => <MetaMaskLogo {...props} />,
+  },
+  {
+    id: "solana",
+    name: "Solana Devnet (Phantom)",
+    iconBg: "bg-[#534bb1]/10 border-[#534bb1]/25",
+    renderIcon: (props) => <PhantomLogo {...props} />,
+  },
+  {
+    id: "ton",
+    name: "TON Testnet (Gram Wallet)",
+    iconBg: "bg-[#0098ea]/10 border-[#0098ea]/25",
+    renderIcon: (props) => <GramWalletLogo {...props} />,
+  },
+  {
+    id: "tron",
+    name: "TRON Shasta (TronLink)",
+    iconBg: "bg-[#ff0613]/10 border-[#ff0613]/25",
+    renderIcon: (props) => <TronLinkLogo {...props} />,
+  },
 ];
 
 export default function AccountConnectionsPage() {
@@ -69,7 +102,9 @@ export default function AccountConnectionsPage() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-xl">{eco.icon}</span>
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${eco.iconBg} shadow-sm`}>
+                        {eco.renderIcon({ className: "h-4 w-4 object-contain" })}
+                      </div>
                       <div>
                         <div className="text-xs font-bold text-foreground">{eco.name}</div>
                         <div className="text-[10px] text-muted-foreground">{net.networkName}</div>

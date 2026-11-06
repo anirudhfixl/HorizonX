@@ -18,11 +18,19 @@ import {
 import { SUPPORTED_TESTNETS } from "@/web3/config/networks";
 import type { BlockchainEcosystem } from "@/web3/types/wallet.types";
 
+import {
+  MetaMaskLogo,
+  PhantomLogo,
+  GramWalletLogo,
+  TronLinkLogo,
+} from "@/components/shared/wallet-icons";
+
 interface EcosystemCardConfig {
   id: BlockchainEcosystem;
   title: string;
   badge: string;
-  icon: string;
+  iconBg: string;
+  renderIcon: (props: { className?: string }) => React.JSX.Element;
   colorClass: string;
 }
 
@@ -31,28 +39,32 @@ const ECOSYSTEM_CARDS: EcosystemCardConfig[] = [
     id: "evm",
     title: "Ethereum Sepolia",
     badge: "EVM Preferred",
-    icon: "🦊",
+    iconBg: "bg-[#e2761b]/10 border-[#e2761b]/25",
+    renderIcon: (props) => <MetaMaskLogo {...props} />,
     colorClass: "from-blue-500/10 to-indigo-500/10 text-indigo-400 border-indigo-500/20",
   },
   {
     id: "solana",
     title: "Solana Devnet",
     badge: "Solana Preferred",
-    icon: "👻",
+    iconBg: "bg-[#534bb1]/10 border-[#534bb1]/25",
+    renderIcon: (props) => <PhantomLogo {...props} />,
     colorClass: "from-purple-500/10 to-violet-500/10 text-purple-400 border-purple-500/20",
   },
   {
     id: "ton",
     title: "TON Testnet",
     badge: "TON Preferred",
-    icon: "💎",
+    iconBg: "bg-[#0098ea]/10 border-[#0098ea]/25",
+    renderIcon: (props) => <GramWalletLogo {...props} />,
     colorClass: "from-sky-500/10 to-cyan-500/10 text-sky-400 border-sky-500/20",
   },
   {
     id: "tron",
     title: "TRON Shasta",
     badge: "TRON Preferred",
-    icon: "⚡",
+    iconBg: "bg-[#ff0613]/10 border-[#ff0613]/25",
+    renderIcon: (props) => <TronLinkLogo {...props} />,
     colorClass: "from-red-500/10 to-amber-500/10 text-red-400 border-red-500/20",
   },
 ];
@@ -113,9 +125,9 @@ export default function AccountWalletsPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary border border-border/60 text-2xl shadow-inner">
-                    {card.icon}
-                  </span>
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${card.iconBg} shadow-sm`}>
+                    {card.renderIcon({ className: "h-6 w-6 object-contain" })}
+                  </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-bold text-foreground">{card.title}</h4>

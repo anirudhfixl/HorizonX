@@ -86,3 +86,4 @@ export async function fetchTonTransactionHistory(address: string): Promise<Trans
 
   return sessionTxs;
 }
+

@@ -18,10 +18,23 @@ interface PhantomWindowProvider {
 
 function getPhantom(): PhantomWindowProvider | null {
   if (typeof window === 'undefined') return null;
-  const anyWin = window as unknown as { phantom?: { solana?: PhantomWindowProvider }; solana?: PhantomWindowProvider };
-  const provider = anyWin?.phantom?.solana || anyWin?.solana;
-  if (provider && provider.isPhantom) return provider;
-  return provider || null;
+  const anyWin = window as unknown as {
+    phantom?: { solana?: PhantomWindowProvider & { isPhantom?: boolean } };
+    solana?: PhantomWindowProvider & { isPhantom?: boolean };
+  };
+
+  // 1. Dedicated Phantom Solana namespace — strictly requiring isPhantom === true
+  if (anyWin?.phantom?.solana && anyWin.phantom.solana.isPhantom === true) {
+    return anyWin.phantom.solana;
+  }
+
+  // 2. Standard window.solana ONLY if isPhantom is explicitly true
+  // (Prevents accidentally resolving MetaMask, Brave, or any other injected EVM/Solana provider)
+  if (anyWin?.solana && anyWin.solana.isPhantom === true) {
+    return anyWin.solana;
+  }
+
+  return null;
 }
 
 const SOLANA_LOCAL_STORAGE_KEY = 'horizonx_solana_connected';
@@ -65,23 +78,11 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
     refreshBalance();
   }, [refreshBalance]);
 
-  // Handle Phantom event listeners and session restoration
+  // Event listeners for disconnect and account change while connected
+  // Strictly no auto-connect on application load; explicit user action required.
   useEffect(() => {
     const phantom = getPhantom();
     if (!phantom) return;
-
-    const handleConnect = (...args: unknown[]) => {
-      const pubKey = args[0] as { toString?: () => string } | undefined;
-      const addr = pubKey && typeof pubKey.toString === 'function' ? pubKey.toString() : phantom.publicKey?.toString() || null;
-      if (addr) {
-        setAddress(addr);
-        try {
-          localStorage.setItem(SOLANA_LOCAL_STORAGE_KEY, 'true');
-        } catch {
-          // ignore
-        }
-      }
-    };
 
     const handleDisconnect = () => {
       setAddress(null);
@@ -95,31 +96,22 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       }
     };
 
-    const handleAccountChanged = (...args: unknown[]) => {
-      const pubKey = args[0];
+    const handleAccountChanged = (pubKey: unknown) => {
       if (pubKey && typeof (pubKey as { toString?: () => string }).toString === 'function') {
-        handleConnect(pubKey);
+        const addr = (pubKey as { toString: () => string }).toString();
+        // Update only if already actively connected by the user
+        setAddress((current) => (current ? addr : null));
       } else {
         handleDisconnect();
       }
     };
 
-    phantom.on('connect', handleConnect);
-    phantom.on('disconnect', handleDisconnect);
-    phantom.on('accountChanged', handleAccountChanged);
-
-    // Eager reconnect if previously connected
-    const wasConnected = typeof localStorage !== 'undefined' && localStorage.getItem(SOLANA_LOCAL_STORAGE_KEY) === 'true';
-    if (wasConnected && phantom.publicKey) {
-      setAddress(phantom.publicKey.toString());
-    } else if (wasConnected) {
-      phantom.connect({ onlyIfTrusted: true }).then((res) => handleConnect(res?.publicKey)).catch(() => {});
-    }
+    phantom.on?.('disconnect', handleDisconnect);
+    phantom.on?.('accountChanged', handleAccountChanged);
 
     return () => {
-      phantom.off('connect', handleConnect);
-      phantom.off('disconnect', handleDisconnect);
-      phantom.off('accountChanged', handleAccountChanged);
+      phantom.off?.('disconnect', handleDisconnect);
+      phantom.off?.('accountChanged', handleAccountChanged);
     };
   }, []);
 
@@ -132,7 +124,11 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
         throw new Error('Phantom wallet extension is not installed in this browser.');
       }
 
-      const res = await phantom.connect();
+      // Explicit user-initiated connection request: onlyIfTrusted: false
+      const res = await phantom.connect({ onlyIfTrusted: false });
+      if (!res?.publicKey) {
+        throw new Error('No public key returned by Phantom');
+      }
       const addr = res.publicKey.toString();
       setAddress(addr);
       try {
@@ -142,7 +138,7 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Phantom connection rejected';
-      if (!/reject|cancel|denied/i.test(msg)) {
+      if (!/reject|cancel|denied|user closed/i.test(msg)) {
         setError(msg);
       }
       throw err;
@@ -155,9 +151,12 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
     setError(null);
     try {
       const phantom = getPhantom();
-      if (phantom) {
+      if (phantom && typeof phantom.disconnect === 'function') {
         await phantom.disconnect();
       }
+    } catch (err: unknown) {
+      console.warn('Phantom disconnect notice:', err);
+    } finally {
       setAddress(null);
       setNativeBalance('0.0000');
       setNativeBalanceRaw(null);
@@ -167,9 +166,6 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
       } catch {
         // ignore
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Solana disconnect failed';
-      setError(msg);
     }
   }, []);
 

@@ -377,7 +377,7 @@
 .navbar-shell {
   --nav-height: 68px;
   position: fixed;
-  z-index: 1000;
+  z-index: 40 !important;
   top: 0px;
   left: 2%;
   width: 96%;
@@ -713,7 +713,7 @@
   align-items: center;
   gap: 8px;
   padding: 0 14px;
-  border-radius: 999px;
+  border-radius: 12px;
   font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   font-size: 13px;
   font-weight: 600;
@@ -1779,14 +1779,14 @@ body:has(.route-shell.projects-route) {
   position: fixed !important;
   inset: 0 0 auto 0 !important;
   height: 138px !important;
-  z-index: 998 !important;
+  z-index: 39 !important;
   pointer-events: none !important;
   background: rgba(11, 8, 6, .30) !important;
   -webkit-backdrop-filter: blur(30px) saturate(155%) !important;
   backdrop-filter: blur(30px) saturate(155%) !important;
 }
 .navbar-shell {
-  z-index: 1000 !important;
+  z-index: 40 !important;
 }
 
 

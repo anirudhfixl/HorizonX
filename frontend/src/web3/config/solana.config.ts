@@ -28,3 +28,4 @@ export const SOLANA_CONFIG = {
   supportedTokens: SOLANA_DEVNET_SUPPORTED_TOKENS,
   preferredWallet: 'Phantom',
 };
+

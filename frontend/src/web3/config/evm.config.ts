@@ -42,3 +42,4 @@ export const EVM_CONFIG = {
   supportedTokens: SEPOLIA_SUPPORTED_TOKENS,
   preferredWallet: 'MetaMask',
 };
+

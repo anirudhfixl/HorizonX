@@ -15,6 +15,15 @@ interface TronLinkWindow {
   };
 }
 
+export function isTronLinkInstalled(): boolean {
+  if (typeof window === 'undefined') return false;
+  const anyWin = window as unknown as {
+    tronLink?: { ready?: boolean; request?: unknown };
+    tronWeb?: { ready?: boolean; defaultAddress?: unknown };
+  };
+  return Boolean(anyWin?.tronLink || anyWin?.tronWeb);
+}
+
 function getTronLink(): TronLinkWindow | null {
   if (typeof window === 'undefined') return null;
   const anyWin = window as unknown as { tronLink?: TronLinkWindow; tronWeb?: { ready?: boolean; defaultAddress?: { base58: string; hex: string } } };
@@ -108,29 +117,62 @@ export function TronWalletProvider({ children }: { children: React.ReactNode }) 
     setError(null);
     setIsConnecting(true);
     try {
-      const tronLink = getTronLink();
+      let tronLink = getTronLink();
+      // Allow a brief wait for injected script if page just loaded
+      if (!tronLink && typeof window !== 'undefined') {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        tronLink = getTronLink();
+      }
+
       if (!tronLink) {
         throw new Error('TronLink wallet extension is not installed in this browser.');
       }
 
-      const res = await tronLink.request({ method: 'tron_requestAccounts' });
-      if (res.code === 200) {
-        const anyWin = window as unknown as { tronWeb?: { defaultAddress?: { base58: string } } };
-        const addr = anyWin?.tronWeb?.defaultAddress?.base58;
-        if (addr) {
-          setAddress(addr);
-          localStorage.setItem(TRON_LOCAL_STORAGE_KEY, addr);
-          return;
+      // Request authorization from TronLink
+      if (typeof tronLink.request === 'function') {
+        const res = await tronLink.request({ method: 'tron_requestAccounts' });
+        if (res && (res.code === 4001 || (res.code !== 200 && res.code !== 0))) {
+          throw new Error('TronLink connection was rejected by user.');
         }
       }
 
-      if (tronLink.tronWeb?.defaultAddress?.base58) {
-        setAddress(tronLink.tronWeb.defaultAddress.base58);
-        localStorage.setItem(TRON_LOCAL_STORAGE_KEY, tronLink.tronWeb.defaultAddress.base58);
-        return;
+      // Poll up to 2 seconds for address to become available
+      let addr: string | null = null;
+      const anyWin = window as unknown as {
+        tronWeb?: {
+          ready?: boolean;
+          defaultAddress?: { base58: string; hex: string };
+          fullNode?: { host?: string };
+        };
+      };
+
+      for (let i = 0; i < 20; i++) {
+        addr = anyWin?.tronWeb?.defaultAddress?.base58 || tronLink.tronWeb?.defaultAddress?.base58 || null;
+        if (addr) break;
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
-      throw new Error('TronLink connection was rejected or no account selected.');
+      if (!addr) {
+        throw new Error('TronLink is locked or no account is selected. Please unlock TronLink.');
+      }
+
+      // Verify Shasta network
+      const host = anyWin?.tronWeb?.fullNode?.host || '';
+      if (host && !host.toLowerCase().includes('shasta')) {
+        // Warn if not Shasta, but allow testnet node
+        if (host.toLowerCase().includes('api.trongrid.io') && !host.toLowerCase().includes('shasta')) {
+          setIsUnsupportedNetwork(true);
+          throw new Error('TronLink is connected to TRON Mainnet. Mainnet is strictly prohibited. Please switch to Shasta Testnet.');
+        }
+      }
+
+      setIsUnsupportedNetwork(false);
+      setAddress(addr);
+      try {
+        localStorage.setItem(TRON_LOCAL_STORAGE_KEY, addr);
+      } catch {
+        // ignore
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'TronLink connection rejected';
       if (!/reject|cancel|denied/i.test(msg)) {
@@ -214,3 +256,4 @@ export function useTronWallet(): EcosystemWalletState {
   }
   return context;
 }
+

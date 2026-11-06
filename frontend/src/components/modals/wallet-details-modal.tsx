@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useModal } from "@/contexts/modal-context";
+import { useWallet } from "@/contexts/wallet-context";
 import { useMultiWallet } from "@/web3";
 import {
   Dialog,
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
+  ArrowLeft,
   Copy,
   Check,
   LogOut,
@@ -31,11 +33,18 @@ import { fetchEvmTransactionHistory } from "@/web3/services/transactions/evm-his
 import { fetchSolanaTransactionHistory } from "@/web3/services/transactions/solana-history";
 import { fetchTonTransactionHistory } from "@/web3/services/transactions/ton-history";
 import { fetchTronTransactionHistory } from "@/web3/services/transactions/tron-history";
+import {
+  MetaMaskLogo,
+  PhantomLogo,
+  GramWalletLogo,
+  TronLinkLogo,
+} from "@/components/shared/wallet-icons";
 import type { BlockchainEcosystem } from "@/web3/types/wallet.types";
 import type { TransactionRecord } from "@/web3/types/transaction.types";
 
 export function WalletDetailsModal() {
   const { isOpen, closeModal, openModal, modalProps } = useModal();
+  const { isDemoActive, demoAddress, balance: demoBalance, disconnectDemo } = useWallet();
   const multiWallet = useMultiWallet();
 
   const initialEcosystem = (modalProps?.ecosystem as BlockchainEcosystem) || "evm";
@@ -113,24 +122,27 @@ export function WalletDetailsModal() {
       <DialogContent className="sm:max-w-lg border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-6 text-foreground max-h-[85vh] overflow-y-auto">
         <DialogHeader className="space-y-1.5 pb-2 border-b border-border/40">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span
-                className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                  activeWallet.isUnsupportedNetwork
-                    ? "bg-amber-500/10 text-amber-500"
-                    : activeWallet.isConnected
-                    ? "bg-emerald-500/10 text-emerald-500"
-                    : "bg-secondary text-muted-foreground"
-                }`}
+            <div className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => openModal("CONNECT_WALLET")}
+                aria-label="Back to wallet overview"
+                className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-border/60 bg-secondary/30 text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors text-xs font-semibold mr-0.5"
               >
-                {activeWallet.isUnsupportedNetwork ? (
-                  <AlertTriangle className="h-5 w-5" />
-                ) : activeWallet.isConnected ? (
-                  <CheckCircle2 className="h-5 w-5" />
+                <ArrowLeft className="h-3.5 w-3.5" />
+                <span>Back</span>
+              </button>
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-secondary/40 shadow-sm">
+                {selectedEcosystem === "evm" ? (
+                  <MetaMaskLogo className="h-5 w-5 object-contain" />
+                ) : selectedEcosystem === "solana" ? (
+                  <PhantomLogo className="h-5 w-5 object-contain" />
+                ) : selectedEcosystem === "ton" ? (
+                  <GramWalletLogo className="h-5 w-5 object-contain" />
                 ) : (
-                  <Coins className="h-5 w-5" />
+                  <TronLinkLogo className="h-5 w-5 object-contain" />
                 )}
-              </span>
+              </div>
               <div>
                 <DialogTitle className="text-lg font-semibold tracking-tight text-foreground">
                   Multi-Chain Wallet
@@ -142,11 +154,33 @@ export function WalletDetailsModal() {
             </div>
 
             {/* Testnet Badge */}
-            <span className="rounded-full bg-primary/10 border border-primary/30 px-2.5 py-0.5 text-xs font-medium text-primary">
+            <span className="rounded-full bg-primary/10 border border-primary/30 px-2.5 py-0.5 text-xs font-medium text-primary shrink-0">
               {networkConfig.shortName}
             </span>
           </div>
         </DialogHeader>
+
+        {/* Demo Mode Banner (if active) */}
+        {isDemoActive && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 flex flex-wrap items-center justify-between gap-2 text-xs text-amber-300">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/25 text-amber-400 border border-amber-500/40 shrink-0">
+                DEMO ACTIVE
+              </span>
+              <span className="text-[11px] text-amber-200/90 truncate" title={demoAddress}>
+                {demoAddress.slice(0, 6)}...{demoAddress.slice(-4)} · {demoBalance} ETH (Simulated)
+              </span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => disconnectDemo()}
+              className="h-7 text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/20 hover:text-amber-200"
+            >
+              Disconnect Demo Wallet
+            </Button>
+          </div>
+        )}
 
         {/* 4-Chain Ecosystem Selector Tabs */}
         <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-secondary/30 border border-border/40 text-xs">
