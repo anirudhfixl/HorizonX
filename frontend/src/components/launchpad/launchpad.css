@@ -503,14 +503,6 @@
   background: transparent;
 }
 .launchpad-detail-shell--detail .lf-detail-content > div:first-child > div:first-child svg { margin-top: .15rem; }
-.launchpad-detail-shell--detail .lf-detail-content > div:first-child > section[aria-labelledby="commitment-title"] {
-  padding: 1.25rem 0 1.5rem;
-  border: 0;
-  border-bottom: 1px solid var(--border);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
 .launchpad-detail-shell--detail .lf-detail-content > div:first-child { min-width: 0; }
 .launchpad-detail-shell--detail .lf-detail-content > section[aria-labelledby="participate-title"] {
   position: sticky;
@@ -535,4 +527,14 @@
   .launchpad-detail-shell--detail .lf-detail-metrics > div { padding: .55rem .5rem; }
   .launchpad-detail-shell--detail .lf-detail-metrics dd { font-size: .76rem; }
   .launchpad-detail-shell--detail .lf-detail-tabs { gap: 1.1rem; }
+}
+
+
+
+/* Directory pages only: remove the orange margin gap around the reserved
+   workspace-nav spacer without changing its 5.3rem navigation height. */
+.launchpad-directory-page > .hx-workspace-nav-spacer {
+  margin-block: 0 !important;
+  height: 5.3rem !important;
+  min-height: 5.3rem !important;
 }

@@ -1,6 +1,6 @@
 import "@/components/launchpad/launchpad.css";
 import { LaunchpadWorkspaceHeader } from "@/components/launchpad/launchpad-section-nav";
-import React, { useState, useMemo, useSyncExternalStore } from "react";
+import React, { useState, useMemo, useSyncExternalStore, useEffect } from "react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,10 @@ import {
   X,
   LayoutGrid,
   List,
-  Plus,
   ChevronLeft,
   ChevronRight,
   ChevronUp,
   ChevronDown,
-  Info,
   ArrowRight,
   Users,
   SearchX,
@@ -426,7 +424,11 @@ function IdentityLines({
 export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryProps) {
   // Filter and view state
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState(() => {
+    if (typeof window === "undefined") return "all";
+    const saved = window.sessionStorage.getItem("horizonx:fair-launch:stage-filter");
+    return saved === "all" || STAGES.some((stage) => stage.value === saved) ? (saved || "all") : "all";
+  });
   const [networkFilter, setNetworkFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortBy, setSortBy] = useState<FairLaunchSortOption>("date-desc");
@@ -435,6 +437,11 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(6);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  // Keep the selected stage when the directory remounts or the user refreshes.
+  useEffect(() => {
+    window.sessionStorage.setItem("horizonx:fair-launch:stage-filter", statusFilter);
+  }, [statusFilter]);
 
   const { data: fairLaunches = [] } = useFairLaunches();
   const { data: tokens = [] } = useTokens();
@@ -625,14 +632,11 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
     "h-8 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:border-primary focus:outline-none";
 
   return (
-    <div className="launchpad-page mx-auto w-full max-w-none space-y-8 px-4 py-8 sm:px-6 lg:px-10 xl:px-12 2xl:px-16 lg:py-12">
+    <div className="launchpad-page launchpad-directory-page mx-auto w-full max-w-none space-y-8 px-4 py-8 sm:px-6 lg:px-10 xl:px-12 2xl:px-16 lg:py-12">
       {mode === "canonical" && <LaunchpadWorkspaceHeader items={[{ label: "Launchpad", to: "/launchpad" }, { label: "Fair launches" }]} />}
       {/* 1. Masthead */}
-      <header className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+      <header className="grid gap-6">
         <div className="space-y-3">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-            {mode === "canonical" ? "Launchpad · Fair launches" : "Explore · Fair launch discovery"}
-          </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             {mode === "canonical" ? "All Fair Launches" : "Fair Launches Discovery"}
           </h1>
@@ -642,19 +646,10 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
               : "Compare fair launches across networks by stage, commitment and schedule, then open one for its full record."}
           </p>
         </div>
-        <Button
-          asChild
-          size="sm"
-          className="gap-1.5 self-start bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90 lg:self-auto"
-        >
-          <Link to="/launchpad/launches/create">
-            <Plus className="h-3.5 w-3.5" /> Create Fair Launch
-          </Link>
-        </Button>
       </header>
 
       {/* Tab Switcher: HorizonX Fair Launches vs GeckoTerminal New Pools */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-border/50 pb-3">
+      <div className="flex flex-wrap items-center gap-3 border-b border-border/50 py-3">
         <Button
           type="button"
           size="sm"
@@ -686,42 +681,18 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
         <NewPoolsDirectory />
       ) : (
         <>
-      {/* 2. Disclosure + how to read a fair launch */}
-      <section aria-label="Data notice and how to read a fair launch" className="grid gap-6 lg:grid-cols-2">
-        <div className="border-l-2 border-primary/60 pl-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-            <Info className="h-3.5 w-3.5 shrink-0" />
-            Demonstration data · Network scope (Architecture Decision D-04)
-          </div>
-          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-            All launches, raised amounts, participant counts and schedules are simulated demonstration data, and
-            listing descriptions are sample text rather than verified terms. Per <strong>D-04</strong>,{" "}
-            <strong>Ethereum Sepolia (Chain ID 11155111)</strong> is the only active wallet network; Base, Arbitrum
-            One and Polygon records are catalog metadata only. No real funds are raised or required.
-          </p>
-        </div>
-        <div className="border-l-2 border-border pl-4">
-          <div className="text-xs font-semibold text-foreground">How a fair launch is shown here</div>
-          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-            A fair launch record stores a <strong>soft cap</strong>, the <strong>total tokens for sale</strong> and a
-            launch window. It does not store a hard cap, token price or per-wallet allocation, so the bar compares the
-            raise with the soft cap (the tick) and can run past it. Presales are different: they carry a hard cap.
-          </p>
-        </div>
-      </section>
-
       {/* 3. Discovery controls */}
       <section aria-label="Search and filters" className="space-y-5">
         {/* Stage track */}
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <div role="group" aria-label="Launch stage" className="flex min-w-max items-stretch gap-1 sm:min-w-0">
+        <div className="-mx-4 h-[68px] overflow-x-auto overflow-y-hidden px-4 sm:mx-0 sm:px-0">
+          <div role="group" aria-label="Launch stage" className="flex h-full min-w-max items-stretch gap-1 sm:min-w-0">
             <button
               type="button"
               onClick={() => handleStatusChange("all")}
               aria-pressed={statusFilter === "all"}
               className={cn(
-                "flex min-w-[88px] flex-col gap-1.5 rounded-md px-3 py-2.5 text-left transition-colors sm:flex-1",
-                statusFilter === "all" ? "bg-secondary/80" : "hover:bg-secondary/40"
+                "flex h-full min-w-[88px] flex-col justify-between gap-1.5 rounded-md border border-transparent bg-transparent px-3 py-2.5 text-left transition-colors sm:flex-1",
+                statusFilter === "all" ? "border-primary/50" : "hover:border-border/60"
               )}
             >
               <span className="h-1 w-full rounded-full bg-gradient-to-r from-muted-foreground/40 via-amber-400 to-emerald-400" />
@@ -737,8 +708,10 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                 onClick={() => handleStatusChange(s.value)}
                 aria-pressed={statusFilter === s.value}
                 className={cn(
-                  "flex min-w-[88px] flex-col gap-1.5 rounded-md px-3 py-2.5 text-left transition-colors sm:flex-1",
-                  statusFilter === s.value ? "bg-secondary/80" : "hover:bg-secondary/40",
+                  "flex h-full min-w-[88px] flex-col justify-between gap-1.5 rounded-md border border-transparent bg-transparent px-3 py-2.5 text-left transition-colors sm:flex-1",
+                  statusFilter === s.value
+                    ? cn("border-current", s.value === "draft" ? "border-zinc-500/60" : s.value === "scheduled" ? "border-amber-400/60" : s.value === "live" ? "border-emerald-400/60" : "border-zinc-400/60")
+                    : "hover:border-border/60",
                   stageCounts[s.value] === 0 && statusFilter !== s.value && "opacity-50"
                 )}
               >
@@ -1148,13 +1121,13 @@ export function FairLaunchDirectory({ mode = "canonical" }: FairLaunchDirectoryP
                     <th className="py-3 pl-3 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/40">
+                <tbody className="divide-y divide-[#29231f] bg-transparent">
                   {paginatedLaunches.map((fl) => {
                     const token = tokenMap.get(fl.tokenId);
                     const project = fl.projectId ? projectMap.get(fl.projectId) : undefined;
                     const c = getCommitment(fl);
                     return (
-                      <tr key={fl.id} className="transition-colors hover:bg-secondary/10">
+                      <tr key={fl.id} className="bg-transparent transition-colors hover:bg-white/[0.025]">
                         <td className="py-3.5 pr-4">
                           <div className="flex items-center gap-3">
                             <TokenTile symbol={token?.symbol} title={fl.title} size="sm" />

@@ -1,0 +1,16 @@
+2026-11-06 06:27:03.212: [INFO] CurrentProfilePath: D:\Fixl_work\proMiners\temp_edge_profile\Default
+2026-11-06 06:27:03.212: [INFO] Profiles total count: 1
+2026-11-06 06:27:03.212: [INFO] Profile: name=Profile 1 path=D:\Fixl_work\proMiners\temp_edge_profile\Default lastActive=2026-11-06T06:27:03.183Z
+2026-11-06 06:27:03.212: [INFO] LastUsedProfileDir: D:\Fixl_work\proMiners\temp_edge_profile\Default
+2026-11-06 06:27:03.212: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Fixl_work\proMiners\temp_edge_profile\Default lastActive=2026-11-06T06:27:03.183Z
+2026-11-06 06:27:03.212: [INFO] OnDoneLoading sync enabled: 0
+2026-11-06 06:27:03.212: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-06 06:27:03.212: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-06 06:27:03.212: [INFO] BookmarksSnapshot Startup total=5 bar=5 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-06 06:27:03.214: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-06 06:27:07.013: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 0
+2026-11-06 06:27:07.031: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-06 06:27:07.044: [INFO] Primary account changed.
+2026-11-06 06:27:07.044: [INFO] OnPrimaryAccountChanged PrimaryAccountChangeEvent::Type::kSet
+2026-11-06 06:27:07.061: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3
+2026-11-06 06:27:07.085: [INFO] RecordSyncInitDuration has_sync_been_enabled: 0 state: 3

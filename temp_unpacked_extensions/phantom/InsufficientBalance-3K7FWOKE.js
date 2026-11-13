@@ -1,0 +1,22 @@
+import{a as w,c as T}from"./chunk-BU3UAH3K.js";import{a as N}from"./chunk-LMZA6NIN.js";import"./chunk-5QYQRCT4.js";import{ea as E,sa as V}from"./chunk-X2DFKDEG.js";import"./chunk-7AUQ4PGY.js";import"./chunk-7LFPKPPS.js";import"./chunk-XOIHROZ2.js";import"./chunk-T6JUKBEM.js";import"./chunk-TPXGP6KR.js";import"./chunk-SIPKILVV.js";import"./chunk-3AVNFBYF.js";import"./chunk-FQXVLIFL.js";import"./chunk-72T5VA6N.js";import"./chunk-WSEUOTFC.js";import"./chunk-ZY4PWXDL.js";import"./chunk-53RA5C5C.js";import"./chunk-O6HH7URN.js";import"./chunk-EPVNAE7G.js";import"./chunk-TKEALTEN.js";import"./chunk-RGSOYWA5.js";import"./chunk-7GEPQZPC.js";import"./chunk-U6A32EFD.js";import"./chunk-PMN7274X.js";import"./chunk-5Z7HLEXX.js";import"./chunk-UO6I334U.js";import"./chunk-QX73RCOK.js";import"./chunk-NS2DCXMO.js";import"./chunk-EZ4BE2KM.js";import{c as $,d as _}from"./chunk-3IW35WFE.js";import"./chunk-PLP2XZVE.js";import{Ya as k}from"./chunk-AVAZQISO.js";import{c}from"./chunk-CJMN3KHS.js";import"./chunk-42T2VNYU.js";import"./chunk-LVK627YI.js";import"./chunk-GWI2UG5Y.js";import"./chunk-FEEGBQYP.js";import"./chunk-ECX75NJ4.js";import"./chunk-IU2N2FOI.js";import"./chunk-XPFLPV4V.js";import"./chunk-JQP3OL52.js";import"./chunk-3OBZ6LUY.js";import"./chunk-SD6LWQWG.js";import"./chunk-MSVYLZEI.js";import"./chunk-NXFIQWFW.js";import"./chunk-AAAPPUJY.js";import"./chunk-2SX244H5.js";import"./chunk-YN22CTJL.js";import"./chunk-IOXRDXUS.js";import{G as S,z as u}from"./chunk-6F56BBC3.js";import"./chunk-TWGFMXTI.js";import"./chunk-PYJSTKTI.js";import"./chunk-MPYVOXNK.js";import"./chunk-SWXHI25T.js";import"./chunk-GUIH7FSB.js";import"./chunk-62GKJ7TH.js";import"./chunk-GTTWDUTX.js";import{Od as P,mg as A,pd as C,xd as v}from"./chunk-MPQKYHWG.js";import{e as H,f as D,s as M}from"./chunk-5ONZFJ5E.js";import"./chunk-QGMIKOU5.js";import"./chunk-KO54X2FM.js";import"./chunk-2KUTQGIW.js";import"./chunk-A3V4OY5P.js";import"./chunk-BD5UCUNA.js";import"./chunk-UCNNJNLC.js";import"./chunk-J3TYUHYV.js";import{a as h,g as I,i as F,n as R}from"./chunk-UG7Z3YUN.js";F();R();var q=I(H(),1);A();var t=I(D(),1),O=c.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow-y: scroll;
+`,W=c.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 90px;
+`,j=c(k).attrs({size:28,weight:500,color:u.colors.legacy.textBase})`
+  margin: 16px;
+`,G=c(k).attrs({size:14,weight:400,lineHeight:17,color:u.colors.legacy.textDiminished})`
+  max-width: 275px;
+
+  span {
+    color: white;
+  }
+`,J=h(z=>{let e=(0,q.c)(17);if(e[0]!=="4534b1932d009957a501f72411ce28bf4f84ce6b88bdcacba7f2b1b35108b714"){for(let i=0;i<17;i+=1)e[i]=Symbol.for("react.memo_cache_sentinel");e[0]="4534b1932d009957a501f72411ce28bf4f84ce6b88bdcacba7f2b1b35108b714"}let{networkId:o,token:a}=z,{t:n}=M(),{handleHideModalVisibility:y}=V(),r;e[1]!==y?(r=h(()=>{y("insufficientBalance")},"t1"),e[1]=y,e[2]=r):r=e[2];let l=r,s;e[3]!==o?(s=o&&v(P(C.getChainID(o))),e[3]=o,e[4]=s):s=e[4];let b=s||"",f;e[5]!==b?(f={caip19:b,context:"modal",analyticsEvent:"fiatOnrampFromInsufficientBalance",entryPoint:"insufficientBalance"},e[5]=b,e[6]=f):f=e[6];let{canBuy:g,openBuy:x}=E(f),m;if(e[7]!==g||e[8]!==o||e[9]!==l||e[10]!==x||e[11]!==n||e[12]!==a){let i=o?C.getTokenSymbol(o):n("tokens"),p;e[14]===Symbol.for("react.memo_cache_sentinel")?(p=(0,t.jsx)(N,{type:"failure",backgroundWidth:75}),e[14]=p):p=e[14];let B=(0,t.jsxs)(W,{children:[p,(0,t.jsx)(j,{children:n("insufficientBalancePrimaryText",{tokenSymbol:i})}),(0,t.jsx)(G,{children:n("insufficientBalanceSecondaryText",{tokenSymbol:i})}),a?(0,t.jsxs)(S,{borderRadius:8,gap:1,marginTop:32,width:"100%",children:[(0,t.jsx)(w,{label:n("insufficientBalanceRemaining"),children:(0,t.jsx)(T,{color:u.colors.legacy.spotNegative,children:`${a.balance} ${i}`})}),(0,t.jsx)(w,{label:n("insufficientBalanceRequired"),children:(0,t.jsx)(T,{children:`${a.required} ${i}`})})]}):null]}),d;e[15]!==B?(d=(0,t.jsx)("div",{children:B}),e[15]=B,e[16]=d):d=e[16],m=(0,t.jsxs)(O,{children:[d,g?(0,t.jsx)(_,{primaryText:n("buyAssetInterpolated",{tokenSymbol:i}),onPrimaryClicked:x,secondaryText:n("commandCancel"),onSecondaryClicked:l}):(0,t.jsx)($,{onClick:l,children:n("commandCancel")})]}),e[7]=g,e[8]=o,e[9]=l,e[10]=x,e[11]=n,e[12]=a,e[13]=m}else m=e[13];return m},"InsufficientBalance"),ce=J;export{J as InsufficientBalance,ce as default};
+//# sourceMappingURL=InsufficientBalance-3K7FWOKE.js.map

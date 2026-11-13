@@ -546,16 +546,19 @@
   font-weight: 500;
   transition: color .18s ease, background .18s ease, border-color .18s ease;
 }
+
 .navbar-shell .nav-link.primary-entry:hover {
   color: var(--nav-text);
   background: var(--nav-control-bg);
   border-color: var(--nav-border);
 }
+
 .navbar-shell .nav-link.primary-entry.active {
   color: #a99aff;
   background: rgba(169, 154, 255, .11);
   border-color: rgba(169, 154, 255, .22);
 }
+
 .navbar-shell .primary-entry-arrow {
   width: 12px;
   height: 12px;
@@ -567,6 +570,7 @@
   opacity: .72;
   transition: transform .18s ease, opacity .18s ease;
 }
+
 .navbar-shell .primary-entry:hover .primary-entry-arrow {
   transform: translateX(2px);
   opacity: 1;
@@ -810,6 +814,7 @@
 
 /* Responsive Media Queries */
 @media (max-width: 1180px) {
+
   .navbar-shell,
   .navbar-shell.is-scrolled {
     left: 2%;
@@ -952,7 +957,7 @@
     height: 35px;
   }
 
-    .navbar-shell .mobile-toggle {
+  .navbar-shell .mobile-toggle {
     width: 38px;
     height: 38px;
     border: 1px solid var(--nav-border);
@@ -1000,7 +1005,7 @@
     gap: 8px;
   }
 
-    .navbar-shell .wallet-btn {
+  .navbar-shell .wallet-btn {
     padding: 0 12px;
     font-size: 13px;
   }
@@ -1013,27 +1018,37 @@
 /* NEXORA global surface language: cool graphite, subtle violet ambient light. */
 :root {
   color-scheme: dark;
-  --nx-border: rgba(150,165,205,.14);
-  --nx-border-strong: rgba(169,154,255,.34);
-  --nx-control-bg: rgba(18,24,41,.70);
+  --nx-border: rgba(150, 165, 205, .14);
+  --nx-border-strong: rgba(169, 154, 255, .34);
+  --nx-control-bg: rgba(18, 24, 41, .70);
 }
+
 html {
   background-color: var(--page-bg, var(--background));
 }
+
 body {
   background-color: var(--page-bg, var(--background));
   background-image:
-    radial-gradient(ellipse 64rem 30rem at 84% -14%, rgba(104,82,230,.075), transparent 66%),
-    radial-gradient(ellipse 44rem 24rem at -12% 92%, rgba(40,150,175,.035), transparent 66%);
+    radial-gradient(ellipse 64rem 30rem at 84% -14%, rgba(104, 82, 230, .075), transparent 66%),
+    radial-gradient(ellipse 44rem 24rem at -12% 92%, rgba(40, 150, 175, .035), transparent 66%);
   transition: background-color 300ms ease;
 }
-::selection { background: rgba(169,154,255,.28); color: var(--foreground); }
-:focus-visible { outline-color: color-mix(in srgb, var(--primary) 78%, white); }
+
+::selection {
+  background: rgba(169, 154, 255, .28);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline-color: color-mix(in srgb, var(--primary) 78%, white);
+}
+
 .light body {
   background-color: #eef1f9;
   background-image:
-    radial-gradient(ellipse 60rem 34rem at 88% 0%, rgba(132,113,226,.09), transparent 68%),
-    radial-gradient(ellipse 42rem 28rem at 0% 55%, rgba(36,158,183,.045), transparent 70%);
+    radial-gradient(ellipse 60rem 34rem at 88% 0%, rgba(132, 113, 226, .09), transparent 68%),
+    radial-gradient(ellipse 42rem 28rem at 0% 55%, rgba(36, 158, 183, .045), transparent 70%);
 }
 
 .navbar-shell.theme-light .nav-link:hover,
@@ -1044,12 +1059,14 @@ body {
 .navbar-shell.theme-light .theme-toggle:hover {
   color: #7054d9;
 }
+
 .navbar-shell.theme-light .wallet-btn-connect,
 .navbar-shell.theme-light .wallet-btn-connect:hover {
   background: #7054d9;
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(112,84,217,.22);
+  box-shadow: 0 4px 14px rgba(112, 84, 217, .22);
 }
+
 @import "../components/ecosystem-visual-polish.css";
 
 
@@ -1060,33 +1077,38 @@ body {
   background-image:
     radial-gradient(ellipse at 16% 12%, rgba(139, 119, 224, .22), transparent 42%),
     radial-gradient(ellipse at 84% 34%, rgba(88, 139, 211, .18), transparent 46%),
-    radial-gradient(1.2px 1.2px at 4% 12%, rgba(255,255,255,.92) 50%, transparent 100%),
-    radial-gradient(1px 1px at 13% 34%, rgba(255,255,255,.7) 50%, transparent 100%),
-    radial-gradient(1.4px 1.4px at 21% 7%, rgba(255,255,255,.85) 50%, transparent 100%),
-    radial-gradient(1px 1px at 29% 52%, rgba(255,255,255,.68) 50%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 37% 22%, rgba(255,255,255,.9) 50%, transparent 100%),
-    radial-gradient(1px 1px at 46% 68%, rgba(255,255,255,.72) 50%, transparent 100%),
-    radial-gradient(1.2px 1.2px at 54% 15%, rgba(255,255,255,.88) 50%, transparent 100%),
-    radial-gradient(1px 1px at 63% 43%, rgba(255,255,255,.65) 50%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 71% 9%, rgba(255,255,255,.9) 50%, transparent 100%),
-    radial-gradient(1px 1px at 80% 59%, rgba(255,255,255,.72) 50%, transparent 100%),
-    radial-gradient(1.3px 1.3px at 89% 27%, rgba(255,255,255,.85) 50%, transparent 100%),
-    radial-gradient(1px 1px at 96% 73%, rgba(255,255,255,.7) 50%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 4% 12%, rgba(255, 255, 255, .92) 50%, transparent 100%),
+    radial-gradient(1px 1px at 13% 34%, rgba(255, 255, 255, .7) 50%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 21% 7%, rgba(255, 255, 255, .85) 50%, transparent 100%),
+    radial-gradient(1px 1px at 29% 52%, rgba(255, 255, 255, .68) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 37% 22%, rgba(255, 255, 255, .9) 50%, transparent 100%),
+    radial-gradient(1px 1px at 46% 68%, rgba(255, 255, 255, .72) 50%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 54% 15%, rgba(255, 255, 255, .88) 50%, transparent 100%),
+    radial-gradient(1px 1px at 63% 43%, rgba(255, 255, 255, .65) 50%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 71% 9%, rgba(255, 255, 255, .9) 50%, transparent 100%),
+    radial-gradient(1px 1px at 80% 59%, rgba(255, 255, 255, .72) 50%, transparent 100%),
+    radial-gradient(1.3px 1.3px at 89% 27%, rgba(255, 255, 255, .85) 50%, transparent 100%),
+    radial-gradient(1px 1px at 96% 73%, rgba(255, 255, 255, .7) 50%, transparent 100%),
     var(--page-bg);
   background-attachment: fixed;
 }
+
 .route-shell.home-route .home-page,
-.route-shell.home-route .home-page > div {
+.route-shell.home-route .home-page>div {
   background-color: transparent !important;
   background-image: none !important;
 }
+
 .route-shell.home-route .route-themed-footer {
   --hwf-bg: var(--page-bg) !important;
   background-color: var(--page-bg) !important;
   background-image: none !important;
 }
+
 @media (prefers-reduced-motion: reduce) {
-  .route-shell.home-route { background-attachment: scroll; }
+  .route-shell.home-route {
+    background-attachment: scroll;
+  }
 }
 
 
@@ -1103,6 +1125,7 @@ body {
   position: relative;
   isolation: isolate;
 }
+
 .route-shell.home-route .earth-hero::after {
   content: "";
   position: absolute;
@@ -1112,13 +1135,11 @@ body {
   right: 0;
   bottom: 0;
   height: 92px;
-  background: linear-gradient(
-    180deg,
-    rgba(9, 11, 24, 0) 0%,
-    rgba(9, 11, 24, 0.16) 28%,
-    rgba(9, 11, 24, 0.48) 66%,
-    var(--page-bg) 100%
-  );
+  background: linear-gradient(180deg,
+      rgba(9, 11, 24, 0) 0%,
+      rgba(9, 11, 24, 0.16) 28%,
+      rgba(9, 11, 24, 0.48) 66%,
+      var(--page-bg) 100%);
 }
 
 
@@ -1141,10 +1162,12 @@ body {
     padding .42s cubic-bezier(.22, 1, .36, 1),
     transform .42s cubic-bezier(.22, 1, .36, 1);
 }
+
 .navbar-shell .nav-zone-brand {
   justify-content: flex-start;
   padding: 0 10px;
 }
+
 .navbar-shell .nav-links-zone {
   min-width: 0;
   display: flex;
@@ -1161,14 +1184,17 @@ body {
     padding .42s cubic-bezier(.22, 1, .36, 1),
     transform .42s cubic-bezier(.22, 1, .36, 1);
 }
+
 .navbar-shell .nav-zone-actions {
   justify-content: flex-end;
   padding: 0 8px;
 }
+
 .navbar-shell.is-scrolled::before {
   opacity: 0;
   transform: scale(.985);
 }
+
 .navbar-shell::before {
   opacity: 1;
   transition:
@@ -1180,6 +1206,7 @@ body {
     background .32s ease,
     box-shadow .38s cubic-bezier(.22, 1, .36, 1);
 }
+
 .navbar-shell.is-scrolled .nav-zone,
 .navbar-shell.is-scrolled .nav-links-zone {
   background: var(--nav-bg);
@@ -1188,26 +1215,32 @@ body {
   -webkit-backdrop-filter: blur(22px) saturate(145%);
   backdrop-filter: blur(22px) saturate(145%);
 }
+
 .navbar-shell.is-scrolled .nav-zone-brand {
   padding: 0 16px;
 }
+
 .navbar-shell.is-scrolled .nav-links-zone {
   padding: 0 12px;
 }
+
 .navbar-shell.is-scrolled .nav-zone-actions {
   padding: 0 12px;
 }
+
 .navbar-shell.is-scrolled .nav-zone-brand,
 .navbar-shell.is-scrolled .nav-links-zone,
 .navbar-shell.is-scrolled .nav-zone-actions {
   transform: translateY(0);
 }
+
 .navbar-shell.is-scrolled .navbar {
   gap: clamp(10px, 1.2vw, 20px);
 }
 
 /* Keep the compact mobile/tablet navigation behaviour unchanged. */
 @media (max-width: 1180px) {
+
   .navbar-shell .nav-zone,
   .navbar-shell .nav-links-zone {
     height: auto;
@@ -1219,6 +1252,7 @@ body {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
+
   .navbar-shell.is-scrolled .nav-zone,
   .navbar-shell.is-scrolled .nav-links-zone {
     padding: 0;
@@ -1228,13 +1262,30 @@ body {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
-  .navbar-shell .nav-zone-brand { justify-content: flex-start; }
-  .navbar-shell .nav-zone-actions { justify-content: flex-end; }
-  .navbar-shell .nav-links-zone { display: contents; }
-  .navbar-shell .nav-zone-brand { display: contents; }
-  .navbar-shell .nav-zone-actions { display: contents; }
+
+  .navbar-shell .nav-zone-brand {
+    justify-content: flex-start;
+  }
+
+  .navbar-shell .nav-zone-actions {
+    justify-content: flex-end;
+  }
+
+  .navbar-shell .nav-links-zone {
+    display: contents;
+  }
+
+  .navbar-shell .nav-zone-brand {
+    display: contents;
+  }
+
+  .navbar-shell .nav-zone-actions {
+    display: contents;
+  }
 }
+
 @media (prefers-reduced-motion: reduce) {
+
   .navbar-shell::before,
   .navbar-shell .nav-zone,
   .navbar-shell .nav-links-zone {
@@ -1250,10 +1301,12 @@ body {
 .navbar-shell.is-scrolled {
   --nav-pill-transition: 460ms cubic-bezier(.22, 1, .36, 1);
 }
+
 .navbar-shell .navbar,
 .navbar-shell.is-scrolled .navbar {
   gap: 16px !important;
 }
+
 .navbar-shell .brand,
 .navbar-shell .brand img,
 .navbar-shell.is-scrolled .brand,
@@ -1261,12 +1314,14 @@ body {
   width: 150px !important;
   min-width: 150px;
 }
+
 .navbar-shell .nav-zone,
 .navbar-shell .nav-links-zone {
   position: relative;
   isolation: isolate;
   overflow: visible;
 }
+
 .navbar-shell .nav-zone {
   padding: 0 10px !important;
   border-color: transparent !important;
@@ -1276,6 +1331,7 @@ body {
   backdrop-filter: none !important;
   transform: none !important;
 }
+
 .navbar-shell .nav-links-zone {
   padding: 0 !important;
   border-color: transparent !important;
@@ -1285,6 +1341,7 @@ body {
   backdrop-filter: none !important;
   transform: none !important;
 }
+
 .navbar-shell .nav-zone::before,
 .navbar-shell .nav-links-zone::before {
   content: "";
@@ -1306,11 +1363,13 @@ body {
     box-shadow var(--nav-pill-transition);
   pointer-events: none;
 }
+
 .navbar-shell.is-scrolled .nav-zone::before,
 .navbar-shell.is-scrolled .nav-links-zone::before {
   opacity: 1;
   transform: scale(1);
 }
+
 .navbar-shell::before,
 .navbar-shell.is-scrolled::before {
   transition:
@@ -1321,30 +1380,38 @@ body {
     box-shadow var(--nav-pill-transition),
     background-color var(--nav-pill-transition);
 }
+
 .navbar-shell.is-scrolled::before {
   opacity: 0;
   box-shadow: none;
 }
+
 .navbar-shell .nav-zone-brand::before,
 .navbar-shell .nav-zone-actions::before {
   inset: 0;
 }
+
 .navbar-shell .nav-links-zone::before {
   inset: 0;
 }
+
 .navbar-shell.is-scrolled .nav-zone-brand,
 .navbar-shell.is-scrolled .nav-links-zone,
 .navbar-shell.is-scrolled .nav-zone-actions {
   padding: 0 10px !important;
   transform: none !important;
 }
+
 @media (max-width: 1180px) {
+
   .navbar-shell .nav-zone::before,
   .navbar-shell .nav-links-zone::before {
     display: none !important;
   }
 }
+
 @media (prefers-reduced-motion: reduce) {
+
   .navbar-shell::before,
   .navbar-shell .nav-zone::before,
   .navbar-shell .nav-links-zone::before {
@@ -1355,6 +1422,7 @@ body {
 
 /* Final desktop pill sizing: compact content-width center, wider brand pill. */
 @media (min-width: 1181px) {
+
   .navbar-shell .navbar,
   .navbar-shell.is-scrolled .navbar {
     display: grid !important;
@@ -1410,6 +1478,7 @@ body {
 
 /* Remove visible outlines from the three floating navbar pills. */
 @media (min-width: 1181px) {
+
   .navbar-shell .nav-zone-brand::before,
   .navbar-shell .nav-links-zone::before,
   .navbar-shell .nav-zone-actions::before,
@@ -1452,8 +1521,13 @@ body {
 }
 
 @keyframes hx-route-enter {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .route-loading-indicator {
@@ -1474,19 +1548,22 @@ body {
   width: 38%;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--primary),
-    var(--brand-to),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      var(--primary),
+      var(--brand-to),
+      transparent);
   animation: hx-route-loading 1.05s cubic-bezier(.4, 0, .2, 1) infinite;
 }
 
 @keyframes hx-route-loading {
-  from { transform: translateX(-110%); }
-  to { transform: translateX(280%); }
+  from {
+    transform: translateX(-110%);
+  }
+
+  to {
+    transform: translateX(280%);
+  }
 }
 
 .route-suspense-fallback {
@@ -1510,12 +1587,10 @@ body {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--foreground) 7%, transparent),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      transparent);
   animation: hx-skeleton-shimmer 1.35s ease-in-out infinite;
 }
 
@@ -1542,19 +1617,23 @@ body {
 }
 
 @keyframes hx-skeleton-shimmer {
-  to { transform: translateX(100%); }
+  to {
+    transform: translateX(100%);
+  }
 }
 
 @media (max-width: 640px) {
   .route-skeleton-grid {
     grid-template-columns: 1fr;
   }
+
   .route-skeleton-card {
     min-height: 112px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .route-page-transition,
   .route-loading-indicator::after,
   .route-skeleton::after {
@@ -1564,7 +1643,7 @@ body {
 
 /* Explore's fixed-navbar clearance uses the same black canvas as its orbital hero.
    Scope this to the Explore route so the shared graphite theme is unchanged elsewhere. */
-.route-shell.explore-route > .route-main {
+.route-shell.explore-route>.route-main {
   background-color: #000 !important;
 }
 
@@ -1592,17 +1671,19 @@ body {
   min-width: 0;
   overflow-x: clip;
 }
-.route-shell.projects-route > .route-main,
+
+.route-shell.projects-route>.route-main,
 .route-shell.projects-route .route-page-transition {
   width: 100%;
   max-width: 100%;
   min-width: 0;
   overflow-x: clip;
 }
+
 .route-shell.projects-route .project-directory-context,
-.route-shell.projects-route .project-directory-context > *,
+.route-shell.projects-route .project-directory-context>*,
 .route-shell.projects-route .grid,
-.route-shell.projects-route .grid > *,
+.route-shell.projects-route .grid>*,
 .route-shell.projects-route main section {
   min-width: 0;
 }
@@ -1630,7 +1711,8 @@ nav.hx-workspace-nav {
   border-bottom: 1px solid var(--border) !important;
   overflow: visible;
 }
-nav.hx-workspace-nav > .hx-workspace-nav__links {
+
+nav.hx-workspace-nav>.hx-workspace-nav__links {
   display: flex;
   flex: 1 1 auto;
   align-items: stretch;
@@ -1641,10 +1723,12 @@ nav.hx-workspace-nav > .hx-workspace-nav__links {
   overflow-y: hidden;
   scrollbar-width: none;
 }
-nav.hx-workspace-nav > .hx-workspace-nav__links::-webkit-scrollbar {
+
+nav.hx-workspace-nav>.hx-workspace-nav__links::-webkit-scrollbar {
   display: none;
 }
-nav.hx-workspace-nav .hx-workspace-nav__links > a {
+
+nav.hx-workspace-nav .hx-workspace-nav__links>a {
   position: relative;
   display: inline-flex;
   flex: 0 0 auto;
@@ -1662,13 +1746,15 @@ nav.hx-workspace-nav .hx-workspace-nav__links > a {
   white-space: nowrap;
   transition: color 150ms ease;
 }
-nav.hx-workspace-nav .hx-workspace-nav__links > a:hover,
-nav.hx-workspace-nav .hx-workspace-nav__links > a.is-active,
-nav.hx-workspace-nav .hx-workspace-nav__links > a[aria-current="page"] {
+
+nav.hx-workspace-nav .hx-workspace-nav__links>a:hover,
+nav.hx-workspace-nav .hx-workspace-nav__links>a.is-active,
+nav.hx-workspace-nav .hx-workspace-nav__links>a[aria-current="page"] {
   color: var(--foreground);
 }
-nav.hx-workspace-nav .hx-workspace-nav__links > a.is-active::after,
-nav.hx-workspace-nav .hx-workspace-nav__links > a[aria-current="page"]::after {
+
+nav.hx-workspace-nav .hx-workspace-nav__links>a.is-active::after,
+nav.hx-workspace-nav .hx-workspace-nav__links>a[aria-current="page"]::after {
   position: absolute;
   right: .375rem;
   bottom: -1px;
@@ -1678,7 +1764,8 @@ nav.hx-workspace-nav .hx-workspace-nav__links > a[aria-current="page"]::after {
   background: var(--primary);
   content: "";
 }
-nav.hx-workspace-nav > .hx-workspace-nav__actions {
+
+nav.hx-workspace-nav>.hx-workspace-nav__actions {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
@@ -1688,13 +1775,15 @@ nav.hx-workspace-nav > .hx-workspace-nav__actions {
   height: 100%;
   padding: 0;
 }
-nav.hx-workspace-nav > .tk-section-nav__create,
-nav.hx-workspace-nav > .lp-section-nav__create,
-nav.hx-workspace-nav > .ad-section-nav__create {
+
+nav.hx-workspace-nav>.tk-section-nav__create,
+nav.hx-workspace-nav>.lp-section-nav__create,
+nav.hx-workspace-nav>.ad-section-nav__create {
   align-self: center;
   flex: 0 0 auto;
   margin: 0;
 }
+
 nav.hx-workspace-nav .hx-workspace-nav__actions a:not([class*="create"]) {
   display: inline-flex;
   align-items: center;
@@ -1706,6 +1795,7 @@ nav.hx-workspace-nav .hx-workspace-nav__actions a:not([class*="create"]) {
   text-decoration: none;
   white-space: nowrap;
 }
+
 nav.hx-workspace-nav .hx-workspace-nav__actions a:not([class*="create"]):hover {
   color: var(--foreground);
 }
@@ -1736,18 +1826,21 @@ body:has(.route-shell.projects-route) {
   overflow-x: clip !important;
   max-width: 100%;
 }
+
 .route-shell.projects-route {
   width: 100%;
   max-width: 100%;
   min-width: 0;
   overflow-x: clip;
 }
-.route-shell.projects-route > .route-main,
+
+.route-shell.projects-route>.route-main,
 .route-shell.projects-route .route-page-transition {
   min-width: 0;
   max-width: 100%;
   overflow-x: clip;
 }
+
 /* Do not clip the Projects nav at its padded content wrapper: the shared
    full-bleed dividers must be allowed to reach the viewport edges. The outer
    route boundary above still prevents document-level horizontal scrolling. */
@@ -1757,18 +1850,24 @@ body:has(.route-shell.projects-route) {
   max-width: 100%;
   overflow-x: visible;
 }
+
 @media (max-width: 760px) {
   nav.hx-workspace-nav {
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
   }
-  nav.hx-workspace-nav::-webkit-scrollbar { display: none; }
-  nav.hx-workspace-nav > .hx-workspace-nav__links {
+
+  nav.hx-workspace-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  nav.hx-workspace-nav>.hx-workspace-nav__links {
     flex: 0 0 auto;
     overflow: visible;
   }
-  nav.hx-workspace-nav > .hx-workspace-nav__actions {
+
+  nav.hx-workspace-nav>.hx-workspace-nav__actions {
     flex: 0 0 auto;
   }
 }
@@ -1785,6 +1884,7 @@ body:has(.route-shell.projects-route) {
   -webkit-backdrop-filter: blur(30px) saturate(155%) !important;
   backdrop-filter: blur(30px) saturate(155%) !important;
 }
+
 .navbar-shell {
   z-index: 40 !important;
 }
@@ -1795,12 +1895,15 @@ body:has(.route-shell.projects-route) {
   min-height: 680px;
   isolation: isolate;
 }
+
 .hx-gemini-effect {
   min-height: 640px;
 }
-.hx-gemini-effect > svg {
+
+.hx-gemini-effect>svg {
   z-index: 1;
 }
+
 .hx-gemini-feature-rail {
   position: absolute;
   z-index: 12;
@@ -1809,15 +1912,26 @@ body:has(.route-shell.projects-route) {
   gap: clamp(3.4rem, 5.8vw, 5.2rem);
   width: min(20.5vw, 18.5rem);
 }
-.hx-gemini-feature-rail--left { left: clamp(1.5rem, 4.1vw, 4.5rem); }
-.hx-gemini-feature-rail--right { right: clamp(1.5rem, 4.1vw, 4.5rem); }
+
+.hx-gemini-feature-rail--left {
+  left: clamp(1.5rem, 4.1vw, 4.5rem);
+}
+
+.hx-gemini-feature-rail--right {
+  right: clamp(1.5rem, 4.1vw, 4.5rem);
+}
+
 .hx-gemini-feature {
   display: flex;
   min-width: 0;
   align-items: center;
   gap: .8rem;
 }
-.hx-gemini-feature--right { flex-direction: row; }
+
+.hx-gemini-feature--right {
+  flex-direction: row;
+}
+
 .hx-gemini-feature__icon {
   display: grid;
   width: 3.25rem;
@@ -1830,8 +1944,18 @@ body:has(.route-shell.projects-route) {
   background: rgba(7, 10, 24, .84);
   box-shadow: 0 0 18px color-mix(in srgb, var(--feature-color) 12%, transparent), inset 0 0 14px color-mix(in srgb, var(--feature-color) 5%, transparent);
 }
-.hx-gemini-feature__icon svg { width: 1.35rem; height: 1.35rem; stroke-width: 1.8; }
-.hx-gemini-feature__content { min-width: 0; flex: 1 1 auto; }
+
+.hx-gemini-feature__icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke-width: 1.8;
+}
+
+.hx-gemini-feature__content {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .hx-gemini-feature__meta {
   display: flex;
   align-items: center;
@@ -1843,7 +1967,13 @@ body:has(.route-shell.projects-route) {
   line-height: 1;
   white-space: nowrap;
 }
-.hx-gemini-feature__meta strong { overflow: hidden; font-weight: 650; text-overflow: ellipsis; }
+
+.hx-gemini-feature__meta strong {
+  overflow: hidden;
+  font-weight: 650;
+  text-overflow: ellipsis;
+}
+
 .hx-gemini-feature__value {
   flex: 0 0 auto;
   color: #f4f5ff;
@@ -1851,14 +1981,16 @@ body:has(.route-shell.projects-route) {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+
 .hx-gemini-feature__track {
   position: relative;
   height: .62rem;
   overflow: hidden;
   border-radius: 999px;
   background: color-mix(in srgb, var(--feature-color) 25%, rgba(20, 25, 45, .92));
-  box-shadow: inset 0 1px 3px rgba(0,0,0,.38);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .38);
 }
+
 .hx-gemini-feature__fill {
   position: absolute;
   inset: 0;
@@ -1868,39 +2000,360 @@ body:has(.route-shell.projects-route) {
   box-shadow: 0 0 12px color-mix(in srgb, var(--feature-color) 50%, transparent);
   transform-origin: left center;
 }
-.hx-gemini-feature--right .hx-gemini-feature__meta { flex-direction: row; }
-.hx-gemini-feature--right .hx-gemini-feature__meta strong { order: 2; }
-.hx-gemini-feature--right .hx-gemini-feature__meta .hx-gemini-feature__value { order: 1; }
-.hx-gemini-feature--right .hx-gemini-feature__track { direction: rtl; }
-.hx-gemini-feature--right .hx-gemini-feature__fill { transform-origin: right center; }
-@media (max-width: 1100px) {
-  .hx-gemini-feature-rail { width: min(23vw, 15rem); }
-  .hx-gemini-feature__icon { width: 2.65rem; height: 2.65rem; flex-basis: 2.65rem; }
-  .hx-gemini-feature__meta { font-size: .76rem; }
-  .hx-gemini-feature__value { font-size: .72rem; }
+
+.hx-gemini-feature--right .hx-gemini-feature__meta {
+  flex-direction: row;
 }
+
+.hx-gemini-feature--right .hx-gemini-feature__meta strong {
+  order: 2;
+}
+
+.hx-gemini-feature--right .hx-gemini-feature__meta .hx-gemini-feature__value {
+  order: 1;
+}
+
+.hx-gemini-feature--right .hx-gemini-feature__track {
+  direction: rtl;
+}
+
+.hx-gemini-feature--right .hx-gemini-feature__fill {
+  transform-origin: right center;
+}
+
+@media (max-width: 1100px) {
+  .hx-gemini-feature-rail {
+    width: min(23vw, 15rem);
+  }
+
+  .hx-gemini-feature__icon {
+    width: 2.65rem;
+    height: 2.65rem;
+    flex-basis: 2.65rem;
+  }
+
+  .hx-gemini-feature__meta {
+    font-size: .76rem;
+  }
+
+  .hx-gemini-feature__value {
+    font-size: .72rem;
+  }
+}
+
 @media (max-width: 760px) {
-  .hx-gemini-section { min-height: 760px; }
-  .hx-gemini-effect { min-height: 720px; }
+  .hx-gemini-section {
+    min-height: 760px;
+  }
+
+  .hx-gemini-effect {
+    min-height: 720px;
+  }
+
   .hx-gemini-feature-rail {
     top: 27rem;
     width: calc(50% - 2rem);
     gap: 1.25rem;
   }
-  .hx-gemini-feature-rail--left { left: 1rem; }
-  .hx-gemini-feature-rail--right { right: 1rem; }
-  .hx-gemini-feature { gap: .45rem; }
-  .hx-gemini-feature__icon { width: 2rem; height: 2rem; flex-basis: 2rem; border-radius: 9px; }
-  .hx-gemini-feature__icon svg { width: 1rem; height: 1rem; }
-  .hx-gemini-feature__meta { font-size: .65rem; margin-bottom: .35rem; }
-  .hx-gemini-feature__value { font-size: .62rem; }
-  .hx-gemini-feature__track { height: .38rem; }
-  .hx-gemini-effect > svg { top: 14rem; width: 150%; }
+
+  .hx-gemini-feature-rail--left {
+    left: 1rem;
+  }
+
+  .hx-gemini-feature-rail--right {
+    right: 1rem;
+  }
+
+  .hx-gemini-feature {
+    gap: .45rem;
+  }
+
+  .hx-gemini-feature__icon {
+    width: 2rem;
+    height: 2rem;
+    flex-basis: 2rem;
+    border-radius: 9px;
+  }
+
+  .hx-gemini-feature__icon svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .hx-gemini-feature__meta {
+    font-size: .65rem;
+    margin-bottom: .35rem;
+  }
+
+  .hx-gemini-feature__value {
+    font-size: .62rem;
+  }
+
+  .hx-gemini-feature__track {
+    height: .38rem;
+  }
+
+  .hx-gemini-effect>svg {
+    top: 14rem;
+    width: 150%;
+  }
 }
+
 @media (max-width: 420px) {
-  .hx-gemini-feature-rail { width: calc(50% - 1.25rem); }
-  .hx-gemini-feature-rail--left { left: .65rem; }
-  .hx-gemini-feature-rail--right { right: .65rem; }
-  .hx-gemini-feature__icon { display: none; }
-  .hx-gemini-feature__meta { font-size: .6rem; }
+  .hx-gemini-feature-rail {
+    width: calc(50% - 1.25rem);
+  }
+
+  .hx-gemini-feature-rail--left {
+    left: .65rem;
+  }
+
+  .hx-gemini-feature-rail--right {
+    right: .65rem;
+  }
+
+  .hx-gemini-feature__icon {
+    display: none;
+  }
+
+  .hx-gemini-feature__meta {
+    font-size: .6rem;
+  }
+}
+
+/* ==========================================================================
+   Centralized Stacking Context & Modal Hierarchy Specification
+   ========================================================================== */
+:root {
+  --z-page-content: 10;
+  --z-scroll-top: 30;
+  --z-nav-glass: 39;
+  --z-nav-sticky: 40;
+  --z-route-loading: 45;
+  --z-dropdowns: 50;
+  --z-dialogs-general: 100;
+  --z-wallet-overlay: 200;
+  --z-wallet-modal: 201;
+  --z-wallet-child-overlay: 219;
+  --z-wallet-child-modal: 220;
+  --z-critical-overlay: 239;
+  --z-critical-modal: 240;
+}
+
+/* Wallet Modal Standardized Overlay Specification */
+.hx-wallet-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 200 !important;
+  background: rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  pointer-events: auto !important;
+}
+
+/* Wallet Modal Standardized Shell Specification */
+.hx-wallet-modal-content {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  translate: 0 0 !important;
+  --tw-translate-x: 0 !important;
+  --tw-translate-y: 0 !important;
+  z-index: 201 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  border-radius: 1.25rem !important;
+  /* 20px */
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(18, 16, 15, 0.96) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+  color: #F3F4F6 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+  outline: none !important;
+
+  /* Mobile (< 768px): Width calc(100vw - 24px), Max Height calc(100dvh - 24px) */
+  width: calc(100vw - 24px) !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: calc(100dvh - 24px) !important;
+}
+
+/* Tablet (768px - 1023px): Width calc(100vw - 40px), Max Width 560px, Max Height calc(100dvh - 32px) */
+@media (min-width: 768px) {
+  .hx-wallet-modal-content {
+    width: calc(100vw - 40px) !important;
+    max-width: 560px !important;
+    max-height: calc(100dvh - 32px) !important;
+  }
+}
+
+/* Desktop (>= 1024px): Width 560px, Max Width calc(100vw - 32px), Max Height calc(100dvh - 48px) */
+@media (min-width: 1024px) {
+  .hx-wallet-modal-content {
+    width: 560px !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100dvh - 48px) !important;
+  }
+}
+
+/* Child / Nested Dialog Layering (e.g. Send / Receive modals) */
+.hx-wallet-child-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 219 !important;
+  background: rgba(0, 0, 0, 0.82) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+.hx-wallet-child-content {
+  z-index: 220 !important;
+}
+
+/* Standardized Modal Header (64px) */
+.hx-wallet-modal-header {
+  height: 64px !important;
+  min-height: 64px !important;
+  max-height: 64px !important;
+  padding: 0 1.25rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Standardized Modal Scrollable Body */
+.hx-wallet-modal-body {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  padding: 1.25rem !important;
+  box-sizing: border-box !important;
+}
+
+/* ==========================================================================
+   Wallet modal layout refinement — shared by overview and multi-chain views
+   ========================================================================== */
+
+/* Use one predictable desktop canvas for both wallet screens. */
+.hx-wallet-modal-content {
+  width: min(600px, calc(100vw - 32px)) !important;
+  max-width: 600px !important;
+  max-height: min(760px, calc(100dvh - 40px)) !important;
+  border-radius: 20px !important;
+  background: #12100f !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.72),
+    0 1px 0 rgba(255, 255, 255, 0.035) inset !important;
+}
+
+/* Both wallet headers have two direct children. Keep them on one row.
+   This explicitly overrides DialogHeader's default flex-column direction. */
+.hx-wallet-modal-header {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 20px !important;
+  text-align: left !important;
+}
+
+.hx-wallet-modal-header > div:first-child {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+
+.hx-wallet-modal-header > div:last-child {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  width: auto !important;
+  min-width: max-content !important;
+  margin: 0 !important;
+}
+
+.hx-wallet-modal-header [data-slot="dialog-title"],
+.hx-wallet-modal-header [data-slot="dialog-description"] {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  text-align: left !important;
+}
+
+.hx-wallet-modal-header [data-slot="dialog-title"] {
+  line-height: 1.2 !important;
+}
+
+.hx-wallet-modal-header [data-slot="dialog-description"] {
+  margin-top: 3px !important;
+  line-height: 1.35 !important;
+}
+
+/* Consistent body rhythm and prevent content from touching the shell edges. */
+.hx-wallet-modal-body {
+  min-height: 0 !important;
+  padding: 20px !important;
+  gap: 16px !important;
+}
+
+/* Keep the modal backdrop neutral black rather than blue-tinted. */
+.hx-wallet-modal-overlay {
+  background: rgba(0, 0, 0, 0.82) !important;
+  backdrop-filter: blur(5px) saturate(0.55) !important;
+  -webkit-backdrop-filter: blur(5px) saturate(0.55) !important;
+}
+
+@media (min-width: 768px) {
+  .hx-wallet-modal-content {
+    width: min(600px, calc(100vw - 48px)) !important;
+    max-width: 600px !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .hx-wallet-modal-content {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    border-radius: 16px !important;
+  }
+
+  .hx-wallet-modal-header {
+    gap: 8px !important;
+    padding: 0 14px !important;
+  }
+
+  .hx-wallet-modal-header > div:first-child {
+    gap: 8px !important;
+  }
+
+  .hx-wallet-modal-header > div:last-child {
+    gap: 6px !important;
+  }
+
+  .hx-wallet-modal-body {
+    padding: 14px !important;
+  }
 }

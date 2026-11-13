@@ -1,0 +1,2 @@
+import{a as o,i as e,n as t}from"./chunk-UG7Z3YUN.js";e();t();e();t();function n(){if(typeof WebSocket<"u")return WebSocket;if(typeof self.WebSocket<"u"||typeof self.WebSocket<"u"||typeof self.WebSocket<"u")return self.WebSocket;throw new Error("`WebSocket` is not supported in this environment")}o(n,"getNativeWebSocket");var S=n();export{S as WebSocket};
+//# sourceMappingURL=native-EQ5N7JLS.js.map

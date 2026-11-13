@@ -1,5 +1,5 @@
 import "@/components/shared/entity-detail.css";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { TokenSectionNav } from "@/components/tokens/token-section-nav";
 import { TokenDetailTabs } from "@/components/tokens/token-detail-tabs";
 import { ArrowDownUp, ExternalLink, Share2, Sliders } from "lucide-react";
@@ -294,6 +294,7 @@ export function TokenDetail({ token }: { token: TokenWithMarket }) {
   const { isConnected, address } = useWallet();
   const [range, setRange] = useState<ChartRange>("7D");
   const [tab, setTab] = useState<TabId>("overview");
+  const [tradePage, setTradePage] = useState(1);
 
   const series = useMemo(() => simulatedSeries(token, range), [token, range]);
   const lows = useMemo(() => {
@@ -320,6 +321,17 @@ export function TokenDetail({ token }: { token: TokenWithMarket }) {
   const allocations = useMemo(() => simulatedAllocations(token), [token]);
   const holders = useMemo(() => simulatedHolders(token), [token]);
   const trades = useMemo(() => simulatedTrades(token), [token]);
+  const tradesPerPage = 8;
+  const tradeTotalPages = Math.max(1, Math.ceil(trades.length / tradesPerPage));
+  const safeTradePage = Math.min(tradePage, tradeTotalPages);
+  const paginatedTrades = trades.slice(
+    (safeTradePage - 1) * tradesPerPage,
+    safeTradePage * tradesPerPage
+  );
+
+  useEffect(() => {
+    setTradePage(1);
+  }, [token.id]);
 
   const allocationRows: AllocationRow[] = allocations.map((a) => ({
     label: a.label,
@@ -512,7 +524,42 @@ export function TokenDetail({ token }: { token: TokenWithMarket }) {
                   <p className="tk-note">
                     <ProvenanceTag kind="simulated" label="Simulated trades" /> Illustrative transactions with masked identifiers. They are not linked to real wallets or transaction hashes.
                   </p>
-                  <DataTable caption={`${token.symbol} recent simulated trades`} columns={tradeCols} rows={trades} rowKey={(t) => t.id} dense />
+                  <DataTable caption={`${token.symbol} recent simulated trades`} columns={tradeCols} rows={paginatedTrades} rowKey={(t) => t.id} dense />
+                  {tradeTotalPages > 1 && (
+                    <nav
+                      className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4"
+                      aria-label="Recent trades pagination"
+                    >
+                      <p className="text-xs text-muted-foreground">
+                        Showing{" "}
+                        <span className="font-semibold text-foreground">
+                          {(safeTradePage - 1) * tradesPerPage + 1}–{Math.min(safeTradePage * tradesPerPage, trades.length)}
+                        </span>{" "}
+                        of <span className="font-semibold text-foreground">{trades.length}</span> trades
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setTradePage((page) => Math.max(1, page - 1))}
+                          disabled={safeTradePage === 1}
+                          className="inline-flex items-center justify-center rounded-lg border border-border/70 bg-card/40 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 disabled:pointer-events-none disabled:opacity-40"
+                        >
+                          Previous
+                        </button>
+                        <span className="px-1 text-xs text-muted-foreground" aria-live="polite">
+                          Page <span className="font-semibold text-foreground">{safeTradePage}</span> of {tradeTotalPages}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setTradePage((page) => Math.min(tradeTotalPages, page + 1))}
+                          disabled={safeTradePage === tradeTotalPages}
+                          className="inline-flex items-center justify-center rounded-lg border border-border/70 bg-card/40 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/50 hover:bg-primary/10 disabled:pointer-events-none disabled:opacity-40"
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </nav>
+                  )}
                 </>
               )}
             </div>

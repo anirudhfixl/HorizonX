@@ -12,6 +12,8 @@ export function AppShell() {
   const isHomeRoute = pathname === "/";
   const isExploreRoute = pathname === "/explore" || pathname.startsWith("/explore/");
   const isProjectsRoute = pathname === "/projects" || pathname.startsWith("/projects/");
+  // Let the footer follow token-detail content instead of flex-filling short tabs.
+  const isTokenDetailRoute = /^\/tokens\/[^/]+(?:\/(?:activity|contract))?\/?$/.test(pathname);
   const theme = getRouteTheme(pathname);
 
   useEffect(() => {
@@ -29,7 +31,7 @@ export function AppShell() {
         <TopNav />
       </Suspense>
 
-      <main className={`route-main min-w-0 flex-1 ${isHomeRoute ? "pt-0" : "pt-[84px] sm:pt-[84px]"} pb-0`}>
+      <main className={`route-main min-w-0 ${isTokenDetailRoute ? "flex-none" : "flex-1"} ${isHomeRoute ? "pt-0" : "pt-[84px] sm:pt-[84px]"} pb-0`}>
         <div key={pathname} className="route-page-transition">
           <Suspense
             fallback={

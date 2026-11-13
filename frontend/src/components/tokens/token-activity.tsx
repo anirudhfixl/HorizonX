@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
-import { TokenDetailShell } from "./token-detail-shell";
 import { getExplorerBaseUrl, isSepoliaNetwork } from "@/components/tokens/token-profile";
 import { cn } from "@/lib/utils";
 import { TOKENOMICS_ALLOCATION_TEMPLATES } from "@/data";
@@ -189,7 +188,6 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 
 export function TokenActivity({
   token,
-  project,
   presales,
   fairLaunches,
   airdrops,
@@ -251,7 +249,7 @@ export function TokenActivity({
   const illustrativeAllocations = TOKENOMICS_ALLOCATION_TEMPLATES;
 
   return (
-    <TokenDetailShell token={token} project={project} activeTab="activity">
+    <>
       <div className="space-y-8">
         <section className="grid gap-3 sm:grid-cols-3" aria-label="Activity summary">
           {[
@@ -485,6 +483,6 @@ export function TokenActivity({
           Ethereum Sepolia (Chain ID 11155111) is the only network supported for Web3 wallet connectivity. To verify real-time holder counts and token transfers, use the official Sepolia Etherscan explorer.
         </p>
       </div>
-    </TokenDetailShell>
+    </>
   );
 }

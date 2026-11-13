@@ -219,7 +219,7 @@ const HWF_CSS = `
 .hwf-col a:hover { opacity: 1; background-size: 100% 1px; color: var(--hwf-warm, var(--footer-warm, var(--primary))); }
 .hwf-col a:focus-visible { outline: 1px solid var(--hwf-warm, var(--footer-warm, var(--primary))); outline-offset: 3px; opacity: 1; }
 .hwf-floating-up {
-  position: fixed; right: 26px; bottom: 26px; z-index: 1200;
+  position: fixed; right: 26px; bottom: 26px; z-index: 30;
   display: grid; place-items: center; width: 68px; height: 68px;
   border: 1px solid rgba(17, 24, 39, .12); border-radius: 9999px;
   background: #E7E9EE; color: #111827;

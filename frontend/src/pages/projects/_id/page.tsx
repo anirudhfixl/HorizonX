@@ -92,6 +92,7 @@ const VERIFICATION: Record<string, { label: string; text: string; cls: string; d
 
 export default function ProjectDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
+  const [activeSection, setActiveSection] = React.useState<"tokens" | "activity" | "partners">("tokens");
   const { data: project, isLoading: projectLoading } = useProject(id);
   const { data: allProjects = [] } = useProjects();
   const { data: allTokens = [] } = useTokens();
@@ -256,9 +257,9 @@ export default function ProjectDetailPage() {
   ];
 
   const sections = [
-    { href: "#tokens", label: `Tokens & market (${linkedTokens.length})` },
-    { href: "#activity", label: `Activity (${activity.length})` },
-    { href: "#partners", label: `Partners (${linkedPartners.length})` },
+    { id: "tokens" as const, label: `Tokens & market (${linkedTokens.length})` },
+    { id: "activity" as const, label: `Activity (${activity.length})` },
+    { id: "partners" as const, label: `Partners (${linkedPartners.length})` },
   ];
 
   return (
@@ -332,26 +333,43 @@ export default function ProjectDetailPage() {
         </dl>
       </header>
 
-      {/* 2. Section anchors */}
-      <nav
-        aria-label="Project sections"
-        className="sticky top-[84px] z-20 -mx-4 flex gap-2 overflow-x-auto border-b border-border/50 bg-background/90 px-4 backdrop-blur-md sm:mx-0 sm:px-0"
+      {/* 2. Project content tabs */}
+      <div
+        role="tablist"
+        aria-label="Project information"
+        className="sticky top-[130px] z-30 -mx-4 flex gap-2 overflow-x-auto border-b border-border/50 bg-background/95 px-4 backdrop-blur-md sm:mx-0 sm:px-0"
       >
-        {sections.map((s) => (
-          <a
-            key={s.href}
-            href={s.href}
-            className="shrink-0 whitespace-nowrap border-b-2 border-transparent px-4 py-3.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+        {sections.map((section) => (
+          <button
+            key={section.id}
+            type="button"
+            role="tab"
+            id={`project-tab-${section.id}`}
+            aria-selected={activeSection === section.id}
+            aria-controls={`project-panel-${section.id}`}
+            onClick={() => setActiveSection(section.id)}
+            className={cn(
+              "shrink-0 whitespace-nowrap border-b-2 px-4 py-3.5 text-sm font-medium transition-colors",
+              activeSection === section.id
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground hover:border-primary/50"
+            )}
           >
-            {s.label}
-          </a>
+            {section.label}
+          </button>
         ))}
-      </nav>
+      </div>
 
-      <div className="grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_360px] 2xl:grid-cols-[minmax(0,1fr)_390px] 2xl:gap-12">
+      <div className="min-w-0 space-y-10">
         <div className="min-w-0 space-y-12">
           {/* Tokens & contracts */}
-          <section id="tokens" className="scroll-mt-36 space-y-5">
+          <section
+              id="project-panel-tokens"
+              role="tabpanel"
+              aria-labelledby="project-tab-tokens"
+              hidden={activeSection !== "tokens"}
+              className="space-y-5"
+            >
             <div className="flex items-end justify-between gap-3">
               <h2 className="flex items-center gap-2 text-xl font-bold text-foreground">
                 <FileCode2 className="h-5 w-5 text-primary" /> Tokens &amp; live market
@@ -458,7 +476,13 @@ export default function ProjectDetailPage() {
           </section>
 
           {/* Activity */}
-          <section id="activity" className="scroll-mt-36 space-y-5">
+          <section
+              id="project-panel-activity"
+              role="tabpanel"
+              aria-labelledby="project-tab-activity"
+              hidden={activeSection !== "activity"}
+              className="space-y-5"
+            >
             <div className="flex items-end justify-between gap-3">
               <h2 className="flex items-center gap-2 text-xl font-bold text-foreground">
                 <Activity className="h-5 w-5 text-primary" /> Launch, reward &amp; staking activity
@@ -504,7 +528,13 @@ export default function ProjectDetailPage() {
           </section>
 
           {/* Verified Partners */}
-          <section id="partners" className="scroll-mt-36 space-y-5">
+          <section
+              id="project-panel-partners"
+              role="tabpanel"
+              aria-labelledby="project-tab-partners"
+              hidden={activeSection !== "partners"}
+              className="space-y-5"
+            >
             <div className="flex items-end justify-between gap-3">
               <h2 className="flex items-center gap-2 text-xl font-bold text-foreground">
                 <Handshake className="h-5 w-5 text-primary" /> Verified ecosystem partners
@@ -562,100 +592,100 @@ export default function ProjectDetailPage() {
           </section>
         </div>
 
-        {/* 3. Side rail */}
-        <aside className="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:sticky xl:top-32 xl:grid-cols-1 xl:self-start">
-          <section aria-labelledby="verification-heading" className="space-y-3">
-            <h2 id="verification-heading" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Verification
-            </h2>
-            {verification ? (
-              <div className={cn("space-y-2 rounded-2xl border p-4", verification.cls)}>
-                <div className={cn("flex items-center gap-2 text-sm font-semibold", verification.text)}>
-                  <ShieldCheck className="h-5 w-5 shrink-0" />
-                  {verification.label}
-                </div>
-                <p className="text-xs leading-relaxed text-muted-foreground">{verification.description}</p>
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground">No verification information is recorded for this project.</p>
-            )}
-          </section>
-
-          <section aria-labelledby="networks-heading" className="space-y-3">
-            <h2 id="networks-heading" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Networks
-            </h2>
-            {networks.length > 0 ? (
-              <ul className="divide-y divide-border/40 text-xs">
-                {networks.map((n) => (
-                  <li key={n} className="flex items-center justify-between gap-3 py-2.5">
-                    <span className="text-foreground">{n}</span>
-                    {isSepolia(n) ? (
-                      <span className="font-mono text-[11px] text-primary">Supported · D-04</span>
-                    ) : (
-                      <span className="text-[11px] text-muted-foreground">Catalog origin</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs text-muted-foreground">No network information is recorded.</p>
-            )}
-            <p className="text-[11px] leading-relaxed text-muted-foreground/80">
-              Per D-04, Ethereum Sepolia (11155111) is the only supported wallet network. Other networks reflect protocol
-              origin and do not imply wallet or transaction support.
-            </p>
-          </section>
-
-          <section aria-labelledby="links-heading" className="space-y-3">
-            <h2 id="links-heading" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Links
-            </h2>
-            {project.websiteUrl || socialEntries.length > 0 ? (
-              <ul className="divide-y divide-border/40 text-xs">
-                {project.websiteUrl && (
-                  <li>
-                    <a
-                      href={project.websiteUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between gap-3 py-2.5 text-foreground transition-colors hover:text-primary"
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                        <span className="truncate">{project.websiteUrl.replace(/^https?:\/\//, "")}</span>
-                      </span>
-                      <ExternalLink className="h-3 w-3 shrink-0" />
-                    </a>
-                  </li>
-                )}
-                {socialEntries.map(([name, url]) => (
-                  <li key={name}>
-                    <a
-                      href={url as string}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between gap-3 py-2.5 capitalize text-foreground transition-colors hover:text-primary"
-                    >
-                      <span>{name}</span>
-                      <ExternalLink className="h-3 w-3 shrink-0" />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs text-muted-foreground">No links are listed for this project.</p>
-            )}
-          </section>
-
-          <p className="flex items-start gap-2 text-[11px] leading-relaxed text-muted-foreground/80">
-            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-            <span>
-              Demonstration data: project details, verification tiers and linked records are simulated for Phase 1.
-            </span>
-          </p>
-        </aside>
       </div>
+
+      {/* Project-level information consolidated into the main details table */}
+      <section aria-labelledby="project-information-heading" className="min-w-0 space-y-4">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Project details</p>
+            <h2 id="project-information-heading" className="mt-1 text-xl font-bold text-foreground">
+              Verification &amp; ecosystem information
+            </h2>
+          </div>
+          <span className="text-xs text-muted-foreground">Project metadata</span>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card/40">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-border/60 bg-secondary/25 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <th scope="col" className="w-[22%] px-4 py-3 font-semibold sm:px-5">Detail</th>
+                <th scope="col" className="px-4 py-3 font-semibold sm:px-5">Recorded information</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              <tr>
+                <th scope="row" className="px-4 py-4 align-top text-xs font-medium text-muted-foreground sm:px-5">Verification</th>
+                <td className="px-4 py-4 sm:px-5">
+                  {verification ? (
+                    <div className="space-y-1.5">
+                      <span className={cn("inline-flex items-center gap-2 text-sm font-semibold", verification.text)}>
+                        <ShieldCheck className="h-4 w-4" /> {verification.label}
+                      </span>
+                      <p className="text-xs leading-relaxed text-muted-foreground">{verification.description}</p>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No verification information is recorded.</span>
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <th scope="row" className="px-4 py-4 align-top text-xs font-medium text-muted-foreground sm:px-5">Networks</th>
+                <td className="px-4 py-4 sm:px-5">
+                  {networks.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {networks.map((network) => (
+                        <span key={network} className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-secondary/30 px-3 py-1.5 text-xs text-foreground">
+                          <span aria-hidden className={cn("h-1.5 w-1.5 rounded-full", isSepolia(network) ? "bg-primary" : "bg-muted-foreground/50")} />
+                          {network}
+                          <span className="text-[10px] text-muted-foreground">
+                            {isSepolia(network) ? "Supported · D-04" : "Catalog origin"}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No network information is recorded.</span>
+                  )}
+                  <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground/80">
+                    Per D-04, Ethereum Sepolia (11155111) is the only supported wallet network. Other networks reflect protocol origin and do not imply wallet or transaction support.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row" className="px-4 py-4 align-top text-xs font-medium text-muted-foreground sm:px-5">Website &amp; links</th>
+                <td className="px-4 py-4 sm:px-5">
+                  {project.websiteUrl || socialEntries.length > 0 ? (
+                    <div className="flex flex-wrap gap-x-5 gap-y-2">
+                      {project.websiteUrl && (
+                        <a href={project.websiteUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium text-primary transition-colors hover:text-primary/80">
+                          <Globe className="h-3.5 w-3.5" />
+                          {project.websiteUrl.replace(/^https?:\/\//, "")}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                      {socialEntries.map(([name, url]) => (
+                        <a key={name} href={url as string} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium capitalize text-primary transition-colors hover:text-primary/80">
+                          {name}<ExternalLink className="h-3 w-3" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">No external links are listed for this project.</span>
+                  )}
+                </td>
+              </tr>
+              <tr>
+                <th scope="row" className="px-4 py-4 align-top text-xs font-medium text-muted-foreground sm:px-5">Data note</th>
+                <td className="px-4 py-4 text-xs leading-relaxed text-muted-foreground sm:px-5">
+                  Project details, verification tiers and linked records are simulated for Phase 1.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

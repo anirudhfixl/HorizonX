@@ -77,9 +77,9 @@ export default function StakingPoolDetailPage() {
 
       <div className="grid grid-cols-1 gap-x-10 gap-y-8 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-8">
-          <section className="entity-detail-section space-y-4">
+          <section className="entity-detail-aside-panel space-y-4">
             <div><span className="entity-detail-eyebrow">Pool information</span><h2>Staking overview</h2></div>
-            <dl className="entity-detail-facts grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+            <dl className="entity-detail-facts grid grid-cols-1 gap-x-8 sm:grid-cols-2 !border-t-0 [&>div]:!border-b-0">
               <div><dt>Network</dt><dd>{pool.network}</dd></div>
               <div><dt>Strategy</dt><dd className="font-medium text-foreground">{pool.category || "Liquid Staking"}</dd></div>
               <div><dt>Data Source</dt><dd className="font-mono text-primary">{pool.source || (pool.origin === 'external' ? 'DefiLlama Yields' : 'HorizonX Vault')}</dd></div>
@@ -92,11 +92,6 @@ export default function StakingPoolDetailPage() {
               <div><dt>Pool owner</dt><dd className="break-all font-mono">{pool.ownerAddress}</dd></div>
             </dl>
           </section>
-
-          <section className="entity-detail-section space-y-3">
-            <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" /><div><span className="entity-detail-eyebrow">Risk & controls</span><h2>Staking contract security</h2></div></div>
-            <p className="text-sm leading-relaxed text-muted-foreground">This vault implements audited non-custodial smart contracts. Staked principal remains 100% owned by the contributor. Rewards accrue every block and can be harvested at any time.</p>
-          </section>
         </div>
 
         <aside className="entity-detail-aside">
@@ -104,7 +99,6 @@ export default function StakingPoolDetailPage() {
             <div>
               <span className="entity-detail-eyebrow">Participation</span>
               <h2>Stake your tokens</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Deposit {token?.symbol || pool.tokenId.toUpperCase()} into this pool.</p>
             </div>
             <div className="space-y-2">
               <label className="block text-xs font-medium text-foreground" htmlFor="stake-amount">Amount to deposit</label>
@@ -127,8 +121,17 @@ export default function StakingPoolDetailPage() {
               <span className="font-semibold block mb-0.5">Phase 1 Public Data Discovery</span>
               Pool metrics and APY yields are public. On-chain staking transactions require testnet deployment scheduled for Phase 2.
             </div>
+            <div className="rounded-lg border border-border/60 bg-secondary/20 p-3">
+              <span className="block text-xs font-semibold text-foreground">Your staking position</span>
+              <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">Your deposited balance and earned rewards will appear here once on-chain staking is enabled for this pool.</p>
+            </div>
           </section>
         </aside>
+
+        <section className="entity-detail-aside-panel space-y-3 xl:col-span-2">
+          <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-primary" /><div><span className="entity-detail-eyebrow">Risk & controls</span><h2>Staking contract security</h2></div></div>
+          <p className="text-sm leading-relaxed text-muted-foreground">This vault implements audited non-custodial smart contracts. Staked principal remains 100% owned by the contributor. Rewards accrue every block and can be harvested at any time.</p>
+        </section>
       </div>
     </main>
   );

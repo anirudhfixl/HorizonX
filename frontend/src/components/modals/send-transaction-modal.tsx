@@ -227,7 +227,7 @@ export function SendTransactionModal() {
 
   return (
     <Dialog open={open} onOpenChange={(val) => !val && closeModal()}>
-      <DialogContent className="sm:max-w-md border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-6 text-foreground">
+      <DialogContent className="hx-wallet-modal-content hx-wallet-child-content sm:max-w-md p-6">
         <DialogHeader className="space-y-1.5 pb-2 border-b border-border/40">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">

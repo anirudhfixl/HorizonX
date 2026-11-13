@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/projects/copy-button";
-import { TokenDetailShell } from "./token-detail-shell";
 import { getExplorerBaseUrl, isSepoliaNetwork } from "@/components/tokens/token-profile";
 import { cn } from "@/lib/utils";
 import type { Token, TokenMarketData, Project, VerificationStatus } from "@/types";
@@ -244,7 +243,7 @@ export function TokenContract({ token, project }: TokenContractProps) {
   ];
 
   return (
-    <TokenDetailShell token={token} project={project} activeTab="contract">
+    <>
       <div className="space-y-8">
         <section className="grid gap-3 sm:grid-cols-3" aria-label="Contract overview">
           {[
@@ -468,6 +467,6 @@ export function TokenContract({ token, project }: TokenContractProps) {
           Ethereum Sepolia (Chain ID 11155111) is the only network supported for Web3 wallet connectivity. No transactions or state mutations are executed on this inspector.
         </p>
       </div>
-    </TokenDetailShell>
+    </>
   );
 }

@@ -90,19 +90,18 @@ const ECOSYSTEM_OPTIONS: EcosystemOption[] = [
 export function ConnectWalletModal() {
   const { isDemoActive, connectDemo, disconnectDemo } = useWallet();
   const multiWallet = useMultiWallet();
-  const { isOpen, closeModal, openModal } = useModal();
+  const { isOpen, closeModal, openModal, modalProps } = useModal();
 
   // Navigation state: null = 4-ecosystem overview, or dedicated ecosystem connection view
   const [selectedEcoFlow, setSelectedEcoFlow] = useState<BlockchainEcosystem | null>(null);
 
   // Sub-tabs inside dedicated views
   const [solanaTab, setSolanaTab] = useState<"extension" | "qr">("extension");
-  const [tonTab, setTonTab] = useState<"qr" | "wallets" | "manual">("qr");
+  const [tonTab, setTonTab] = useState<"qr" | "wallets">("qr");
 
   // Error and pending states
   const [connectError, setConnectError] = useState<string | null>(null);
   const [copiedPayload, setCopiedPayload] = useState(false);
-  const [manualTonAddr, setManualTonAddr] = useState("");
 
   // Unique session ID for genuine QR handshake sessions
   const [sessionId] = useState(() => Math.random().toString(36).substring(2, 10) + Date.now().toString(36));
@@ -135,16 +134,22 @@ export function ConnectWalletModal() {
 
   const open = isOpen("CONNECT_WALLET");
 
-  // Reset navigation when modal closes or opens
+  // Reset or preset navigation when modal opens/closes
   useEffect(() => {
     if (open) {
       checkExtensions();
       setConnectError(null);
+      if (
+        modalProps?.ecosystem &&
+        (modalProps.ecosystem === "ton" || modalProps.ecosystem === "tron" || modalProps.ecosystem === "solana")
+      ) {
+        setSelectedEcoFlow(modalProps.ecosystem as BlockchainEcosystem);
+      }
     } else {
       setSelectedEcoFlow(null);
       setConnectError(null);
     }
-  }, [open, checkExtensions]);
+  }, [open, modalProps?.ecosystem, checkExtensions]);
 
   useEffect(() => {
     if (!connectError) return;
@@ -216,25 +221,6 @@ export function ConnectWalletModal() {
     }
   };
 
-  const handleManualTonConnect = async () => {
-    if (!manualTonAddr.trim()) return;
-    const clean = manualTonAddr.trim();
-    if (clean.startsWith("EQ") || clean.startsWith("UQ")) {
-      setConnectError("Mainnet address detected (EQ/UQ). Only TON Testnet addresses (starting with 0Q or kQ) are permitted in HorizonX.");
-      return;
-    }
-    if (!clean.startsWith("0Q") && !clean.startsWith("kQ") && !clean.startsWith("0:")) {
-      setConnectError("Invalid TON Testnet address. Testnet addresses start with 0Q, kQ, or 0:.");
-      return;
-    }
-    try {
-      localStorage.setItem("horizonx_ton_connected", clean);
-      window.location.reload();
-    } catch {
-      // ignore
-    }
-  };
-
   const handleDemoConnect = () => {
     connectDemo();
     closeModal();
@@ -244,14 +230,7 @@ export function ConnectWalletModal() {
     <Dialog open={open} onOpenChange={(val) => !val && closeModal()}>
       <DialogContent
         showCloseButton={false}
-        className="
-          fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50
-          w-[calc(100%-1.5rem)] sm:max-w-[500px]
-          max-h-[90vh] flex flex-col p-0 gap-0
-          overflow-hidden rounded-2xl
-          border border-border/80 bg-background/95 backdrop-blur-xl
-          shadow-2xl text-foreground duration-200
-        "
+        className="hx-wallet-modal-content"
       >
         {/* ========================================================================= */}
         {/* SCENARIO 1: Dedicated Ecosystem Connection Flow (Solana / TON / TRON)     */}
@@ -259,12 +238,18 @@ export function ConnectWalletModal() {
         {selectedEcoFlow !== null ? (
           <>
             {/* Dedicated Flow Header with Back Navigation */}
-            <DialogHeader className="px-5 pt-4 pb-3.5 border-b border-border/40 flex flex-row items-center justify-between space-y-0 text-left">
+            <DialogHeader className="hx-wallet-modal-header text-left">
               <div className="flex items-center gap-2.5 min-w-0 flex-1">
                 <button
                   type="button"
-                  onClick={() => setSelectedEcoFlow(null)}
-                  aria-label="Back to ecosystems"
+                  onClick={() => {
+                    if (modalProps?.returnTo === "WALLET_DETAILS") {
+                      openModal("WALLET_DETAILS", { ecosystem: selectedEcoFlow });
+                    } else {
+                      setSelectedEcoFlow(null);
+                    }
+                  }}
+                  aria-label="Back"
                   className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-border/60 bg-secondary/40 text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors text-xs font-semibold shrink-0"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
@@ -310,7 +295,7 @@ export function ConnectWalletModal() {
             </DialogHeader>
 
             {/* Dedicated Flow Body */}
-            <div className="flex-1 overflow-y-auto px-5 pt-4 pb-5 space-y-4">
+            <div className="hx-wallet-modal-body space-y-4">
               {/* Error Message */}
               {connectError && (
                 <div
@@ -488,7 +473,7 @@ export function ConnectWalletModal() {
               {selectedEcoFlow === "ton" && (
                 <div className="space-y-4">
                   {/* TON Sub-tabs */}
-                  <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-secondary/30 border border-border/40 text-xs font-semibold">
+                  <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-secondary/30 border border-border/40 text-xs font-semibold">
                     <button
                       type="button"
                       onClick={() => setTonTab("qr")}
@@ -512,17 +497,6 @@ export function ConnectWalletModal() {
                     >
                       <Wallet className="h-3.5 w-3.5" />
                       <span>Wallets</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTonTab("manual")}
-                      className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg transition-all ${
-                        tonTab === "manual"
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <span>Address</span>
                     </button>
                   </div>
 
@@ -548,7 +522,7 @@ export function ConnectWalletModal() {
                         {copiedPayload ? "Copied URI" : "Copy Connection URI"}
                       </Button>
                     </div>
-                  ) : tonTab === "wallets" ? (
+                  ) : (
                     /* Available TON Wallets */
                     <div className="space-y-2.5">
                       {/* Gram Wallet (Preferred) */}
@@ -635,30 +609,6 @@ export function ConnectWalletModal() {
                           </a>
                         </Button>
                       </div>
-                    </div>
-                  ) : (
-                    /* Manual Testnet Address Entry */
-                    <div className="space-y-3 rounded-xl border border-border/60 bg-card/40 p-4">
-                      <div>
-                        <p className="text-xs font-bold text-foreground">Connect with Testnet Address</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Enter your TON Testnet address (must start with 0Q or kQ, or raw 0:... format).
-                        </p>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="0QC7q-154_mD9Hn..."
-                        value={manualTonAddr}
-                        onChange={(e) => setManualTonAddr(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-lg border border-border/80 bg-background/80 text-foreground font-mono focus:outline-none focus:border-primary"
-                      />
-                      <Button
-                        size="sm"
-                        onClick={handleManualTonConnect}
-                        className="w-full h-8 text-xs font-semibold"
-                      >
-                        Connect Testnet Address
-                      </Button>
                     </div>
                   )}
 
@@ -812,16 +762,16 @@ export function ConnectWalletModal() {
           /* ========================================================================= */
           <>
             {/* Header */}
-            <DialogHeader className="px-5 pt-5 pb-4 border-b border-border/40 flex flex-row items-center justify-between space-y-0 text-left">
+            <DialogHeader className="hx-wallet-modal-header text-left">
               <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary shadow-inner">
-                  <Wallet className="h-5 w-5" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/30 bg-primary/10 text-primary shadow-inner">
+                  <Wallet className="h-4.5 w-4.5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <DialogTitle className="text-base sm:text-lg font-bold tracking-tight text-foreground">
+                  <DialogTitle className="text-base font-bold tracking-tight text-foreground">
                     Connect Wallet
                   </DialogTitle>
-                  <DialogDescription className="text-xs text-muted-foreground truncate mt-0.5">
+                  <DialogDescription className="text-xs text-muted-foreground truncate">
                     Independent Web3 Testnet Connections
                   </DialogDescription>
                 </div>
@@ -838,7 +788,7 @@ export function ConnectWalletModal() {
             </DialogHeader>
 
             {/* Scrollable Body */}
-            <div className="flex-1 overflow-y-auto px-5 pt-4 pb-5 space-y-4">
+            <div className="hx-wallet-modal-body space-y-4">
               {/* Error Alert */}
               {connectError && (
                 <div

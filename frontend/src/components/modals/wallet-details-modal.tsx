@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useModal } from "@/contexts/modal-context";
 import { useWallet } from "@/contexts/wallet-context";
-import { useMultiWallet } from "@/web3";
+import { useMultiWallet, openReownAppKit } from "@/web3";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,9 @@ import {
   ArrowDownLeft,
   Coins,
   Loader2,
+  X,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { SUPPORTED_TESTNETS } from "@/web3/config/networks";
@@ -41,6 +44,15 @@ import {
 } from "@/components/shared/wallet-icons";
 import type { BlockchainEcosystem } from "@/web3/types/wallet.types";
 import type { TransactionRecord } from "@/web3/types/transaction.types";
+
+function checkTronLinkInstalled(): boolean {
+  if (typeof window === "undefined") return false;
+  const anyWin = window as unknown as {
+    tronLink?: { ready?: boolean };
+    tronWeb?: { ready?: boolean; defaultAddress?: unknown };
+  };
+  return Boolean(anyWin?.tronLink || anyWin?.tronWeb);
+}
 
 export function WalletDetailsModal() {
   const { isOpen, closeModal, openModal, modalProps } = useModal();
@@ -117,48 +129,130 @@ export function WalletDetailsModal() {
     });
   };
 
+  const [isTronDetected, setIsTronDetected] = useState<boolean>(checkTronLinkInstalled);
+
+  useEffect(() => {
+    if (open) {
+      setIsTronDetected(checkTronLinkInstalled());
+    }
+  }, [open, selectedEcosystem]);
+
+  const handleCheckTronAgain = () => {
+    const installed = checkTronLinkInstalled();
+    setIsTronDetected(installed);
+    if (installed) {
+      toast.success("TronLink Detected", {
+        description: "TronLink extension found! You can now connect to TRON Shasta.",
+      });
+    } else {
+      toast.info("TronLink Not Detected", {
+        description: "TronLink was not detected. Please make sure the extension is enabled.",
+      });
+    }
+  };
+
+  const handleConnectEcosystem = async () => {
+    if (selectedEcosystem === "evm") {
+      closeModal();
+      await openReownAppKit("Connect");
+      return;
+    }
+    if (selectedEcosystem === "ton") {
+      // Never use manual address prompt! Open the shared TON Connect modal experience
+      openModal("CONNECT_WALLET", { ecosystem: "ton", returnTo: "WALLET_DETAILS" });
+      return;
+    }
+    if (selectedEcosystem === "solana") {
+      const anyWin = window as unknown as { phantom?: { solana?: { isPhantom?: boolean } }; solana?: { isPhantom?: boolean } };
+      const hasPhantom = Boolean(anyWin?.phantom?.solana?.isPhantom || anyWin?.solana?.isPhantom);
+      if (hasPhantom) {
+        try {
+          await activeWallet.connect();
+          toast.success("Phantom Connected", {
+            description: "Connected to Solana Devnet",
+          });
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : "Connection failed";
+          if (!/reject|cancel|denied/i.test(msg)) {
+            toast.error("Solana Connection", { description: msg });
+          }
+        }
+      } else {
+        openModal("CONNECT_WALLET", { ecosystem: "solana", returnTo: "WALLET_DETAILS" });
+      }
+      return;
+    }
+    if (selectedEcosystem === "tron") {
+      if (!isTronDetected) {
+        openModal("CONNECT_WALLET", { ecosystem: "tron", returnTo: "WALLET_DETAILS" });
+        return;
+      }
+      try {
+        await activeWallet.connect();
+        toast.success("TronLink Connected", {
+          description: "Connected to TRON Shasta Testnet",
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Connection failed";
+        if (!/reject|cancel|denied/i.test(msg)) {
+          toast.error("TRON Connection", { description: msg });
+        }
+      }
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(val) => !val && closeModal()}>
-      <DialogContent className="sm:max-w-lg border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl p-6 text-foreground max-h-[85vh] overflow-y-auto">
-        <DialogHeader className="space-y-1.5 pb-2 border-b border-border/40">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => openModal("CONNECT_WALLET")}
-                aria-label="Back to wallet overview"
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-border/60 bg-secondary/30 text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors text-xs font-semibold mr-0.5"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Back</span>
-              </button>
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-secondary/40 shadow-sm">
-                {selectedEcosystem === "evm" ? (
-                  <MetaMaskLogo className="h-5 w-5 object-contain" />
-                ) : selectedEcosystem === "solana" ? (
-                  <PhantomLogo className="h-5 w-5 object-contain" />
-                ) : selectedEcosystem === "ton" ? (
-                  <GramWalletLogo className="h-5 w-5 object-contain" />
-                ) : (
-                  <TronLinkLogo className="h-5 w-5 object-contain" />
-                )}
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-semibold tracking-tight text-foreground">
-                  Multi-Chain Wallet
-                </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground">
-                  {activeWallet.walletName} · {networkConfig.networkName}
-                </DialogDescription>
-              </div>
+      <DialogContent showCloseButton={false} className="hx-wallet-modal-content">
+        <DialogHeader className="hx-wallet-modal-header text-left">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <button
+              type="button"
+              onClick={() => openModal("CONNECT_WALLET")}
+              aria-label="Back to wallet overview"
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-border/60 bg-secondary/30 text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors text-xs font-semibold shrink-0"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Back</span>
+            </button>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-secondary/40 shadow-sm">
+              {selectedEcosystem === "evm" ? (
+                <MetaMaskLogo className="h-4.5 w-4.5 object-contain" />
+              ) : selectedEcosystem === "solana" ? (
+                <PhantomLogo className="h-4.5 w-4.5 object-contain" />
+              ) : selectedEcosystem === "ton" ? (
+                <GramWalletLogo className="h-4.5 w-4.5 object-contain" />
+              ) : (
+                <TronLinkLogo className="h-4.5 w-4.5 object-contain" />
+              )}
             </div>
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="text-base font-bold tracking-tight text-foreground truncate">
+                Multi-Chain Wallet
+              </DialogTitle>
+              <DialogDescription className="text-[11px] text-muted-foreground truncate">
+                {activeWallet.walletName} · {networkConfig.networkName}
+              </DialogDescription>
+            </div>
+          </div>
 
-            {/* Testnet Badge */}
-            <span className="rounded-full bg-primary/10 border border-primary/30 px-2.5 py-0.5 text-xs font-medium text-primary shrink-0">
+          <div className="flex items-center gap-2 shrink-0 ml-2">
+            <span className="rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 text-[11px] font-medium text-primary shrink-0">
               {networkConfig.shortName}
             </span>
+            <button
+              type="button"
+              onClick={closeModal}
+              aria-label="Close modal"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </DialogHeader>
+
+        {/* Scrollable Body */}
+        <div className="hx-wallet-modal-body space-y-4">
 
         {/* Demo Mode Banner (if active) */}
         {isDemoActive && (
@@ -245,7 +339,7 @@ export function WalletDetailsModal() {
         )}
 
         {!activeWallet.isConnected ? (
-          <div className="space-y-4 py-8 text-center">
+          <div className="space-y-4 py-6 text-center">
             <Coins className="h-10 w-10 mx-auto text-muted-foreground opacity-50" />
             <div>
               <h3 className="text-sm font-semibold text-foreground">
@@ -255,17 +349,67 @@ export function WalletDetailsModal() {
                 Connect {activeWallet.walletName} to manage your testnet balance, send and receive assets, and view transaction history.
               </p>
             </div>
-            <Button
-              size="sm"
-              onClick={() => activeWallet.connect()}
-              disabled={activeWallet.isConnecting}
-              className="text-xs font-semibold px-4"
-            >
-              {activeWallet.isConnecting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-              ) : null}
-              Connect {activeWallet.walletName}
-            </Button>
+
+            {/* TRON specific: if not installed, show full installation interface */}
+            {selectedEcosystem === "tron" && !isTronDetected ? (
+              <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 space-y-3 text-left">
+                <div className="flex items-start gap-2.5">
+                  <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-foreground text-xs">TronLink wallet not detected</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                      The TronLink browser extension is required to connect to TRON Shasta testnet.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-background/50 border border-border/40 p-2.5 space-y-1.5 text-[11px] text-muted-foreground">
+                  <p className="font-semibold text-foreground text-xs">Installation steps:</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Install TronLink from the official Chrome Web Store.</li>
+                    <li>In TronLink, switch your network node to <strong className="text-foreground">Shasta Testnet</strong>.</li>
+                    <li>Return to HorizonX and click <strong className="text-foreground">Check Again</strong>.</li>
+                  </ol>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <Button asChild size="sm" className="h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground">
+                    <a
+                      href="https://chromewebstore.google.com/detail/tronlink/ibnejdfjmmkpcnlpebklmnkoeoihofec"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Install TronLink <ExternalLink className="h-3 w-3 ml-0.5" />
+                    </a>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCheckTronAgain}
+                    className="h-8 text-xs font-semibold gap-1.5 border-border/70 hover:bg-secondary/70"
+                  >
+                    <RefreshCw className="h-3 w-3" /> Check Again
+                  </Button>
+                  <Button asChild size="sm" variant="ghost" className="h-8 text-xs text-muted-foreground">
+                    <a href="https://www.tronlink.org/" target="_blank" rel="noopener noreferrer">
+                      Official Site <ExternalLink className="h-2.5 w-2.5 ml-1" />
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                onClick={handleConnectEcosystem}
+                disabled={activeWallet.isConnecting}
+                className="text-xs font-semibold px-4"
+              >
+                {activeWallet.isConnecting ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                ) : null}
+                Connect {activeWallet.walletName}
+              </Button>
+            )}
           </div>
         ) : activeTab === "overview" ? (
           <div className="space-y-4">
@@ -473,6 +617,7 @@ export function WalletDetailsModal() {
             )}
           </div>
         )}
+        </div>
       </DialogContent>
     </Dialog>
   );

@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 
 type WorkspaceNavPortalProps = {
   children: React.ReactNode;
+  spacerClassName?: string;
 };
 
 /**
@@ -10,7 +11,7 @@ type WorkspaceNavPortalProps = {
  * wrappers. This keeps fixed positioning reliable while a spacer preserves the
  * original page flow where the navigation was declared.
  */
-export function WorkspaceNavPortal({ children }: WorkspaceNavPortalProps) {
+export function WorkspaceNavPortal({ children, spacerClassName = "" }: WorkspaceNavPortalProps) {
   const navigation = (
     <div className="hx-workspace-nav-portal">
       {/* Render the shared glass only on routes that actually have inner navigation. */}
@@ -21,7 +22,7 @@ export function WorkspaceNavPortal({ children }: WorkspaceNavPortalProps) {
 
   return (
     <>
-      <div className="hx-workspace-nav-spacer" aria-hidden="true" />
+      <div className={`hx-workspace-nav-spacer ${spacerClassName}`.trim()} aria-hidden="true" />
       {typeof document !== "undefined" ? createPortal(navigation, document.body) : null}
     </>
   );

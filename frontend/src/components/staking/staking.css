@@ -328,3 +328,15 @@
 .staking-create-aside__copy {
   max-width: 34rem;
 }
+
+
+/* The main route already offsets the fixed top navbar by 84px.
+   Reserve only the actual 3.55rem workspace-tab height here, and avoid
+   the page's generic vertical stack gap between the spacer and breadcrumb. */
+.staking-page > .staking-workspace-nav-spacer {
+  height: 3.55rem !important;
+  min-height: 3.55rem !important;
+}
+.staking-page > .staking-workspace-nav-spacer + .st-breadcrumb {
+  margin-top: 1.25rem !important;
+}

@@ -1,15 +1,15 @@
 import "@/components/airdrops/airdrops.css";
 import { AirdropWorkspaceHeader } from "@/components/airdrops/airdrop-section-nav";
-import React, { useState, useMemo, useSyncExternalStore } from "react";
+import React, { useState, useMemo } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ProvenanceBadge } from "@/components/shared/provenance-badge";
 import { EmptyState } from "@/components/shared/empty-state";
-import { DataArtwork } from "@/components/shared/data-artwork";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DataArtwork } from "@/components/shared/data-artwork";
 import { Input } from "@/components/ui/input";
-import { useAirdrops, useTokens, useProjects, cryptoRankClient } from "@/api";
+import { useAirdrops, useTokens, useProjects } from "@/api";
 import {
   readSessionAirdropsRaw,
   subscribeSessionAirdrops,
@@ -28,16 +28,23 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
-  ArrowUpDown,
   ChevronUp,
   ChevronDown,
   Info,
   Calendar,
-  Users,
   CheckCircle2,
   Sparkles,
   ExternalLink,
+  Scale,
+  Check,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 
 export type AirdropSortOption =
@@ -47,13 +54,32 @@ export type AirdropSortOption =
   | "date-asc"
   | "reward-desc"
   | "recipients-desc"
-  | "progress-desc";
+  | "claims-desc"
+  | "progress-desc"
+  | "ending-soon"
+  | "updated-desc";
 
 export interface AirdropDirectoryProps {
   mode?: "canonical" | "explore";
 }
 
 export { calculateClaimProgress, parseRewardAmount };
+
+// Normalize provider/catalog values before filtering so incomplete external records
+// cannot crash the directory or create inconsistent network labels.
+const getNetworkName = (value: unknown) => String(value ?? "").trim();
+const isSepoliaNetwork = (value: unknown) => {
+  const network = getNetworkName(value).toLowerCase();
+  return network.includes("sepolia") || network === "ethereum";
+};
+const getCampaignSource = (air: any) =>
+  air.origin ||
+  air.provenance ||
+  (String(air.id ?? "").startsWith("session-")
+    ? "session"
+    : air.isExternal
+      ? "external"
+      : "ecosystem");
 
 export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) {
   const { data: airdrops = [] } = useAirdrops();
@@ -69,22 +95,13 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
   const [networkFilter, setNetworkFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
   const [sortBy, setSortBy] = useState<AirdropSortOption>("date-desc");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(6);
-  const [providerStatus, setProviderStatus] = useState<{ configured: boolean; planRestricted?: boolean } | null>(null);
-
-  React.useEffect(() => {
-    let active = true;
-    cryptoRankClient.getStatus().then((status) => {
-      if (active) setProviderStatus(status);
-    }).catch(() => {
-      if (active) setProviderStatus({ configured: false, planRestricted: false });
-    });
-    return () => { active = false; };
-  }, []);
-
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
+  const pageSize = 9;
   // Maps for fast token and project metadata lookups
   const tokenMap = useMemo(() => {
     const map = new Map<string, Token>();
@@ -97,6 +114,14 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
     PROJECTS.forEach((p) => map.set(p.id, p));
     return map;
   }, [PROJECTS]);
+
+  // Unique networks derived from the campaign catalog.
+  const uniqueNetworks = useMemo(
+    () => Array.from(new Set(allAirdrops.map((air) => getNetworkName(air.network)).filter(Boolean)))
+      .filter((network) => !isSepoliaNetwork(network))
+      .sort((a, b) => a.localeCompare(b)),
+    [allAirdrops]
+  );
 
   // Unique categories derived from airdrops and linked tokens
   const uniqueCategories = useMemo(() => {
@@ -144,10 +169,6 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
     setCurrentPage(1);
   };
 
-  const handlePageSizeChange = (size: number) => {
-    setPageSize(size);
-    setCurrentPage(1);
-  };
 
   const handleResetFilters = () => {
     setSearchQuery("");
@@ -155,6 +176,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
     setNetworkFilter("all");
     setCategoryFilter("all");
     setTypeFilter("all");
+    setSourceFilter("all");
     setSortBy("date-desc");
     setCurrentPage(1);
   };
@@ -168,15 +190,15 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
       // 1. Search Query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchesTitle = air.title.toLowerCase().includes(q);
-        const matchesDesc = air.description?.toLowerCase().includes(q) ?? false;
-        const matchesTokenName = token?.name.toLowerCase().includes(q) ?? false;
-        const matchesTokenSymbol = token?.symbol.toLowerCase().includes(q) ?? false;
-        const matchesProject = project?.name.toLowerCase().includes(q) ?? false;
-        const matchesNetwork = air.network.toLowerCase().includes(q);
-        const matchesCategory = air.category?.toLowerCase().includes(q) ?? false;
-        const matchesType = air.type.toLowerCase().includes(q);
-        const matchesId = air.id.toLowerCase().includes(q);
+        const matchesTitle = String(air.title ?? air.name ?? "").toLowerCase().includes(q);
+        const matchesDesc = String(air.description ?? "").toLowerCase().includes(q);
+        const matchesTokenName = String(token?.name ?? "").toLowerCase().includes(q);
+        const matchesTokenSymbol = String(token?.symbol ?? "").toLowerCase().includes(q);
+        const matchesProject = String(project?.name ?? "").toLowerCase().includes(q);
+        const matchesNetwork = getNetworkName(air.network).toLowerCase().includes(q);
+        const matchesCategory = String(air.category ?? "").toLowerCase().includes(q);
+        const matchesType = String(air.type ?? "").toLowerCase().includes(q);
+        const matchesId = String(air.id ?? "").toLowerCase().includes(q);
 
         if (
           !matchesTitle &&
@@ -200,10 +222,9 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
 
       // 3. Network Filter (D-04 Scope)
       if (networkFilter === "sepolia") {
-        const net = air.network.toLowerCase();
-        if (!net.includes("sepolia") && net !== "ethereum") return false;
+        if (!isSepoliaNetwork(air.network)) return false;
       } else if (networkFilter !== "all") {
-        if (air.network !== networkFilter) return false;
+        if (getNetworkName(air.network) !== networkFilter) return false;
       }
 
       // 4. Category Filter
@@ -213,22 +234,55 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
       }
 
       // 5. Campaign Type Filter
-      if (typeFilter !== "all" && air.type !== typeFilter) {
+      if (typeFilter !== "all" && String(air.type ?? "") !== typeFilter) {
+        return false;
+      }
+
+      // 6. Data source filter. This uses provenance already present in the
+      // campaign record; it does not infer verification or campaign quality.
+      const source = getCampaignSource(air);
+      if (sourceFilter !== "all" && source !== sourceFilter) {
         return false;
       }
 
       return true;
     });
-  }, [allAirdrops, searchQuery, statusFilter, networkFilter, categoryFilter, typeFilter, tokenMap, projectMap]);
+  }, [allAirdrops, searchQuery, statusFilter, networkFilter, categoryFilter, typeFilter, sourceFilter, tokenMap, projectMap]);
+
+  const toggleCompare = (campaignId: string) => {
+    setCompareIds((current) =>
+      current.includes(campaignId)
+        ? current.filter((id) => id !== campaignId)
+        : current.length < 3
+          ? [...current, campaignId]
+          : current
+    );
+  };
+
+  const comparisonAirdrops = useMemo(
+    () => compareIds.map((id) => allAirdrops.find((air) => String(air.id) === id)).filter(Boolean),
+    [compareIds, allAirdrops]
+  ) as any[];
+
+  const formatCompareDate = (value: unknown) => {
+    if (!value) return "Not reported";
+    const date = new Date(String(value));
+    return Number.isNaN(date.getTime())
+      ? "Not reported"
+      : date.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const compareValue = (value: unknown) =>
+    value === null || value === undefined || String(value).trim() === "" ? "Not reported" : String(value);
 
   // Sorted airdrops
   const sortedAirdrops = useMemo(() => {
     return [...filteredAirdrops].sort((a, b) => {
       switch (sortBy) {
         case "name-asc":
-          return a.title.localeCompare(b.title);
+          return String(a.title ?? a.name ?? a.id ?? "").localeCompare(String(b.title ?? b.name ?? b.id ?? ""));
         case "name-desc":
-          return b.title.localeCompare(a.title);
+          return String(b.title ?? b.name ?? b.id ?? "").localeCompare(String(a.title ?? a.name ?? a.id ?? ""));
         case "date-desc":
           return (
             new Date(b.startTime || b.createdAt).getTime() -
@@ -245,11 +299,24 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
           return rewardB - rewardA;
         }
         case "recipients-desc":
-          return (b.recipientCount || 0) - (a.recipientCount || 0);
+          return (Number(b.recipientCount) || 0) - (Number(a.recipientCount) || 0);
+        case "claims-desc":
+          return (Number(b.claimedCount) || 0) - (Number(a.claimedCount) || 0);
         case "progress-desc": {
           const progA = calculateClaimProgress(a.claimedCount, a.recipientCount);
           const progB = calculateClaimProgress(b.claimedCount, b.recipientCount);
           return progB - progA;
+        }
+        case "ending-soon": {
+          const endA = a.endTime ? Date.parse(a.endTime) : Number.POSITIVE_INFINITY;
+          const endB = b.endTime ? Date.parse(b.endTime) : Number.POSITIVE_INFINITY;
+          return (Number.isFinite(endA) ? endA : Number.POSITIVE_INFINITY) -
+            (Number.isFinite(endB) ? endB : Number.POSITIVE_INFINITY);
+        }
+        case "updated-desc": {
+          const updatedA = Date.parse(a.lastUpdated || a.updatedAt || a.createdAt || "") || 0;
+          const updatedB = Date.parse(b.lastUpdated || b.updatedAt || b.createdAt || "") || 0;
+          return updatedB - updatedA;
         }
         default:
           return 0;
@@ -269,7 +336,8 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
     statusFilter !== "all" ||
     networkFilter !== "all" ||
     categoryFilter !== "all" ||
-    typeFilter !== "all";
+    typeFilter !== "all" ||
+    sourceFilter !== "all";
 
   // Table header click sort
   const handleSortClick = (field: "name" | "date" | "reward" | "recipients" | "progress") => {
@@ -294,7 +362,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
   };
 
   return (
-    <div className="airdrop-page w-full max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-7 space-y-7">
+    <div className="airdrop-page airdrop-directory-page w-full max-w-none px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-7 space-y-7">
       <AirdropWorkspaceHeader items={[{ label: "Airdrops", to: "/airdrops" }, { label: "Campaigns" }]} />
       {/* 1. Page Header */}
       <PageHeader
@@ -382,351 +450,486 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
         </div>
       )}
 
-      {/* 3. Summary Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Total Campaigns</span>
-            <Gift className="h-4 w-4 text-primary" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-foreground">
-            {allAirdrops.length}
-          </div>
-          <p className="text-[11px] text-muted-foreground">Incentive reward pools</p>
-        </div>
-
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Potential Airdrops</span>
-            <Sparkles className="h-4 w-4 text-cyan-400" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-cyan-400">
-            {allAirdrops.filter((air) => air.category === "Potential Airdrops").length}
-          </div>
-          <p className="text-[11px] text-muted-foreground">Tokenless protocols (DefiLlama)</p>
-        </div>
-
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Airdrop Registry</span>
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-emerald-400">
-            {allAirdrops.filter((air) => air.category === "Airdrop Registry").length}
-          </div>
-          <p className="text-[11px] text-muted-foreground">Verified snapshot claims</p>
-        </div>
-
-        <div className="rounded-xl border border-border/60 bg-card/60 p-4 backdrop-blur-sm space-y-1">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Ecosystem (D-04)</span>
-            <Users className="h-4 w-4 text-primary" />
-          </div>
-          <div className="text-2xl font-bold font-mono text-primary">
-            {allAirdrops.filter((air) => air.isEcosystem || air.origin === "ecosystem").length}
-          </div>
-          <p className="text-[11px] text-muted-foreground">HorizonX Sepolia catalog</p>
-        </div>
-      </div>
-
-      {/* 4. Controls Toolbar */}
-      <div className="rounded-2xl border border-border/60 bg-card/60 p-4 sm:p-5 backdrop-blur-md space-y-3">
-        {/* Quick Scope Filter Chips */}
-        <div className="flex flex-wrap items-center gap-1.5 pb-2 border-b border-border/30">
-          <Button
-            type="button"
-            size="sm"
-            variant={categoryFilter === "all" && networkFilter === "all" ? "default" : "outline"}
-            className={`h-7 text-xs px-2.5 rounded-full ${categoryFilter === "all" && networkFilter === "all" ? "bg-primary text-primary-foreground font-semibold" : "border-border/60"}`}
-            onClick={() => {
-              setCategoryFilter("all");
-              setNetworkFilter("all");
-              setCurrentPage(1);
-            }}
-          >
-            All Campaigns ({allAirdrops.length})
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={categoryFilter === "Potential Airdrops" ? "default" : "outline"}
-            className={`h-7 text-xs px-2.5 rounded-full border-cyan-500/40 ${categoryFilter === "Potential Airdrops" ? "bg-cyan-500 text-black font-semibold" : "text-cyan-300 hover:bg-cyan-500/15"}`}
-            onClick={() => {
-              setCategoryFilter("Potential Airdrops");
-              setNetworkFilter("all");
-              setCurrentPage(1);
-            }}
-          >
-            <Sparkles className="h-3 w-3 mr-1 text-cyan-400" />
-            Potential Airdrops ({allAirdrops.filter((a) => a.category === "Potential Airdrops").length})
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={categoryFilter === "Airdrop Registry" ? "default" : "outline"}
-            className={`h-7 text-xs px-2.5 rounded-full border-emerald-500/40 ${categoryFilter === "Airdrop Registry" ? "bg-emerald-500 text-black font-semibold" : "text-emerald-300 hover:bg-emerald-500/15"}`}
-            onClick={() => {
-              setCategoryFilter("Airdrop Registry");
-              setNetworkFilter("all");
-              setCurrentPage(1);
-            }}
-          >
-            <CheckCircle2 className="h-3 w-3 mr-1 text-emerald-400" />
-            Airdrop Registry ({allAirdrops.filter((a) => a.category === "Airdrop Registry").length})
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant={networkFilter === "sepolia" ? "default" : "outline"}
-            className={`h-7 text-xs px-2.5 rounded-full ${networkFilter === "sepolia" ? "bg-primary text-primary-foreground font-semibold" : "border-border/60"}`}
-            onClick={() => {
-              setNetworkFilter("sepolia");
-              setCategoryFilter("all");
-              setCurrentPage(1);
-            }}
-          >
-            Sepolia Ecosystem ({allAirdrops.filter((a) => a.isEcosystem || a.origin === "ecosystem").length})
-          </Button>
-        </div>
-
-        {/* Top bar: Search + View Mode */}
-        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-          <div className="relative flex-1 max-w-xl">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search by campaign title, token, symbol or description..."
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-9 pr-8 text-xs bg-secondary/30 border-border/60 h-9"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => handleSearchChange("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
-                aria-label="Clear search"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            {/* View Mode Toggle */}
-            <div className="flex items-center rounded-lg border border-border/60 bg-secondary/30 p-0.5">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded text-xs transition-colors ${
-                  viewMode === "grid"
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Grid View"
-                aria-label="Grid View"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`p-1.5 rounded text-xs transition-colors ${
-                  viewMode === "table"
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                title="Table View"
-                aria-label="Table View"
-              >
-                <List className="h-4 w-4" />
-              </button>
+      {/* 4. Campaign directory controls and listings — aligned with the Airdrops overview */}
+      <section className="airdrop-directory-panel overflow-hidden rounded-2xl border border-border/60 bg-[#0e0d0e]">
+        <div className="space-y-4 border-b border-border/60 p-4 sm:p-5">
+          {/* Directory heading, search and view switcher */}
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base font-semibold tracking-tight text-foreground">Explore campaigns</h2>
+                <span className="rounded-md border border-border/50 bg-secondary/30 px-2 py-0.5 text-[10px] text-muted-foreground">
+                  Full catalog
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  ({totalItems} {totalItems === 1 ? "campaign" : "campaigns"})
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Search, compare and filter campaign distributions across supported and discovery networks.
+              </p>
             </div>
 
-            {/* Page Size Select */}
-            <select
-              value={pageSize}
-              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-              className="h-9 rounded-lg border border-border/60 bg-secondary/30 px-2.5 text-xs text-foreground focus:outline-none focus:border-primary"
-              aria-label="Page Size"
-            >
-              <option value={4} className="bg-card text-foreground">
-                4 per page
-              </option>
-              <option value={6} className="bg-card text-foreground">
-                6 per page
-              </option>
-              <option value={12} className="bg-card text-foreground">
-                12 per page
-              </option>
-            </select>
-          </div>
-        </div>
+            <div className="flex w-full flex-col gap-2 sm:flex-row xl:w-auto xl:items-center">
+              <div className="relative min-w-0 flex-1 xl:w-[22rem] xl:flex-none">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search campaigns by title, token, symbol or description..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="h-10 border-border/60 bg-secondary/30 pl-9 pr-9 text-xs"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => handleSearchChange("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
 
-        {/* Filters row */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/40">
-          {/* Status Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-muted-foreground">Status:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => handleStatusChange(e.target.value)}
-              className="h-7 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-            >
-              <option value="all" className="bg-card text-foreground">
-                All Statuses
-              </option>
-              <option value="active" className="bg-card text-foreground">
-                Active
-              </option>
-              <option value="pending" className="bg-card text-foreground">
-                Pending
-              </option>
-              <option value="ended" className="bg-card text-foreground">
-                Ended
-              </option>
-              <option value="draft" className="bg-card text-foreground">
-                Draft
-              </option>
-            </select>
-          </div>
-
-          {/* D-04 Network Scope Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-muted-foreground">Network:</span>
-            <select
-              value={networkFilter}
-              onChange={(e) => handleNetworkChange(e.target.value)}
-              className="h-7 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-            >
-              <option value="all" className="bg-card text-foreground">
-                All Networks
-              </option>
-              <option value="sepolia" className="bg-card text-foreground">
-                Ethereum Sepolia (11155111 — Active)
-              </option>
-            </select>
+              <div className="airdrop-directory-view-toggle flex shrink-0 items-center self-end rounded-lg border border-border/60 bg-secondary/30 p-0.5 sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("table")}
+                  aria-pressed={viewMode === "table"}
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors ${
+                    viewMode === "table"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <List className="h-3.5 w-3.5" />
+                  Table
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("grid")}
+                  aria-pressed={viewMode === "grid"}
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors ${
+                    viewMode === "grid"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <LayoutGrid className="h-3.5 w-3.5" />
+                  Grid
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Category Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-muted-foreground">Category:</span>
-            <select
-              value={categoryFilter}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="h-7 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-            >
-              <option value="all" className="bg-card text-foreground">
-                All Categories
-              </option>
-              {uniqueCategories.map((cat) => (
-                <option key={cat} value={cat} className="bg-card text-foreground">
-                  {cat}
-                </option>
-              ))}
-            </select>
+          {/* Lifecycle shortcuts: the main discovery paths, not dashboard KPIs. */}
+          <div className="flex flex-wrap items-center gap-2 border-t border-border/40 pt-3" role="group" aria-label="Filter campaigns by lifecycle">
+            {([
+              { value: "all", label: "All campaigns", count: allAirdrops.length },
+              { value: "active", label: "Active", count: allAirdrops.filter((air) => air.status === "active").length },
+              { value: "pending", label: "Upcoming", count: allAirdrops.filter((air) => air.status === "pending").length },
+              { value: "ended", label: "Ended", count: allAirdrops.filter((air) => air.status === "ended").length },
+              { value: "draft", label: "Draft", count: allAirdrops.filter((air) => air.status === "draft").length },
+            ] as const).map((tab) => {
+              const selected = statusFilter === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => handleStatusChange(tab.value)}
+                  className={`inline-flex h-8 items-center gap-2 rounded-lg border px-3 text-[11px] font-semibold transition-colors ${
+                    selected
+                      ? "border-primary/40 bg-primary text-primary-foreground"
+                      : "border-border/60 bg-secondary/20 text-muted-foreground hover:border-primary/35 hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}<span className={selected ? "opacity-80" : "opacity-60"}>{tab.count}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Campaign Type Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-medium text-muted-foreground">Type:</span>
-            <select
-              value={typeFilter}
-              onChange={(e) => handleTypeChange(e.target.value)}
-              className="h-7 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-            >
-              <option value="all" className="bg-card text-foreground">
-                All Types
-              </option>
-              {uniqueTypes.map((t) => (
-                <option key={t} value={t} className="bg-card text-foreground uppercase">
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Sort By */}
-          <div className="flex items-center gap-1.5 ml-auto">
-            <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
-              <ArrowUpDown className="h-3 w-3" /> Sort:
-            </span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as AirdropSortOption)}
-              className="h-7 rounded-md border border-border/60 bg-secondary/30 px-2 text-xs text-foreground focus:outline-none focus:border-primary"
-            >
-              <option value="date-desc" className="bg-card text-foreground">
-                Newest First
-              </option>
-              <option value="date-asc" className="bg-card text-foreground">
-                Oldest First
-              </option>
-              <option value="name-asc" className="bg-card text-foreground">
-                Title (A to Z)
-              </option>
-              <option value="name-desc" className="bg-card text-foreground">
-                Title (Z to A)
-              </option>
-              <option value="reward-desc" className="bg-card text-foreground">
-                Total Reward Pool
-              </option>
-              <option value="recipients-desc" className="bg-card text-foreground">
-                Most Recipients
-              </option>
-              <option value="progress-desc" className="bg-card text-foreground">
-                Claim Progress
-              </option>
-            </select>
-          </div>
-
-          {/* Reset Filters button */}
-          {hasActiveFilters && (
+          {/* Campaign scope shortcuts retained from the original page */}
+          <div className="flex flex-wrap items-center gap-2 border-t border-border/40 pt-3">
             <Button
-              variant="ghost"
+              type="button"
               size="sm"
-              onClick={handleResetFilters}
-              className="h-7 text-xs text-muted-foreground hover:text-foreground px-2"
+              variant={categoryFilter === "Potential Airdrops" ? "default" : "outline"}
+              className={`h-8 rounded-lg border px-3 text-[11px] ${
+                categoryFilter === "Potential Airdrops"
+                  ? "border-cyan-400/40 bg-cyan-400 text-[#071014] font-semibold"
+                  : "border-cyan-500/25 bg-cyan-500/5 text-cyan-300 hover:bg-cyan-500/10"
+              }`}
+              onClick={() => {
+                setCategoryFilter("Potential Airdrops");
+                setNetworkFilter("all");
+                setCurrentPage(1);
+              }}
             >
-              <X className="h-3 w-3 mr-1" /> Reset
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+              Potential Airdrops ({allAirdrops.filter((a) => a.category === "Potential Airdrops").length})
             </Button>
-          )}
-        </div>
-      </div>
+            <Button
+              type="button"
+              size="sm"
+              variant={categoryFilter === "Airdrop Registry" ? "default" : "outline"}
+              className={`h-8 rounded-lg border px-3 text-[11px] ${
+                categoryFilter === "Airdrop Registry"
+                  ? "border-emerald-400/40 bg-emerald-400 text-[#07130f] font-semibold"
+                  : "border-emerald-500/25 bg-emerald-500/5 text-emerald-300 hover:bg-emerald-500/10"
+              }`}
+              onClick={() => {
+                setCategoryFilter("Airdrop Registry");
+                setNetworkFilter("all");
+                setCurrentPage(1);
+              }}
+            >
+              <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
+              Airdrop Registry ({allAirdrops.filter((a) => a.category === "Airdrop Registry").length})
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={networkFilter === "sepolia" ? "default" : "outline"}
+              className={`h-8 rounded-lg px-3 text-[11px] ${
+                networkFilter === "sepolia"
+                  ? "bg-primary font-semibold text-primary-foreground"
+                  : "border-border/60 bg-secondary/20 text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => {
+                setNetworkFilter("sepolia");
+                setCategoryFilter("all");
+                setCurrentPage(1);
+              }}
+            >
+              Sepolia Ecosystem ({allAirdrops.filter((a) => isSepoliaNetwork(a.network)).length})
+            </Button>
+          </div>
 
-      {/* 5. Listing Presentation (Grid or Table) */}
-      {paginatedAirdrops.length === 0 ? (
-        <EmptyState
-          icon={<Gift className="h-7 w-7 text-primary/70" />}
-          title="No Airdrop Campaigns Found"
-          description="No airdrop reward distributions match your current filters and search query. Try broadening your keywords or resetting filters."
-          action={
-            hasActiveFilters ? (
+          {/* Filter row follows the same labeled-control rhythm as Staking Pools */}
+          <div className="grid grid-cols-1 gap-3 border-t border-border/40 pt-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+            <div>
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => handleStatusChange(e.target.value)}
+                className="h-10 w-full rounded-lg border border-border/60 bg-secondary/30 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="all">All statuses</option>
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="ended">Ended</option>
+                <option value="draft">Draft</option>
+                <option value="failed">Failed</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="unverified">Unverified</option>
+                <option value="unknown">Unknown</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Network</label>
+              <select
+                value={networkFilter}
+                onChange={(e) => handleNetworkChange(e.target.value)}
+                className="h-10 w-full rounded-lg border border-border/60 bg-secondary/30 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="all">All networks</option>
+                <option value="sepolia">Ethereum Sepolia</option>
+                {uniqueNetworks.map((network) => (
+                  <option key={network} value={network}>{network}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Category</label>
+              <select
+                value={categoryFilter}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                className="h-10 w-full rounded-lg border border-border/60 bg-secondary/30 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="all">All categories</option>
+                {uniqueCategories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Campaign type</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => handleTypeChange(e.target.value)}
+                className="h-10 w-full rounded-lg border border-border/60 bg-secondary/30 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="all">All types</option>
+                {uniqueTypes.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Data source</label>
+              <select
+                value={sourceFilter}
+                onChange={(e) => { setSourceFilter(e.target.value); setCurrentPage(1); }}
+                className="h-10 w-full rounded-lg border border-border/60 bg-secondary/30 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="all">All sources</option>
+                <option value="ecosystem">HorizonX catalog</option>
+                <option value="external">External discovery</option>
+                <option value="session">Session-created</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Sort by</label>
+              <select
+                value={sortBy}
+                onChange={(e) => { setSortBy(e.target.value as AirdropSortOption); setCurrentPage(1); }}
+                className="h-10 w-full rounded-lg border border-border/60 bg-secondary/30 px-3 text-xs text-foreground focus:border-primary focus:outline-none"
+              >
+                <option value="date-desc">Newest first</option>
+                <option value="date-asc">Oldest first</option>
+                <option value="name-asc">Campaign name (A–Z)</option>
+                <option value="name-desc">Campaign name (Z–A)</option>
+                <option value="reward-desc">Largest reward pool</option>
+                <option value="recipients-desc">Most recipients</option>
+                <option value="claims-desc">Most claims recorded</option>
+                <option value="progress-desc">Claim progress</option>
+                <option value="ending-soon">Ending soon</option>
+                <option value="updated-desc">Recently updated</option>
+              </select>
+            </div>
+          </div>
+
+          {hasActiveFilters && (
+            <div className="flex justify-end">
               <Button
-                variant="outline"
+                type="button"
+                variant="ghost"
                 size="sm"
                 onClick={handleResetFilters}
-                className="text-xs border-border/60"
+                className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
               >
-                Reset All Filters
+                <X className="mr-1.5 h-3.5 w-3.5" /> Reset filters
               </Button>
-            ) : undefined
-          }
-        />
-      ) : viewMode === "grid" ? (
+            </div>
+          )}
+        </div>
+
+        {/* 5. Listing presentation */}
+        {paginatedAirdrops.length === 0 ? (
+          <div className="p-6 sm:p-8">
+            <EmptyState
+              icon={<Gift className="h-7 w-7 text-primary/70" />}
+              title={
+                categoryFilter === "Potential Airdrops" && allAirdrops.filter((air) => air.category === "Potential Airdrops").length === 0
+                  ? "No potential airdrops available yet"
+                  : categoryFilter === "Airdrop Registry" && allAirdrops.filter((air) => air.category === "Airdrop Registry").length === 0
+                    ? "No registry campaigns available yet"
+                    : statusFilter === "pending" && !searchQuery.trim() && networkFilter === "all" && categoryFilter === "all" && typeFilter === "all" && sourceFilter === "all"
+                      ? "No upcoming campaigns"
+                      : "No airdrop campaigns found"
+              }
+              description="There are no campaign records matching this view right now. Try another lifecycle tab, broaden your filters, or reset the current selection."
+              action={
+                hasActiveFilters ? (
+                  <Button variant="outline" size="sm" onClick={handleResetFilters} className="text-xs border-border/60">
+                    Reset All Filters
+                  </Button>
+                ) : undefined
+              }
+            />
+          </div>
+        ) : viewMode === "table" ? (
+          <div className="airdrop-directory-table-wrap overflow-x-auto">
+            <table className="airdrop-directory-table w-full min-w-[1050px] border-collapse text-left text-xs">
+              <thead className="border-b border-border/60 bg-[#101012] text-[10px] uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th onClick={() => handleSortClick("name")} className="cursor-pointer px-5 py-3.5 font-semibold transition-colors hover:text-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      Campaign / Asset
+                      {sortBy === "name-asc" && <ChevronUp className="h-3 w-3 text-primary" />}
+                      {sortBy === "name-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
+                    </span>
+                  </th>
+                  <th className="px-4 py-3.5 font-semibold">Network</th>
+                  <th className="px-4 py-3.5 font-semibold">Type / Category</th>
+                  <th onClick={() => handleSortClick("reward")} className="cursor-pointer px-4 py-3.5 font-semibold transition-colors hover:text-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      Reward pool
+                      {sortBy === "reward-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
+                    </span>
+                  </th>
+                  <th onClick={() => handleSortClick("recipients")} className="cursor-pointer px-4 py-3.5 font-semibold transition-colors hover:text-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      Claims
+                      {sortBy === "recipients-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
+                    </span>
+                  </th>
+                  <th onClick={() => handleSortClick("progress")} className="cursor-pointer px-4 py-3.5 font-semibold transition-colors hover:text-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      Claim progress
+                      {sortBy === "progress-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
+                    </span>
+                  </th>
+                  <th className="px-4 py-3.5 font-semibold">Status</th>
+                  <th className="px-5 py-3.5 text-right font-semibold">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {paginatedAirdrops.map((air) => {
+                  const token = tokenMap.get(air.tokenId);
+                  const project = air.projectId ? projectMap.get(air.projectId) : undefined;
+                  const progress = calculateClaimProgress(air.claimedCount, air.recipientCount);
+                  const isSepolia = isSepoliaNetwork(air.network);
+
+                  return (
+                    <tr key={air.id} className="group bg-[#0e0d0e] transition-colors hover:bg-[#151416]">
+                      <td className="px-5 py-3.5">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-[11px] font-bold text-primary">
+                            {token?.symbol?.[0] || air.title.slice(0, 1).toUpperCase()}
+                          </span>
+                          <div className="min-w-0">
+                            <Link to={`/airdrops/campaigns/${air.id}`} className="block truncate text-xs font-semibold text-foreground transition-colors group-hover:text-primary">
+                              {air.title}
+                            </Link>
+                            <span className="mt-1 block truncate text-[10px] font-mono text-muted-foreground">
+                              {token ? token.symbol : air.tokenId.toUpperCase()}
+                              {project ? ` · ${project.name}` : ""}
+                            </span>
+                            <span className="mt-0.5 block text-[10px] text-muted-foreground/80">
+                              {air.status === "pending" ? `Starts ${air.startTime?.slice(0, 10) || "TBD"}` : `Ends ${air.endTime?.slice(0, 10) || "TBD"}`}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className={`rounded-md border px-2 py-1 text-[10px] ${
+                          isSepolia
+                            ? "border-primary/20 bg-primary/10 text-primary"
+                            : "border-border/50 bg-secondary/30 text-muted-foreground"
+                        }`}>
+                          {isSepolia ? "Ethereum Sepolia" : getNetworkName(air.network) || "Network not reported"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex max-w-[180px] flex-wrap gap-1">
+                          {air.type && <span className="rounded border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-primary">{air.type}</span>}
+                          {air.category && <span className="rounded bg-secondary/50 px-2 py-0.5 text-[10px] text-muted-foreground">{air.category}</span>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 font-mono text-xs font-semibold text-emerald-400">{air.totalReward || "Not disclosed"}</td>
+                      <td className="px-4 py-3.5 font-mono text-foreground">
+                        {typeof air.claimedCount === "number" && typeof air.recipientCount === "number" ? (
+                          <>
+                            {air.claimedCount.toLocaleString()}
+                            <span className="text-muted-foreground"> / {air.recipientCount.toLocaleString()}</span>
+                          </>
+                        ) : <span className="text-muted-foreground">Not reported</span>}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        {typeof air.claimedCount === "number" && typeof air.recipientCount === "number" && air.recipientCount > 0 ? (
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-secondary">
+                            <div
+                              className={`h-full rounded-full ${progress >= 100 ? "bg-emerald-400" : progress > 0 ? "bg-primary" : "bg-muted-foreground/30"}`}
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          <span className="font-mono text-[10px] text-muted-foreground">{progress}%</span>
+                        </div>
+                        ) : <span className="text-[10px] text-muted-foreground">Not reported</span>}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex flex-col items-start gap-1">
+                          <StatusBadge status={air.status} />
+                          <ProvenanceBadge
+                            kind={air.origin === "external" ? "simulated" : getAirdropProvenance(air)}
+                            label={air.source || (air.origin === "external" ? "CryptoRank Drophunting" : "HorizonX Ecosystem (Simulated)")}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="inline-flex items-center gap-1.5">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            disabled={!compareIds.includes(String(air.id)) && compareIds.length >= 3}
+                            onClick={() => toggleCompare(String(air.id))}
+                            className={`h-8 px-2 text-[11px] ${compareIds.includes(String(air.id)) ? "text-primary" : "text-muted-foreground"}`}
+                            aria-label={compareIds.includes(String(air.id)) ? `Remove ${air.title} from comparison` : `Compare ${air.title}`}
+                          >
+                            {compareIds.includes(String(air.id)) ? <Check className="mr-1 h-3.5 w-3.5" /> : <Scale className="mr-1 h-3.5 w-3.5" />}
+                            {compareIds.includes(String(air.id)) ? "Added" : "Compare"}
+                          </Button>
+                          <Button asChild size="sm" variant="outline" className="h-8 border-border/60 px-3 text-[11px]">
+                            <Link to={`/airdrops/campaigns/${air.id}`}>View <span className="ml-1">↗</span></Link>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : viewMode === "grid" ? (
         /* GRID VIEW */
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 xl:gap-5">
+        <div className="airdrop-directory-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-5">
           {paginatedAirdrops.map((air) => {
             const token = tokenMap.get(air.tokenId);
             const project = air.projectId ? projectMap.get(air.projectId) : undefined;
             const progress = calculateClaimProgress(air.claimedCount, air.recipientCount);
-            const isSepolia =
-              air.network.toLowerCase().includes("sepolia") || air.network === "Ethereum";
+            const isSepolia = isSepoliaNetwork(air.network);
 
             return (
               <div
                 key={air.id}
-                className="flex flex-col justify-between rounded-2xl border border-border/60 bg-card/55 p-5 sm:p-5 backdrop-blur-md hover:border-primary/45 hover:bg-card/80 hover:shadow-xl hover:shadow-primary/5 transition-all duration-200 group min-w-0"
+                className="airdrop-campaign-card flex h-full min-w-0 flex-col rounded-2xl border border-border/60 bg-card/55 p-5 backdrop-blur-md transition-all duration-200 group hover:border-primary/45 hover:bg-card/80 hover:shadow-xl hover:shadow-primary/5"
               >
-                <div className="space-y-4">
-                  <DataArtwork src={(air as typeof air & { image?: string }).image} alt={`${air.title} campaign`} className="h-36 w-full rounded-xl border border-border/40" fallbackLabel="Airdrop campaign" />
+                <div className="flex flex-1 flex-col space-y-4">
+                  {/* Use real campaign artwork when available. The shared dataset placeholder is
+                      intentionally replaced with a campaign identity panel so every card does not
+                      repeat the same generic image. */}
+                  {(() => {
+                    const campaignImage = (air as typeof air & { image?: string }).image;
+                    const isGenericArtwork = !campaignImage || campaignImage.includes("horizonx-dataset-placeholder.svg");
+                    const visualTone = air.category?.toLowerCase().includes("defi")
+                      ? "from-violet-950/80 via-[#171321] to-[#0d0c10]"
+                      : air.category?.toLowerCase().includes("governance")
+                        ? "from-[#302013] via-[#1a1512] to-[#100e0d]"
+                        : air.category?.toLowerCase().includes("infrastructure")
+                          ? "from-slate-800/80 via-[#15171d] to-[#0d0e12]"
+                          : "from-[#241b31] via-[#17131f] to-[#0d0c10]";
+                    return isGenericArtwork ? (
+                      <div className={`relative flex h-36 w-full items-center justify-between overflow-hidden rounded-xl border border-border/50 bg-gradient-to-br ${visualTone} px-5`} aria-label={`${air.title} campaign artwork`} role="img">
+                        <div className="pointer-events-none absolute inset-0 opacity-30" aria-hidden="true">
+                          <div className="absolute -right-8 -top-20 h-56 w-56 rounded-full border border-primary/40" />
+                          <div className="absolute -right-1 -top-12 h-40 w-40 rounded-full border border-primary/30" />
+                          <div className="absolute right-12 top-7 h-24 w-24 rounded-full border border-primary/20" />
+                          <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_48%,rgba(167,139,250,0.18),transparent_42%)]" />
+                        </div>
+                        <div className="relative z-10 min-w-0">
+                          <span className="text-[9px] font-semibold uppercase tracking-[0.2em] text-primary/80">Airdrop campaign</span>
+                          <p className="mt-2 max-w-[15rem] truncate text-sm font-semibold text-foreground/90">{project?.name || air.title}</p>
+                          <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">{air.category || air.type || "Ecosystem rewards"}</p>
+                        </div>
+                        <div className="relative z-10 ml-4 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-primary/35 bg-background/40 text-base font-bold tracking-tight text-primary shadow-lg shadow-black/20 backdrop-blur-sm">
+                          {token?.symbol?.slice(0, 4) || getInitials(air.title)}
+                        </div>
+                      </div>
+                    ) : (
+                      <DataArtwork src={campaignImage} alt={`${air.title} campaign`} className="h-36 w-full rounded-xl border border-border/40" fallbackLabel="Airdrop campaign" />
+                    );
+                  })()}
                   {/* Card Header: Network + Type + Badges */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -737,7 +940,7 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                             : "bg-muted text-muted-foreground border border-border/40"
                         }`}
                       >
-                        {air.network}
+                        {isSepolia ? "Ethereum Sepolia" : getNetworkName(air.network) || "Network not reported"}
                       </span>
                       <span className="rounded bg-primary/10 border border-primary/25 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase">
                         {air.type}
@@ -762,9 +965,18 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
 
                   {/* Title & Token Identity */}
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/30 flex items-center justify-center font-bold text-sm text-primary font-mono shadow-inner">
-                      {token ? token.symbol.slice(0, 3) : getInitials(air.title)}
-                    </div>
+                    {project?.logoUrl || token?.logoUrl ? (
+                      <DataArtwork
+                        src={project?.logoUrl || token?.logoUrl}
+                        alt={`${project?.name || token?.name || air.title} logo`}
+                        className="h-10 w-10 shrink-0 rounded-xl border border-primary/25 bg-secondary/30 object-contain p-1"
+                        fallbackLabel={getInitials(project?.name || token?.name || air.title)}
+                      />
+                    ) : (
+                      <div className="h-10 w-10 shrink-0 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/30 flex items-center justify-center font-bold text-sm text-primary font-mono shadow-inner">
+                        {token ? token.symbol.slice(0, 3) : getInitials(air.title)}
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
                       <Link
                         to={`/airdrops/campaigns/${air.id}`}
@@ -801,39 +1013,42 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                   </div>
 
                   {/* Description */}
-                  {air.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                      {air.description}
-                    </p>
-                  )}
+                  <p className="min-h-[2.5rem] text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                    {air.description || "Campaign details have not been published by the source yet."}
+                  </p>
 
                   {/* Reward Pool Highlight */}
                   <div className="rounded-xl border border-border/40 bg-secondary/15 p-3.5 space-y-2.5">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-muted-foreground">Reward Pool</span>
                       <span className="font-mono font-bold text-emerald-400">
-                        {air.totalReward || "TBD"}
+                        {air.totalReward || "Not disclosed"}
                       </span>
                     </div>
 
-                    {/* Claim Progress Bar */}
-                    <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          progress >= 100
-                            ? "bg-emerald-400"
-                            : progress > 0
-                            ? "bg-primary"
-                            : "bg-muted-foreground/30"
-                        }`}
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
-                      <span>Claimed: <strong className="font-mono text-foreground">{air.claimedCount?.toLocaleString() || "0"}</strong></span>
-                      <span>Total: <strong className="font-mono text-foreground">{air.recipientCount?.toLocaleString() || "0"}</strong></span>
-                    </div>
+                    {/* Only render a claim rate when both source values exist. */}
+                    {typeof air.claimedCount === "number" && typeof air.recipientCount === "number" && air.recipientCount > 0 ? (
+                      <>
+                        <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              progress >= 100
+                                ? "bg-emerald-400"
+                                : progress > 0
+                                ? "bg-primary"
+                                : "bg-muted-foreground/30"
+                            }`}
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-0.5">
+                          <span>Claimed: <strong className="font-mono text-foreground">{air.claimedCount.toLocaleString()}</strong></span>
+                          <span>Total: <strong className="font-mono text-foreground">{air.recipientCount.toLocaleString()}</strong></span>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">Claim progress not reported</p>
+                    )}
                   </div>
 
                   {/* Timeline metadata */}
@@ -850,14 +1065,38 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
                       </span>
                     </div>
                   )}
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                    <span>Updated</span>
+                    <span className="font-mono text-foreground/80">
+                      {(() => {
+                        const value = air.lastUpdated || air.updatedAt || air.createdAt;
+                        const date = value ? new Date(value) : null;
+                        return date && !Number.isNaN(date.getTime())
+                          ? date.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" })
+                          : "Not reported";
+                      })()}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Card Action */}
-                <div className="mt-5 pt-4 border-t border-border/40 flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-muted-foreground">
-                    ID: {air.id}
+                <div className="mt-5 flex items-center justify-between border-t border-border/40 pt-4">
+                  <span className="max-w-[58%] truncate text-[10px] font-mono text-muted-foreground" title={`Campaign ID: ${air.id}`}>
+                    {air.id}
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={!compareIds.includes(String(air.id)) && compareIds.length >= 3}
+                      onClick={() => toggleCompare(String(air.id))}
+                      className={`h-8 w-8 px-0 ${compareIds.includes(String(air.id)) ? "text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                      aria-label={compareIds.includes(String(air.id)) ? `Remove ${air.title} from comparison` : `Compare ${air.title}`}
+                      title={compareIds.includes(String(air.id)) ? "Remove from comparison" : "Add to comparison"}
+                    >
+                      {compareIds.includes(String(air.id)) ? <Check className="h-3.5 w-3.5" /> : <Scale className="h-3.5 w-3.5" />}
+                    </Button>
                     <Button
                       asChild
                       size="sm"
@@ -871,264 +1110,113 @@ export function AirdropDirectory({ mode = "canonical" }: AirdropDirectoryProps) 
             );
           })}
         </div>
-      ) : (
-        /* TABLE VIEW */
-        <div className="rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md overflow-hidden shadow-lg">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-border/60 bg-secondary/20 text-muted-foreground uppercase text-[10px] tracking-wider font-semibold">
-                  <th
-                    onClick={() => handleSortClick("name")}
-                    className="py-3 px-4 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Campaign / Token</span>
-                      {sortBy === "name-asc" && <ChevronUp className="h-3 w-3 text-primary" />}
-                      {sortBy === "name-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
-                    </div>
-                  </th>
-                  <th className="py-3 px-3">Network & Category</th>
-                  <th className="py-3 px-3">Type</th>
-                  <th className="py-3 px-3">Status</th>
-                  <th
-                    onClick={() => handleSortClick("reward")}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Total Pool</span>
-                      {sortBy === "reward-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSortClick("progress")}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Claim Progress</span>
-                      {sortBy === "progress-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSortClick("recipients")}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Recipients</span>
-                      {sortBy === "recipients-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
-                    </div>
-                  </th>
-                  <th
-                    onClick={() => handleSortClick("date")}
-                    className="py-3 px-3 cursor-pointer hover:text-foreground transition-colors"
-                  >
-                    <div className="flex items-center gap-1">
-                      <span>Timeline</span>
-                      {sortBy === "date-desc" && <ChevronDown className="h-3 w-3 text-primary" />}
-                      {sortBy === "date-asc" && <ChevronUp className="h-3 w-3 text-primary" />}
-                    </div>
-                  </th>
-                  <th className="py-3 px-4 text-right">Action</th>
+        ) : null}
+
+        {/* Pagination footer mirrors the overview directory */}
+        {totalPages > 1 && (
+          <div className="airdrop-directory-pagination flex flex-col gap-3 border-t border-border/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div className="text-xs text-muted-foreground">
+              Showing{" "}
+              <strong className="text-foreground">{startIndex + 1}–{Math.min(startIndex + pageSize, totalItems)}</strong>
+              {" "}of <strong className="text-foreground">{totalItems}</strong> campaigns
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={effectivePage <= 1}
+                className="h-9 gap-1.5 border-border/60 px-3 text-xs"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" /> Previous
+              </Button>
+              <span className="min-w-[5.5rem] text-center text-xs text-muted-foreground">
+                Page <strong className="text-foreground">{effectivePage}</strong> of {totalPages}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                disabled={effectivePage >= totalPages}
+                className="h-9 gap-1.5 border-border/60 px-3 text-xs"
+              >
+                Next <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Comparison tray floats above the page without changing directory/card dimensions. */}
+      {comparisonAirdrops.length > 0 && (
+        <div className="fixed bottom-5 left-1/2 z-[80] flex -translate-x-1/2 items-center gap-3 rounded-xl border border-primary/30 bg-[#17151b]/95 px-4 py-3 shadow-2xl shadow-black/40 backdrop-blur-xl">
+          <div className="flex items-center gap-2 text-xs text-foreground">
+            <Scale className="h-4 w-4 text-primary" />
+            <strong>{comparisonAirdrops.length} of 3 selected</strong>
+            <span className="hidden text-muted-foreground sm:inline">Compare campaign details side by side</span>
+          </div>
+          <Button size="sm" onClick={() => setCompareOpen(true)} className="h-8 bg-primary px-3 text-xs text-primary-foreground">
+            Compare now
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setCompareIds([])} className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground">
+            Clear
+          </Button>
+        </div>
+      )}
+
+      <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
+        <DialogContent className="max-h-[85vh] max-w-5xl overflow-y-auto border-border/70 bg-[#111013] text-foreground">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">Compare airdrop campaigns</DialogTitle>
+            <DialogDescription>
+              Compare published campaign metadata side by side. Reward amounts may use different tokens and are not directly equivalent in market value.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="overflow-x-auto rounded-xl border border-border/60">
+            <table className="w-full min-w-[640px] border-collapse text-left text-xs">
+              <thead className="bg-secondary/30">
+                <tr>
+                  <th className="w-36 px-3 py-3 text-muted-foreground">Campaign detail</th>
+                  {comparisonAirdrops.map((air) => (
+                    <th key={air.id} className="min-w-[170px] px-3 py-3 align-top">
+                      <div className="line-clamp-2 font-semibold text-foreground">{air.title || air.name || "Untitled campaign"}</div>
+                      <div className="mt-1 font-mono text-[10px] font-normal text-muted-foreground">{air.id}</div>
+                    </th>
+                  ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/40">
-                {paginatedAirdrops.map((air) => {
-                  const token = tokenMap.get(air.tokenId);
-                  const project = air.projectId ? projectMap.get(air.projectId) : undefined;
-                  const progress = calculateClaimProgress(air.claimedCount, air.recipientCount);
-                  const isSepolia =
-                    air.network.toLowerCase().includes("sepolia") || air.network === "Ethereum";
-
-                  return (
-                    <tr
-                      key={air.id}
-                      className="hover:bg-secondary/10 transition-colors group"
-                    >
-                      {/* Name & Token */}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 shrink-0 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-xs text-primary font-mono">
-                            {token ? token.symbol.slice(0, 3) : getInitials(air.title)}
-                          </div>
-                          <div className="min-w-0">
-                            <Link
-                              to={`/airdrops/campaigns/${air.id}`}
-                              className="font-bold text-foreground hover:text-primary transition-colors line-clamp-1"
-                            >
-                              {air.title}
-                            </Link>
-                            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                              {token ? (
-                                <Link
-                                  to={`/tokens/${token.id}`}
-                                  className="font-mono text-primary hover:underline font-semibold"
-                                >
-                                  ${token.symbol}
-                                </Link>
-                              ) : (
-                                <span className="font-mono text-foreground font-semibold">
-                                  {air.tokenId.toUpperCase()}
-                                </span>
-                              )}
-                              {project && (
-                                <>
-                                  <span className="text-muted-foreground/60">•</span>
-                                  <span className="truncate">{project.name}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Network & Category */}
-                      <td className="py-3.5 px-3">
-                        <div className="space-y-1">
-                          <span
-                            className={`inline-block rounded px-2 py-0.5 text-[10px] font-mono ${
-                              isSepolia
-                                ? "bg-primary/10 text-primary border border-primary/30"
-                                : "bg-muted text-muted-foreground border border-border/40"
-                            }`}
-                          >
-                            {air.network}
-                          </span>
-                          {air.category && (
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {air.category}
-                            </p>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Type */}
-                      <td className="py-3.5 px-3">
-                        <span className="rounded bg-primary/10 border border-primary/25 px-2 py-0.5 text-[10px] font-semibold text-primary uppercase">
-                          {air.type}
-                        </span>
-                      </td>
-
-                      {/* Status & Provenance */}
-                      <td className="py-3.5 px-3">
-                        <div className="flex flex-col items-start gap-1">
-                          <StatusBadge status={air.status} />
-                          <ProvenanceBadge
-                            kind={air.origin === "external" ? "simulated" : getAirdropProvenance(air)}
-                            label={air.source || (air.origin === "external" ? "CryptoRank Drophunting" : "HorizonX Ecosystem (Simulated)")}
-                          />
-                        </div>
-                      </td>
-
-                      {/* Total Pool */}
-                      <td className="py-3.5 px-3 font-mono">
-                        <span className="font-semibold text-emerald-400">
-                          {air.totalReward || "TBD"}
-                        </span>
-                      </td>
-
-                      {/* Progress */}
-                      <td className="py-3.5 px-3">
-                        <div className="w-24 space-y-1">
-                          <div className="flex justify-between text-[11px] font-mono">
-                            <span className="font-semibold text-foreground">{progress}%</span>
-                          </div>
-                          <div className="h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${
-                                progress >= 100
-                                  ? "bg-emerald-400"
-                                  : progress > 0
-                                  ? "bg-primary"
-                                  : "bg-muted-foreground/30"
-                              }`}
-                              style={{ width: `${progress}%` }}
-                            />
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Recipients */}
-                      <td className="py-3.5 px-3 font-mono text-foreground">
-                        {air.recipientCount ? air.recipientCount.toLocaleString() : "0"}
-                      </td>
-
-                      {/* Timeline */}
-                      <td className="py-3.5 px-3 font-mono text-[11px] text-muted-foreground">
-                        {air.status === "pending"
-                          ? `Starts: ${air.startTime?.slice(0, 10) || "TBD"}`
-                          : `Expires: ${air.endTime?.slice(0, 10) || "TBD"}`}
-                      </td>
-
-                      {/* Action */}
-                      <td className="py-3.5 px-4 text-right">
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs border-border/60 hover:border-primary/50"
-                        >
-                          <Link to={`/airdrops/campaigns/${air.id}`}>Inspect</Link>
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+              <tbody className="divide-y divide-border/50">
+                {([
+                  ["Network", (air: any) => isSepoliaNetwork(air.network) ? "Ethereum Sepolia" : compareValue(air.network)],
+                  ["Status", (air: any) => compareValue(air.status)],
+                  ["Campaign type", (air: any) => compareValue(air.type)],
+                  ["Category", (air: any) => compareValue(air.category)],
+                  ["Reward pool", (air: any) => compareValue(air.totalReward)],
+                  ["Recipients", (air: any) => typeof air.recipientCount === "number" ? air.recipientCount.toLocaleString() : "Not reported"],
+                  ["Claims recorded", (air: any) => typeof air.claimedCount === "number" ? air.claimedCount.toLocaleString() : "Not reported"],
+                  ["Claim progress", (air: any) => typeof air.claimedCount === "number" && typeof air.recipientCount === "number" && air.recipientCount > 0 ? `${calculateClaimProgress(air.claimedCount, air.recipientCount)}%` : "Not reported"],
+                  ["Starts", (air: any) => formatCompareDate(air.startTime)],
+                  ["Ends", (air: any) => formatCompareDate(air.endTime)],
+                  ["Data source", (air: any) => compareValue(air.source || getCampaignSource(air))],
+                ] as [string, (air: any) => string][]).map(([label, getter]) => (
+                  <tr key={label}>
+                    <th className="bg-secondary/10 px-3 py-3 font-medium text-muted-foreground">{label}</th>
+                    {comparisonAirdrops.map((air) => (
+                      <td key={air.id} className="px-3 py-3 text-foreground">{getter(air)}</td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {/* 6. Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-          <div className="text-xs text-muted-foreground">
-            Showing <strong className="text-foreground">{startIndex + 1}</strong> to{" "}
-            <strong className="text-foreground">
-              {Math.min(startIndex + pageSize, totalItems)}
-            </strong>{" "}
-            of <strong className="text-foreground">{totalItems}</strong> airdrop campaigns
+          <div className="flex flex-wrap justify-between gap-2">
+            <Button variant="outline" size="sm" onClick={() => setCompareIds([])} className="text-xs">Clear selection</Button>
+            <Button size="sm" onClick={() => setCompareOpen(false)} className="text-xs">Done</Button>
           </div>
-
-          <div className="flex items-center gap-1.5">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={effectivePage <= 1}
-              className="h-8 px-2.5 text-xs border-border/60"
-            >
-              <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Prev
-            </Button>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <Button
-                key={page}
-                variant={effectivePage === page ? "default" : "outline"}
-                size="sm"
-                onClick={() => setCurrentPage(page)}
-                className={`h-8 w-8 p-0 text-xs ${
-                  effectivePage === page
-                    ? "bg-primary text-primary-foreground font-bold"
-                    : "border-border/60 text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {page}
-              </Button>
-            ))}
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={effectivePage >= totalPages}
-              className="h-8 px-2.5 text-xs border-border/60"
-            >
-              Next <ChevronRight className="h-3.5 w-3.5 ml-1" />
-            </Button>
-          </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

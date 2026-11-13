@@ -105,15 +105,6 @@
   }
 }
 
-.ad-section-nav__crosslink {
-  display: inline-flex; align-items: center; min-height: 2.35rem;
-  color: var(--muted-foreground); text-decoration: none; font-size: .8rem;
-  font-weight: 550; white-space: nowrap; transition: color 150ms ease;
-}
-.ad-section-nav__crosslink:hover { color: var(--foreground); }
-@media (max-width: 640px) {
-  .ad-section-nav__crosslink { display: none; }
-}
 
 /* Extend the airdrop workspace navigation rules to the viewport edges while
    keeping its labels and action aligned with the page content grid. */
@@ -123,3 +114,1937 @@
   border-bottom-color: transparent;
 }
 .ad-section-nav::before, .ad-section-nav::after { content: none !important; display: none !important; }
+
+
+/* The fixed workspace navigation already occupies the row above the content.
+   Reserve only its actual 3.55rem height so the breadcrumb sits directly below
+   it instead of inheriting the oversized global spacer. */
+.airdrop-page > .hx-workspace-nav-spacer {
+  height: 3.55rem !important;
+  min-height: 3.55rem !important;
+  margin: 0 !important;
+}
+.airdrop-page > .hx-workspace-nav-spacer + .ad-breadcrumb {
+  /* Keep the same deliberate breathing room used by the other ecosystems. */
+  margin-top: 1.25rem !important;
+}
+
+/* Overview actions use the same filled-purple hover treatment as the
+   workspace's primary action, while remaining understated at rest. */
+.airdrop-page .airdrop-overview-actions a:hover {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+
+/* Campaign directory uses the same grid/table language as Staking Pools.
+   These selectors are intentionally Airdrops-only. */
+.airdrop-page .airdrop-directory-shell {
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card) 42%, transparent);
+}
+.airdrop-page .airdrop-directory-grid {
+  align-items: stretch;
+}
+.airdrop-page .airdrop-campaign-card {
+  min-height: 300px;
+  border-radius: 16px !important;
+  background: color-mix(in srgb, var(--card) 78%, transparent);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 8%);
+}
+.airdrop-page .airdrop-campaign-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+}
+.airdrop-page .airdrop-directory-shell table {
+  border-collapse: collapse;
+}
+.airdrop-page .airdrop-directory-shell thead th {
+  white-space: nowrap;
+  font-weight: 650;
+}
+.airdrop-page .airdrop-directory-shell tbody tr {
+  height: 68px;
+}
+.airdrop-page .airdrop-directory-shell tbody tr:last-child {
+  border-bottom: 0;
+}
+.airdrop-page .airdrop-directory-pagination {
+  border-color: var(--border);
+}
+.airdrop-page .airdrop-directory-pagination button {
+  min-height: 2rem;
+}
+@media (max-width: 640px) {
+  .airdrop-page .airdrop-directory-grid {
+    padding: .75rem;
+  }
+  .airdrop-page .airdrop-campaign-card {
+    min-height: 0;
+  }
+}
+
+
+
+/* Unified Airdrops directory surface: toolbar, results and pagination live
+   inside one card, using the same near-black base as the Staking directory. */
+.airdrop-page .airdrop-directory-panel {
+  background: #0e0d0e;
+  border-color: var(--border);
+}
+.airdrop-page .airdrop-directory-panel__toolbar {
+  background: #0e0d0e;
+}
+.airdrop-page .airdrop-directory-table-wrap {
+  background: #0e0d0e;
+}
+.airdrop-page .airdrop-directory-table {
+  background: #0e0d0e;
+  color: var(--foreground);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.airdrop-page .airdrop-directory-table thead {
+  background: #101012 !important;
+}
+.airdrop-page .airdrop-directory-table tbody tr {
+  background: #0e0d0e;
+}
+.airdrop-page .airdrop-directory-table tbody tr:hover {
+  background: #151416;
+}
+.airdrop-page .airdrop-directory-table th,
+.airdrop-page .airdrop-directory-table td {
+  border-color: color-mix(in srgb, var(--border) 72%, transparent);
+}
+.airdrop-page .airdrop-directory-grid {
+  background: #0e0d0e;
+}
+.airdrop-page .airdrop-campaign-card {
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+  border-color: color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 1rem;
+}
+.airdrop-page .airdrop-campaign-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 52%, var(--border));
+  background: color-mix(in srgb, var(--card) 60%, transparent);
+}
+.airdrop-page .airdrop-directory-pagination {
+  background: #0e0d0e;
+}
+.airdrop-page .airdrop-view-toggle {
+  min-height: 2.5rem;
+}
+.airdrop-page .airdrop-view-toggle button {
+  min-width: 5.2rem;
+}
+@media (max-width: 640px) {
+  .airdrop-page .airdrop-view-toggle button {
+    min-width: 4.6rem;
+    padding-inline: .65rem;
+  }
+}
+
+
+/* Airdrops directory controls follow the Staking Pools toolbar rhythm. */
+.airdrop-page .airdrop-directory-panel__toolbar select,
+.airdrop-page .airdrop-directory-panel__toolbar input {
+  color-scheme: dark;
+}
+.airdrop-page .airdrop-directory-panel__toolbar select:focus-visible,
+.airdrop-page .airdrop-directory-panel__toolbar input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 70%, transparent);
+  outline-offset: 1px;
+}
+.airdrop-page .airdrop-directory-grid {
+  gap: 1.5rem;
+  padding: 1.25rem;
+}
+.airdrop-page .airdrop-campaign-card {
+  min-height: 320px;
+  padding: 1.25rem;
+}
+@media (max-width: 640px) {
+  .airdrop-page .airdrop-directory-grid {
+    gap: 1rem;
+    padding: .75rem;
+  }
+  .airdrop-page .airdrop-campaign-card {
+    min-height: 0;
+    padding: 1rem;
+  }
+}
+
+
+/* Canonical /airdrops/campaigns directory: align its controls, cards and table
+   with the finalized Airdrops overview without changing the overview itself. */
+.airdrop-directory-page .airdrop-directory-panel {
+  background: #0e0d0e;
+  border-color: var(--border);
+}
+.airdrop-directory-page .airdrop-directory-panel select,
+.airdrop-directory-page .airdrop-directory-panel input {
+  color-scheme: dark;
+}
+.airdrop-directory-page .airdrop-directory-panel select:focus-visible,
+.airdrop-directory-page .airdrop-directory-panel input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 70%, transparent);
+  outline-offset: 1px;
+}
+.airdrop-directory-page .airdrop-directory-view-toggle button {
+  min-width: 5.2rem;
+}
+.airdrop-directory-page .airdrop-directory-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+  padding: 1.25rem;
+}
+.airdrop-directory-page .airdrop-campaign-card {
+  min-width: 0;
+  min-height: 340px;
+  border-color: var(--border);
+  background: #101112;
+}
+.airdrop-directory-page .airdrop-directory-table {
+  background: #0e0d0e;
+}
+.airdrop-directory-page .airdrop-directory-table tbody tr {
+  background: #0e0d0e;
+  transition: background-color 150ms ease;
+}
+.airdrop-directory-page .airdrop-directory-table tbody tr:hover {
+  background: #151416;
+}
+@media (max-width: 1024px) {
+  .airdrop-directory-page .airdrop-directory-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .airdrop-directory-page .airdrop-directory-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding: .75rem;
+  }
+  .airdrop-directory-page .airdrop-campaign-card {
+    min-height: 0;
+    padding: 1rem;
+  }
+  .airdrop-directory-page .airdrop-directory-view-toggle button {
+    min-width: 4.5rem;
+    padding-inline: .65rem;
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Airdrops Overview dashboard — scoped so the Campaigns directory is intact. */
+/* -------------------------------------------------------------------------- */
+.airdrop-overview-dashboard {
+  color: var(--foreground);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi,
+.airdrop-overview-dashboard .airdrop-dashboard-panel {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1.1rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(167, 139, 250, .055), transparent 38%),
+    #101112;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi {
+  display: flex;
+  align-items: flex-start;
+  gap: .9rem;
+  min-height: 126px;
+  padding: 1.1rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__icon {
+  display: grid;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: .85rem;
+  background: color-mix(in srgb, currentColor 11%, transparent);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__icon svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__icon--purple { color: #a78bfa; }
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__icon--green { color: #10b981; }
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__icon--cyan { color: #22d3ee; }
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__icon--amber { color: #fbbf24; }
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__content {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: .25rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__content > span {
+  color: var(--muted-foreground);
+  font-size: .75rem;
+  font-weight: 600;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__content strong {
+  color: var(--foreground);
+  font-size: 1.65rem;
+  font-weight: 750;
+  letter-spacing: -.045em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__content small {
+  color: var(--muted-foreground);
+  font-size: .68rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__corner {
+  color: var(--muted-foreground);
+  opacity: .65;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi__corner svg {
+  width: 1rem;
+  height: 1rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-disclosure {
+  display: flex;
+  align-items: flex-start;
+  gap: .65rem;
+  padding: .85rem 1rem;
+  border: 1px solid rgba(245, 158, 11, .24);
+  border-radius: .85rem;
+  background: rgba(245, 158, 11, .055);
+  color: #fbbf24;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-disclosure p {
+  color: var(--muted-foreground);
+  font-size: .7rem;
+  line-height: 1.65;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-disclosure strong {
+  color: #fbbf24;
+  font-weight: 700;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel {
+  padding: 1.15rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel__header h2 {
+  margin-top: .15rem;
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: -.025em;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel__header p {
+  margin-top: .25rem;
+  color: var(--muted-foreground);
+  font-size: .69rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-eyebrow {
+  color: #a78bfa;
+  font-size: .61rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel__header-icon {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(167, 139, 250, .2);
+  border-radius: .75rem;
+  background: rgba(167, 139, 250, .09);
+  color: #a78bfa;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel__header-icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart {
+  padding: .35rem .2rem 0;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__plot {
+  position: relative;
+  display: grid;
+  height: 210px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: .7rem;
+  padding: .4rem 0 1.45rem 2rem;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(25% - 1px),
+    rgba(148, 163, 184, .13) calc(25% - 1px),
+    rgba(148, 163, 184, .13) 25%
+  );
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__grid {
+  position: absolute;
+  inset: 0 auto 1.45rem 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--muted-foreground);
+  font-size: .58rem;
+  font-variant-numeric: tabular-nums;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__bar-column {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .35rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__bar-track {
+  display: flex;
+  width: min(58%, 2.1rem);
+  height: 100%;
+  align-items: flex-end;
+  overflow: hidden;
+  border-radius: .45rem .45rem .1rem .1rem;
+  background: rgba(148, 163, 184, .09);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: .4rem .4rem .1rem .1rem;
+  background: linear-gradient(180deg, #c4b5fd 0%, #8b5cf6 100%);
+  box-shadow: 0 0 18px rgba(139, 92, 246, .18);
+  transition: height .25s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__value {
+  position: absolute;
+  bottom: 1.35rem;
+  color: var(--foreground);
+  font-size: .6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__label {
+  position: absolute;
+  bottom: 0;
+  color: var(--muted-foreground);
+  font-size: .62rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel__footnote {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  margin-top: .85rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: .63rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel__footnote > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-dot {
+  width: .45rem;
+  height: .45rem;
+  border-radius: 999px;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-dot--purple { background: #a78bfa; }
+.airdrop-overview-dashboard .airdrop-dashboard-network-list,
+.airdrop-overview-dashboard .airdrop-dashboard-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: .95rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row__top,
+.airdrop-overview-dashboard .airdrop-dashboard-status-row__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 2.8rem;
+  align-items: center;
+  gap: .7rem;
+  margin-bottom: .4rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row__top > span,
+.airdrop-overview-dashboard .airdrop-dashboard-status-row__top > span {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: .5rem;
+  color: var(--foreground);
+  font-size: .7rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row__top i,
+.airdrop-overview-dashboard .airdrop-dashboard-status-row__top i {
+  width: .5rem;
+  height: .5rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row__top strong,
+.airdrop-overview-dashboard .airdrop-dashboard-status-row__top strong {
+  color: var(--foreground);
+  font-size: .7rem;
+  font-variant-numeric: tabular-nums;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row__top small,
+.airdrop-overview-dashboard .airdrop-dashboard-status-row__top small {
+  color: var(--muted-foreground);
+  font-size: .62rem;
+  text-align: right;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-progress {
+  height: .38rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, .12);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-footer {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  margin-top: 1.15rem;
+  padding-top: .85rem;
+  border-top: 1px solid var(--border);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-footer span {
+  color: var(--muted-foreground);
+  font-size: .62rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-footer strong {
+  color: var(--foreground);
+  font-size: .7rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-text-link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .35rem;
+  color: #a78bfa;
+  font-size: .68rem;
+  font-weight: 700;
+  transition: color .15s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-text-link:hover { color: #c4b5fd; }
+.airdrop-overview-dashboard .airdrop-dashboard-text-link svg {
+  width: .9rem;
+  height: .9rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-list {
+  display: flex;
+  flex-direction: column;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, .85fr) minmax(0, .9fr) minmax(130px, .9fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: .9rem .2rem;
+  border-top: 1px solid var(--border);
+  transition: background-color .15s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured:first-child { border-top: 0; }
+.airdrop-overview-dashboard .airdrop-dashboard-featured:hover { background: rgba(167, 139, 250, .035); }
+.airdrop-overview-dashboard .airdrop-dashboard-featured__identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: .7rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__symbol {
+  display: grid;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(167, 139, 250, .3);
+  border-radius: .8rem;
+  background: rgba(167, 139, 250, .1);
+  color: #c4b5fd;
+  font-size: .68rem;
+  font-weight: 800;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__identity > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .22rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__identity strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: .7rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__identity small,
+.airdrop-overview-dashboard .airdrop-dashboard-featured__reward small,
+.airdrop-overview-dashboard .airdrop-dashboard-featured__claim small {
+  color: var(--muted-foreground);
+  font-size: .61rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__meta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .35rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__meta > span:first-child {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--muted-foreground);
+  font-size: .62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__reward {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .3rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__reward strong {
+  overflow: hidden;
+  color: #10d6a0;
+  font-size: .72rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__claim > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: .5rem;
+  margin-bottom: .35rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__claim > div:first-child strong {
+  color: var(--foreground);
+  font-size: .65rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__claim > small {
+  display: block;
+  margin-top: .3rem;
+  font-size: .58rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured__arrow {
+  width: .95rem;
+  height: .95rem;
+  color: var(--muted-foreground);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-rate {
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  margin-top: 1.2rem;
+  padding: .85rem;
+  border: 1px solid rgba(16, 185, 129, .2);
+  border-radius: .8rem;
+  background: rgba(16, 185, 129, .055);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-rate__icon {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: .65rem;
+  background: rgba(16, 185, 129, .12);
+  color: #10b981;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-rate__icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-rate > div:nth-child(2) {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: .1rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-rate small {
+  color: var(--muted-foreground);
+  font-size: .6rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-rate strong {
+  color: #10d6a0;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-rate > span {
+  color: var(--muted-foreground);
+  font-size: .58rem;
+  text-align: right;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity-list {
+  display: flex;
+  flex-direction: column;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: .8rem;
+  padding: .8rem .2rem;
+  border-top: 1px solid var(--border);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity:first-child { border-top: 0; }
+.airdrop-overview-dashboard .airdrop-dashboard-activity__icon {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border-radius: .7rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__icon svg {
+  width: 1rem;
+  height: 1rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__icon.is-purple {
+  background: rgba(167, 139, 250, .12);
+  color: #a78bfa;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__icon.is-green {
+  background: rgba(16, 185, 129, .12);
+  color: #10b981;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .2rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__copy strong {
+  color: var(--foreground);
+  font-size: .68rem;
+  font-weight: 700;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__copy small {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: .62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__date {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  color: var(--muted-foreground);
+  font-size: .6rem;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__date svg {
+  width: .75rem;
+  height: .75rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__arrow {
+  width: .9rem;
+  height: .9rem;
+  color: var(--muted-foreground);
+}
+@media (max-width: 1100px) {
+  .airdrop-overview-dashboard .airdrop-dashboard-featured {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, .8fr) minmax(0, .9fr);
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-featured__claim {
+    grid-column: 2 / 4;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-featured__arrow {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .airdrop-overview-dashboard .airdrop-dashboard-panel { padding: .9rem; }
+  .airdrop-overview-dashboard .airdrop-dashboard-kpi { min-height: 108px; padding: .9rem; }
+  .airdrop-overview-dashboard .airdrop-dashboard-chart__plot { height: 175px; gap: .35rem; }
+  .airdrop-overview-dashboard .airdrop-dashboard-featured {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: .65rem;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-featured__meta {
+    grid-column: 1 / 2;
+    grid-row: 2;
+    flex-direction: row;
+    align-items: center;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-featured__reward {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    align-items: flex-end;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-featured__claim {
+    grid-column: 1 / -1;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-activity {
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-activity__date {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-activity__arrow { display: none; }
+}
+
+
+/* Interactive Airdrops overview dashboard — scoped to /airdrops only. */
+.airdrop-overview-dashboard .airdrop-dashboard-kpi--button {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  transition: border-color .18s ease, background-color .18s ease, transform .18s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi--button:hover,
+.airdrop-overview-dashboard .airdrop-dashboard-kpi--button:focus-visible {
+  border-color: rgba(167, 139, 250, .58);
+  background:
+    radial-gradient(circle at 100% 100%, rgba(139, 92, 246, .12), transparent 48%),
+    #121114;
+  outline: none;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-kpi--button:focus-visible,
+.airdrop-overview-dashboard .airdrop-dashboard-network-row:focus-visible,
+.airdrop-overview-dashboard .airdrop-dashboard-status-row:focus-visible,
+.airdrop-overview-dashboard .airdrop-dashboard-chart__bar-column:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 3px;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: .18rem;
+  color: #9ca3af;
+  font-size: .65rem;
+  cursor: help;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-analytics-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, .9fr) minmax(230px, .78fr);
+  gap: .85rem;
+  align-items: stretch;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel__header {
+  align-items: center;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel__header h2 {
+  font-size: .95rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-period-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: .15rem;
+  padding: .2rem;
+  border: 1px solid var(--border);
+  border-radius: .7rem;
+  background: #0b0b0e;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-period-toggle button {
+  padding: .38rem .62rem;
+  border-radius: .48rem;
+  color: var(--muted-foreground);
+  font-size: .62rem;
+  font-weight: 650;
+  transition: color .15s ease, background .15s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-period-toggle button:hover {
+  color: var(--foreground);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-period-toggle button.is-active {
+  color: #100d18;
+  background: #b69cff;
+  box-shadow: 0 2px 12px rgba(167, 139, 250, .2);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__plot {
+  grid-template-columns: 1.3rem repeat(12, minmax(0, 1fr));
+  gap: .38rem;
+  height: 180px;
+  padding-left: 0;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__grid {
+  left: 0;
+  width: 1.2rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__bar-column {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__bar-column:hover .airdrop-dashboard-chart__bar-track,
+.airdrop-overview-dashboard .airdrop-dashboard-chart__bar-column.is-selected .airdrop-dashboard-chart__bar-track {
+  background: rgba(167, 139, 250, .22);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__bar-column.is-selected .airdrop-dashboard-chart__bar {
+  background: linear-gradient(180deg, #e2d5ff, #a78bfa);
+  box-shadow: 0 0 20px rgba(167, 139, 250, .48);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__bar-track {
+  width: min(65%, 1.45rem);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart__label {
+  font-size: .57rem;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart-selection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .7rem;
+  margin-top: .65rem;
+  padding: .55rem .7rem;
+  border: 1px solid rgba(167, 139, 250, .2);
+  border-radius: .65rem;
+  background: rgba(167, 139, 250, .06);
+  color: var(--muted-foreground);
+  font-size: .62rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart-selection strong {
+  color: var(--foreground);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-chart-selection button {
+  color: #b69cff;
+  font-weight: 700;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-donut-layout {
+  display: grid;
+  grid-template-columns: minmax(110px, .9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: .9rem;
+  min-height: 155px;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-donut {
+  display: grid;
+  width: clamp(112px, 10vw, 148px);
+  aspect-ratio: 1;
+  place-items: center;
+  justify-self: center;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform .18s ease, filter .18s ease;
+  position: relative;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-donut::before {
+  content: "";
+  position: absolute;
+  inset: 19%;
+  border-radius: 50%;
+  background: #101112;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-donut:hover {
+  transform: scale(1.035);
+  filter: brightness(1.12);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-donut > span {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .08rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-donut strong {
+  color: var(--foreground);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-donut small {
+  color: var(--muted-foreground);
+  font-size: .58rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-list {
+  gap: .62rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 2.7rem;
+  align-items: center;
+  gap: .45rem;
+  width: 100%;
+  padding: .12rem 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row:hover .airdrop-dashboard-network-row__name {
+  color: #c4b5fd;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row__name {
+  display: inline-flex;
+  align-items: center;
+  gap: .42rem;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: .63rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row__name i {
+  width: .48rem;
+  height: .48rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row strong {
+  color: var(--foreground);
+  font-size: .64rem;
+  font-variant-numeric: tabular-nums;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-row small {
+  color: var(--muted-foreground);
+  font-size: .58rem;
+  text-align: right;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-network-footer {
+  margin-top: .65rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-status-list {
+  gap: .82rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-status-row {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-status-row:hover .airdrop-dashboard-status-row__top > span {
+  color: #c4b5fd;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-status-row__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 2.5rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-status-row .airdrop-dashboard-progress {
+  display: block;
+  width: 100%;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-rate {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-rate:hover {
+  border-color: rgba(16, 185, 129, .5);
+  background: rgba(16, 185, 129, .09);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown {
+  overflow: hidden;
+  border: 1px solid rgba(167, 139, 250, .28);
+  border-radius: 1rem;
+  background: #101012;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--border);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__header h2 {
+  margin-top: .15rem;
+  color: var(--foreground);
+  font-size: .9rem;
+  font-weight: 750;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__header p {
+  margin-top: .15rem;
+  color: var(--muted-foreground);
+  font-size: .62rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__header > button {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: .6rem;
+  color: var(--muted-foreground);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__header > button:hover {
+  color: var(--foreground);
+  border-color: #a78bfa;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__header svg {
+  width: 1rem;
+  height: 1rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .5rem;
+  padding: .8rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__item {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: .65rem;
+  min-width: 0;
+  padding: .65rem;
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  background: rgba(255,255,255,.015);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__item:hover {
+  border-color: rgba(167,139,250,.45);
+  background: rgba(167,139,250,.045);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__item > span:nth-child(2) {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .2rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__item strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: .66rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__item small {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: .58rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__item > svg {
+  width: .9rem;
+  height: .9rem;
+  color: var(--muted-foreground);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-drilldown__empty {
+  padding: 1.2rem;
+  color: var(--muted-foreground);
+  font-size: .7rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-lower-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(300px, .95fr);
+  gap: .85rem;
+  align-items: stretch;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-heading-with-icon {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-heading-emoji {
+  font-size: 1.25rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-controls {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-controls > button {
+  display: grid;
+  width: 1.8rem;
+  height: 1.8rem;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted-foreground);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-controls > button:hover:not(:disabled) {
+  border-color: #a78bfa;
+  color: #c4b5fd;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-controls > button:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-controls > button svg {
+  width: .85rem;
+  height: .85rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .65rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 190px;
+  flex-direction: column;
+  overflow: hidden;
+  padding: .8rem;
+  border: 1px solid var(--border);
+  border-radius: .85rem;
+  background: #111114;
+  transition: border-color .16s ease, transform .16s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card:hover {
+  border-color: rgba(167,139,250,.58);
+  transform: translateY(-2px);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card.accent-1 {
+  background: #111114;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card.accent-2 {
+  background: #111114;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .4rem;
+  margin-bottom: .55rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__title {
+  display: -webkit-box;
+  min-height: 2.1rem;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: .69rem;
+  font-weight: 750;
+  line-height: 1.45;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+  margin-top: .55rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__tags span {
+  max-width: 100%;
+  overflow: hidden;
+  padding: .2rem .42rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: #c4b5fd;
+  font-size: .54rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__project {
+  margin-top: .35rem;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: .56rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__reward {
+  display: flex;
+  flex-direction: column;
+  gap: .12rem;
+  margin-top: auto;
+  padding-top: .75rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__reward small,
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__progress small {
+  color: var(--muted-foreground);
+  font-size: .56rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__reward strong {
+  overflow: hidden;
+  color: #10d6a0;
+  font-size: .83rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__progress {
+  margin-top: .55rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__progress > span {
+  display: flex;
+  justify-content: space-between;
+  gap: .35rem;
+  margin-bottom: .25rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__progress b {
+  color: var(--foreground);
+  font-size: .56rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__progress > i {
+  display: block;
+  height: .34rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148,163,184,.15);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card__progress > i > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8b5cf6, #c4b5fd);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity-list {
+  position: relative;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity-list::before {
+  content: none;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity {
+  position: relative;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto auto;
+  gap: .55rem;
+  padding: .85rem 0;
+  border-top: 0;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 2.95rem;
+  bottom: -.85rem;
+  left: 1.05rem;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(167,139,250,.7), rgba(148,163,184,.24));
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity:last-child::before {
+  display: none;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity:hover .airdrop-dashboard-activity__copy strong {
+  color: #c4b5fd;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__icon {
+  position: relative;
+  z-index: 1;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 3px solid #101112;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(148,163,184,.12);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-activity__date {
+  font-size: .56rem;
+}
+@media (max-width: 1280px) {
+  .airdrop-overview-dashboard .airdrop-dashboard-analytics-grid {
+    grid-template-columns: minmax(0, 1.3fr) minmax(260px, .9fr);
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-status-panel {
+    grid-column: 1 / -1;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-status-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .85rem;
+  }
+}
+@media (max-width: 900px) {
+  .airdrop-overview-dashboard .airdrop-dashboard-lower-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 720px) {
+  .airdrop-overview-dashboard .airdrop-dashboard-analytics-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-status-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-featured-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-featured-card {
+    min-height: 170px;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-drilldown__list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .airdrop-overview-dashboard .airdrop-dashboard-period-toggle button {
+    padding-inline: .42rem;
+    font-size: .56rem;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-donut-layout {
+    grid-template-columns: 105px minmax(0, 1fr);
+    gap: .5rem;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-chart__plot {
+    grid-template-columns: 1.1rem repeat(7, minmax(0, 1fr));
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-featured-controls .airdrop-dashboard-text-link {
+    display: none;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-activity {
+    grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-activity__arrow {
+    display: none;
+  }
+}
+
+
+
+/* Airdrops overview expansion: operational insights, claim health and deadline watch.
+   All metrics are derived from the campaign catalog; no synthetic chart values are added. */
+.airdrop-overview-dashboard .airdrop-dashboard-operations-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(260px, .82fr);
+  gap: .85rem;
+  align-items: stretch;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-operations-grid > .airdrop-dashboard-panel {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: .95rem;
+  background: #101012;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .55rem;
+  margin-top: .85rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-summary > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .2rem;
+  padding: .65rem .7rem;
+  border: 1px solid var(--border);
+  border-radius: .7rem;
+  background: rgba(255,255,255,.018);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-summary small {
+  color: var(--muted-foreground);
+  font-size: .58rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-summary strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: clamp(.9rem, 1.25vw, 1.15rem);
+  font-weight: 800;
+  text-overflow: ellipsis;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-stacked {
+  display: flex;
+  width: 100%;
+  height: .62rem;
+  overflow: hidden;
+  margin-top: .85rem;
+  border-radius: 999px;
+  background: rgba(148,163,184,.13);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-stacked span:first-child {
+  background: #10b981;
+  transition: width .25s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-stacked span:last-child {
+  background: #a78bfa;
+  transition: width .25s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: .55rem;
+  color: var(--muted-foreground);
+  font-size: .58rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: .32rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-legend i {
+  width: .42rem;
+  height: .42rem;
+  border-radius: 50%;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-legend i.is-claimed { background: #10b981; }
+.airdrop-overview-dashboard .airdrop-dashboard-claim-legend i.is-unclaimed { background: #a78bfa; }
+.airdrop-overview-dashboard .airdrop-dashboard-claim-legend button,
+.airdrop-overview-dashboard .airdrop-dashboard-category-footer button {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  margin-left: auto;
+  color: #b9a4ff;
+  font-size: .6rem;
+  font-weight: 700;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-claim-legend button svg,
+.airdrop-overview-dashboard .airdrop-dashboard-category-footer button svg {
+  width: .75rem;
+  height: .75rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking {
+  display: grid;
+  gap: .55rem;
+  margin-top: 1rem;
+  padding-top: .8rem;
+  border-top: 1px solid var(--border);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  color: var(--foreground);
+  font-size: .63rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking__heading span {
+  color: var(--muted-foreground);
+  font-size: .56rem;
+  font-weight: 500;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(55px, .7fr) 2rem;
+  align-items: center;
+  gap: .5rem;
+  text-decoration: none;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking__row:hover .airdrop-dashboard-ranking__name strong {
+  color: #c4b5fd;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking__name {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .12rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking__name strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: .59rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking__name small {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: .53rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking__bar,
+.airdrop-overview-dashboard .airdrop-dashboard-category-track {
+  display: block;
+  height: .34rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148,163,184,.13);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking__bar i,
+.airdrop-overview-dashboard .airdrop-dashboard-category-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #10b981;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-ranking__row > b {
+  color: #10d6a0;
+  font-size: .6rem;
+  text-align: right;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-list {
+  display: grid;
+  gap: .12rem;
+  margin-top: .55rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-row {
+  display: grid;
+  grid-template-columns: 2.65rem minmax(0, 1fr) auto  .8rem;
+  align-items: center;
+  gap: .55rem;
+  padding: .68rem .1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  text-decoration: none;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-row:last-child {
+  border-bottom: 0;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-row:hover .airdrop-dashboard-deadline-copy strong {
+  color: #c4b5fd;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-date {
+  display: flex;
+  width: 2.45rem;
+  min-height: 2.55rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(167,139,250,.25);
+  border-radius: .6rem;
+  background: rgba(167,139,250,.07);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-date strong {
+  color: var(--foreground);
+  font-size: .9rem;
+  line-height: 1.05;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-date small {
+  color: #b9a4ff;
+  font-size: .52rem;
+  text-transform: uppercase;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .18rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-copy strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: .61rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-copy small {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: .54rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-count {
+  color: var(--muted-foreground);
+  font-size: .55rem;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-count.is-soon {
+  color: #fbbf24;
+  font-weight: 750;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-row > svg {
+  width: .75rem;
+  height: .75rem;
+  color: var(--muted-foreground);
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-empty {
+  display: flex;
+  min-height: 10rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-empty svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-bottom: .25rem;
+  color: #a78bfa;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-empty strong {
+  color: var(--foreground);
+  font-size: .65rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-deadline-empty span {
+  font-size: .56rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin-top: .65rem;
+  color: #b9a4ff;
+  font-size: .6rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-panel-link svg {
+  width: .75rem;
+  height: .75rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-category-list {
+  display: grid;
+  gap: .88rem;
+  margin-top: .9rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-category-row {
+  display: grid;
+  width: 100%;
+  gap: .35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-category-row__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-category-row__top strong {
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: .62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-category-row__top small {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+  font-size: .55rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-category-row:hover .airdrop-dashboard-category-row__top strong {
+  color: #c4b5fd;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-category-track i {
+  transition: width .2s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-category-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .4rem;
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: .55rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-empty-note {
+  color: var(--muted-foreground);
+  font-size: .6rem;
+}
+@media (max-width: 1280px) {
+  .airdrop-overview-dashboard .airdrop-dashboard-operations-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-category-panel {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 760px) {
+  .airdrop-overview-dashboard .airdrop-dashboard-operations-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-category-panel {
+    grid-column: auto;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-claim-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-deadline-row {
+    grid-template-columns: 2.65rem minmax(0, 1fr) auto;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-deadline-row > svg {
+    display: none;
+  }
+}
+
+
+
+
+/* Featured Airdrops: faster stepped rail with overlaid side navigation. */
+.airdrop-overview-dashboard .airdrop-dashboard-featured-panel {
+  overflow: hidden;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-cards {
+  --airdrop-featured-card-width: calc((100% - 1.3rem) / 3);
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  padding-block: .1rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: var(--airdrop-featured-card-width);
+  width: 100%;
+  gap: .65rem;
+  animation: airdrop-featured-step 2.2s cubic-bezier(.22,.75,.25,1) both;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-card {
+  width: 100%;
+  min-width: 0;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-controls {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-rail-arrows {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: 1.35rem;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .24s ease, visibility .24s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-featured-panel:hover .airdrop-dashboard-featured-rail-arrows,
+.airdrop-overview-dashboard .airdrop-dashboard-featured-panel:has(.airdrop-dashboard-rail-arrow:focus-visible) .airdrop-dashboard-featured-rail-arrows {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-rail-arrow {
+  display: inline-flex;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 2.65rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 9999px;
+  color: #fff;
+  background: rgba(30,30,30,.78);
+  box-shadow: 0 2px 12px rgba(0,0,0,.22);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+  transition: border-color .16s ease, background-color .16s ease, transform .16s ease, opacity .16s ease;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-rail-arrow:hover,
+.airdrop-overview-dashboard .airdrop-dashboard-rail-arrow:active {
+  border-color: rgba(255,255,255,.12);
+  color: #fff;
+  background: rgba(30,30,30,.78);
+  transform: none;
+}
+.airdrop-overview-dashboard .airdrop-dashboard-rail-arrow:disabled {
+  opacity: .35;
+  cursor: not-allowed;
+}
+@keyframes airdrop-featured-step {
+  0% { transform: translateX(0); }
+  19.1% {
+    transform: translateX(calc(-1 * (var(--airdrop-featured-card-width) + .65rem)));
+  }
+  100% {
+    transform: translateX(calc(-1 * (var(--airdrop-featured-card-width) + .65rem)));
+  }
+}
+@media (max-width: 1050px) {
+  .airdrop-overview-dashboard .airdrop-dashboard-featured-cards {
+    --airdrop-featured-card-width: calc((100% - .65rem) / 2);
+  }
+}
+@media (max-width: 680px) {
+  .airdrop-overview-dashboard .airdrop-dashboard-featured-cards {
+    --airdrop-featured-card-width: min(82vw, 330px);
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-featured-rail-arrows {
+    padding-inline: .8rem;
+  }
+  .airdrop-overview-dashboard .airdrop-dashboard-rail-arrow {
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-basis: 2.25rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .airdrop-overview-dashboard .airdrop-dashboard-featured-track {
+    animation: none;
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Airdrop campaign detail: stable geometry without nested scroll containers.  */
+/* The 3:1 desktop composition matches the approved campaign detail layout.     */
+/* Panels keep consistent minimum sizing and grow naturally for real content.  */
+/* -------------------------------------------------------------------------- */
+.airdrop-campaign-detail .airdrop-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(300px, 1fr);
+  align-items: start;
+  gap: 1rem;
+}
+.airdrop-campaign-detail .airdrop-detail-panel {
+  box-sizing: border-box;
+  min-width: 0;
+  height: auto;
+  overflow: visible;
+  overscroll-behavior: auto;
+  scrollbar-width: auto;
+}
+.airdrop-campaign-detail .airdrop-detail-panel--overview {
+  min-height: 286px;
+}
+.airdrop-campaign-detail .airdrop-detail-panel--eligibility {
+  min-height: 278px;
+}
+.airdrop-campaign-detail .airdrop-detail-panel--rewards {
+  min-height: 370px;
+}
+.airdrop-campaign-detail .airdrop-detail-panel--history {
+  min-height: 190px;
+}
+.airdrop-campaign-detail .airdrop-detail-panel--timeline {
+  min-height: 260px;
+}
+.airdrop-campaign-detail .airdrop-detail-panel--participation {
+  min-height: 350px;
+}
+.airdrop-campaign-detail .airdrop-detail-panel--trust {
+  min-height: 360px;
+}
+.airdrop-campaign-detail .airdrop-detail-panel--project {
+  min-height: 260px;
+}
+.airdrop-campaign-detail .airdrop-detail-panel--technical {
+  min-height: 230px;
+}
+.airdrop-campaign-detail .airdrop-detail-requirements > li {
+  min-height: 56px;
+  overflow-wrap: anywhere;
+}
+.airdrop-campaign-detail .airdrop-detail-empty {
+  min-height: 112px;
+}
+@media (max-width: 1279px) {
+  .airdrop-campaign-detail .airdrop-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .airdrop-campaign-detail .airdrop-detail-panel {
+    min-height: 0;
+  }
+  .airdrop-campaign-detail .airdrop-detail-metric {
+    height: auto;
+    min-height: 132px;
+  }
+}
+@media (max-width: 640px) {
+  .airdrop-campaign-detail .airdrop-detail-metric {
+    min-height: 120px;
+  }
+}

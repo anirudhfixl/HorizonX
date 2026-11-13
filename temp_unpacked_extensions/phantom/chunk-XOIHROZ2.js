@@ -1,0 +1,2 @@
+import{d,e as c}from"./chunk-5ONZFJ5E.js";import{a as n,g as s,i,n as r}from"./chunk-UG7Z3YUN.js";i();r();var p=s(c(),1),t=s(d(),1);var S=(0,t.createContext)({}),k=n(()=>{let e=(0,p.c)(1);if(e[0]!=="aae6742c41f28119a8a270c119baa38e7f2681b6a2551035479edd748d34d313"){for(let a=0;a<1;a+=1)e[a]=Symbol.for("react.memo_cache_sentinel");e[0]="aae6742c41f28119a8a270c119baa38e7f2681b6a2551035479edd748d34d313"}let o=(0,t.useContext)(S);if(!o)throw new Error("Missing modal context");return o},"useLegacyModals");export{S as a,k as b};
+//# sourceMappingURL=chunk-XOIHROZ2.js.map

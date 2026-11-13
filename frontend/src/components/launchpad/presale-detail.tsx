@@ -610,31 +610,30 @@ export function PresaleDetail({
       {/* TAB 1: OVERVIEW                                                        */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "overview" && (
+        <>
         <div className="lf-detail-content grid grid-cols-1 gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_360px]">
           {/* Left Column: Raise, Timeline, Spotlights */}
           <div className="min-w-0 space-y-8">
-            {/* Disclosure Banner */}
-            <div className={cn("rounded-2xl border p-4 sm:p-5", presale.isExternal ? "border-cyan-500/20 bg-cyan-500/5" : "border-primary/20 bg-primary/5")}>
-              <div className="flex items-start gap-3">
-                <Info className={cn("mt-0.5 h-4 w-4 shrink-0", presale.isExternal ? "text-cyan-400" : "text-primary")} />
-                <div className="space-y-1 text-xs">
-                  <p className="font-semibold text-foreground">
-                    {presale.isExternal
-                      ? `CryptoRank Public Sale (${presale.saleType || "IDO"})`
-                      : provenance === "session"
-                      ? "User-Created Launch Simulation"
-                      : "Catalog Demonstration Presale"}
-                  </p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {presale.isExternal
-                      ? `This token sale offering is tracked live from CryptoRank v3. Launch details and allocations reflect public intelligence provided by ${presale.launchpadName || "the host launchpad"}.`
-                      : provenance === "session"
-                      ? "This presale was configured and simulated during your local browser session. Saved in client storage (pm_session_launches_v1), under Ethereum Sepolia scope (D-04)."
-                      : "This record is a pre-seeded demonstration launch from the HorizonX catalog. No real blockchain transactions or escrow deposits exist."}
-                  </p>
+            {/* Keep source disclosures for external and user-created launches only. */}
+            {(presale.isExternal || provenance === "session") && (
+              <div className={cn("rounded-2xl border p-4 sm:p-5", presale.isExternal ? "border-cyan-500/20 bg-cyan-500/5" : "border-primary/20 bg-primary/5")}>
+                <div className="flex items-start gap-3">
+                  <Info className={cn("mt-0.5 h-4 w-4 shrink-0", presale.isExternal ? "text-cyan-400" : "text-primary")} />
+                  <div className="space-y-1 text-xs">
+                    <p className="font-semibold text-foreground">
+                      {presale.isExternal
+                        ? `CryptoRank Public Sale (${presale.saleType || "IDO"})`
+                        : "User-Created Launch Simulation"}
+                    </p>
+                    <p className="text-muted-foreground leading-relaxed">
+                      {presale.isExternal
+                        ? `This token sale offering is tracked live from CryptoRank v3. Launch details and allocations reflect public intelligence provided by ${presale.launchpadName || "the host launchpad"}.`
+                        : "This presale was configured and simulated during your local browser session. Saved in client storage (pm_session_launches_v1), under Ethereum Sepolia scope (D-04)."}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Raise Progress Instrument */}
             <section aria-labelledby="raise-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
@@ -646,19 +645,6 @@ export function PresaleDetail({
               />
               <div className="mt-6">
                 <RaiseInstrument presale={presale} raise={raise} />
-              </div>
-            </section>
-
-            {/* Timeline Milestones */}
-            <section aria-labelledby="schedule-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
-              <SectionHead
-                id="schedule-title"
-                eyebrow="Schedule"
-                title="Sale timeline"
-                aside={<span className="text-xs text-muted-foreground">Times are stored UTC values</span>}
-              />
-              <div className="mt-6">
-                <ScheduleRail milestones={milestones} />
               </div>
             </section>
 
@@ -783,45 +769,113 @@ export function PresaleDetail({
               </div>
             </section>
 
-            {/* Sibling Launches */}
-            {hasRelated && (
-              <section aria-labelledby="related-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
-                <SectionHead id="related-title" eyebrow="Same Token" title="Other Launches for this Asset" />
-                <ul className="mt-4 divide-y divide-border/60 border-y border-border/60">
-                  {siblingPresales.map((p) => (
-                    <li key={p.id}>
-                      <Link to={`/launchpad/presales/${p.id}`} className="group flex items-center justify-between gap-4 py-3">
-                        <span className="min-w-0">
-                          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Presale</span>
-                          <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{p.title}</span>
-                        </span>
-                        <StatusBadge status={p.status} />
-                      </Link>
-                    </li>
-                  ))}
-                  {fairLaunches.map((f) => (
-                    <li key={f.id}>
-                      <Link to={`/launchpad/launches/${f.id}`} className="group flex items-center justify-between gap-4 py-3">
-                        <span className="min-w-0">
-                          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Fair Launch</span>
-                          <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{f.title}</span>
-                        </span>
-                        <StatusBadge status={f.status} />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+
           </div>
 
           {/* Right Rail: Participation Panel */}
           <aside className="lg:col-start-2">
-            <div className="lg:sticky lg:top-24">
-              <ParticipationPanel presale={presale} raise={raise} />
+            <ParticipationPanel presale={presale} raise={raise} />
+
+            <div className="mt-8">
+              {/* Timeline Milestones */}
+              <section aria-labelledby="schedule-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+                <SectionHead
+                  id="schedule-title"
+                  eyebrow="Schedule"
+                  title="Sale timeline"
+                  aside={<span className="text-xs text-muted-foreground">Times are stored UTC values</span>}
+                />
+                <div className="mt-6">
+                  <ScheduleRail milestones={milestones} />
+                </div>
+              </section>
             </div>
           </aside>
         </div>
+
+        {/* Full-width related launches section */}
+        {hasRelated && (
+              <section aria-labelledby="related-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+                <SectionHead id="related-title" eyebrow="Same Token" title="Other Launches for this Asset" />
+                <div className="mt-5 space-y-2">
+                  {siblingPresales.map((p) => (
+                    <Link
+                      key={p.id}
+                      to={`/launchpad/presales/${p.id}`}
+                      className="group grid grid-cols-1 gap-3 rounded-xl border border-border/60 bg-secondary/5 px-4 py-4 transition-colors hover:border-primary/30 hover:bg-secondary/15 sm:grid-cols-[minmax(0,1.7fr)_repeat(6,minmax(0,1fr))] sm:items-center sm:gap-5 sm:px-3"
+                    >
+                      <span className="min-w-0">
+                        <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Presale</span>
+                        <span className="block truncate text-sm font-semibold text-foreground group-hover:text-primary">{p.title}</span>
+                        <span className="mt-1 block truncate text-xs text-muted-foreground">{p.description || "Presale associated with this token."}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Network</span>
+                        <span className="mt-1 block truncate text-xs font-medium text-foreground">{p.network || "Not recorded"}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Raised / hard cap</span>
+                        <span className="mt-1 block truncate text-xs font-medium text-foreground">{p.totalRaised || "—"} / {p.hardCap || "—"}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Participants</span>
+                        <span className="mt-1 block text-xs font-medium text-foreground">{p.participantCount?.toLocaleString() ?? "—"}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Token price</span>
+                        <span className="mt-1 block truncate text-xs font-medium text-foreground">{p.salePrice || "Not recorded"}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Allocation</span>
+                        <span className="mt-1 block truncate text-xs font-medium text-foreground">{p.allocation || "Not recorded"}</span>
+                      </span>
+                      <span className="flex items-center justify-between gap-3 sm:justify-end">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground sm:hidden">Status</span>
+                        <StatusBadge status={p.status} />
+                      </span>
+                    </Link>
+                  ))}
+                  {fairLaunches.map((f) => (
+                    <Link
+                      key={f.id}
+                      to={`/launchpad/launches/${f.id}`}
+                      className="group grid grid-cols-1 gap-3 rounded-xl border border-border/60 bg-secondary/5 px-4 py-4 transition-colors hover:border-primary/30 hover:bg-secondary/15 sm:grid-cols-[minmax(0,1.7fr)_repeat(6,minmax(0,1fr))] sm:items-center sm:gap-5 sm:px-3"
+                    >
+                      <span className="min-w-0">
+                        <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Fair Launch</span>
+                        <span className="block truncate text-sm font-semibold text-foreground group-hover:text-primary">{f.title}</span>
+                        <span className="mt-1 block truncate text-xs text-muted-foreground">{f.description || "Fair launch associated with this token."}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Network</span>
+                        <span className="mt-1 block truncate text-xs font-medium text-foreground">{f.network || "Not recorded"}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Raised / soft cap</span>
+                        <span className="mt-1 block truncate text-xs font-medium text-foreground">{f.totalRaised || "—"} / {f.softCap || "—"}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Participants</span>
+                        <span className="mt-1 block text-xs font-medium text-foreground">{f.participantCount?.toLocaleString() ?? "—"}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Token price</span>
+                        <span className="mt-1 block truncate text-xs font-medium text-foreground">{f.salePrice || "Not recorded"}</span>
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] uppercase tracking-wider text-muted-foreground">Allocation</span>
+                        <span className="mt-1 block truncate text-xs font-medium text-foreground">{f.allocation || f.totalSelling || "Not recorded"}</span>
+                      </span>
+                      <span className="flex items-center justify-between gap-3 sm:justify-end">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground sm:hidden">Status</span>
+                        <StatusBadge status={f.status} />
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+        )}
+        </>
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════ */}

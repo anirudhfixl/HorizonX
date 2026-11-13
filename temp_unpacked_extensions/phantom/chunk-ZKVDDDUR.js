@@ -1,0 +1,23 @@
+import{D as A}from"./chunk-7AUQ4PGY.js";import{F as U,G as V,W}from"./chunk-AVAZQISO.js";import{c as $}from"./chunk-CJMN3KHS.js";import{z as u}from"./chunk-6F56BBC3.js";import{d as Z,e as T,f as w}from"./chunk-5ONZFJ5E.js";import{a as g,g as l,i as m,n as b}from"./chunk-UG7Z3YUN.js";m();b();var Y=$.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: ${n=>n.isPurple?u.colors.brand.midnight:u.colors.legacy.elementBase};
+  background-image: ${n=>n.previewImage?`url(${n.previewImage})`:void 0};
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+`;m();b();var q=l(T(),1);var G=l(Z(),1);var E=l(w(),1),J=G.default.memo(n=>{let e=(0,q.c)(10);if(e[0]!=="cba3b8aa4179cae1a6ae4c69501f1c6c7f36cbd7a512b2cbd11f7027fa07a2bd"){for(let r=0;r<10;r+=1)e[r]=Symbol.for("react.memo_cache_sentinel");e[0]="cba3b8aa4179cae1a6ae4c69501f1c6c7f36cbd7a512b2cbd11f7027fa07a2bd"}let{type:f,width:s,fill:i}=n,t=s===void 0?48:s,o=i===void 0?u.colors.legacy.borderBase:i;switch(f){case"video":{let r;return e[1]!==o||e[2]!==t?(r=(0,E.jsx)(V,{width:t,height:t,fill:o}),e[1]=o,e[2]=t,e[3]=r):r=e[3],r}case"audio":{let r;return e[4]!==o||e[5]!==t?(r=(0,E.jsx)(U,{width:t,height:t,fill:o}),e[4]=o,e[5]=t,e[6]=r):r=e[6],r}case"image":case"other":default:{let r;return e[7]!==o||e[8]!==t?(r=(0,E.jsx)(W,{width:t,height:t,fill:o}),e[7]=o,e[8]=t,e[9]=r):r=e[9],r}}});m();b();var ee=l(T(),1),h=l(Z(),1);m();b();var K=l(T(),1);var Q=l(Z(),1);var D=l(w(),1),j=Q.default.memo(n=>{let e=(0,K.c)(5);if(e[0]!=="4e559b34fa66b0ab60086903e664611aa95a0a09c6cb36e4357d9486be7f17d6"){for(let o=0;o<5;o+=1)e[o]=Symbol.for("react.memo_cache_sentinel");e[0]="4e559b34fa66b0ab60086903e664611aa95a0a09c6cb36e4357d9486be7f17d6"}let{showBadge:f}=n,s=f===void 0?!0:f,i;e[1]!==s?(i=s?(0,D.jsx)(A,{width:"100px",height:"10px",borderRadius:"6px",backgroundColor:u.colors.legacy.borderDiminished}):null,e[1]=s,e[2]=i):i=e[2];let t;return e[3]!==i?(t=(0,D.jsx)(A,{aspectRatio:1,width:"100%",height:"100%",backgroundColor:u.colors.legacy.elementBase,align:"flex-end",borderRadius:"6px",padding:"15px",children:i}),e[3]=i,e[4]=t):t=e[4],t});var c=l(w(),1),se=3,de=$.img`
+  transition: transform 0.5s ease;
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  transform: ${n=>n.zoomState==="zoomedIn"?`scale(${se})`:"scale(1)"};
+  cursor: ${n=>{if(n.isZoomControlsEnabled){if(n.zoomState==="zoomedIn")return"zoom-out";if(n.zoomState==="zoomedOut")return"zoom-in"}else return"inherit"}};
+`,Be=h.default.memo(n=>{let e=(0,ee.c)(26);if(e[0]!=="eac6801ae6ccfcf57a3faac5b989659a65d5f8851c533fd7b42bb80036738f28"){for(let a=0;a<26;a+=1)e[a]=Symbol.for("react.memo_cache_sentinel");e[0]="eac6801ae6ccfcf57a3faac5b989659a65d5f8851c533fd7b42bb80036738f28"}let{uri:f,showSkeletonBadge:s,isZoomControlsEnabled:i}=n,t=s===void 0?!1:s,o=i===void 0?!1:i,[r,F]=(0,h.useState)("loading"),[d,H]=(0,h.useState)("zoomedOut"),y=(0,h.useRef)(null),I;e[1]===Symbol.for("react.memo_cache_sentinel")?(I=g(a=>{let re=a.nativeEvent.layerX,ne=a.nativeEvent.layerY,ie=a.currentTarget.offsetWidth,ae=a.currentTarget.offsetHeight,le=re/ie*100,ce=ne/ae*100;y.current&&(y.current.style.transformOrigin=`${le}% ${ce}%`)},"t2"),e[1]=I):I=e[1];let N=I,S;e[2]!==o||e[3]!==d?(S=g(a=>{o&&(H(d==="zoomedIn"?"zoomedOut":"zoomedIn"),N(a))},"t3"),e[2]=o,e[3]=d,e[4]=S):S=e[4];let L=S,z;e[5]!==o||e[6]!==d?(z=g(a=>{d==="zoomedOut"||!o||N(a)},"t4"),e[5]=o,e[6]=d,e[7]=z):z=e[7];let x=z,k;e[8]!==o?(k=g(()=>{o&&(y.current&&(y.current.style.transformOrigin="center"),H("zoomedOut"))},"t5"),e[8]=o,e[9]=k):k=e[9];let B=k,R=f!==null&&f.trim()!==""?f:null,v;e[10]===Symbol.for("react.memo_cache_sentinel")?(v=g(()=>{F("success")},"t6"),e[10]=v):v=e[10];let oe=v,_;e[11]===Symbol.for("react.memo_cache_sentinel")?(_=g(()=>{F("error")},"t7"),e[11]=_):_=e[11];let te=_,O=r==="loading",P=r==="error",p;e[12]!==R||e[13]!==P||e[14]!==o||e[15]!==L||e[16]!==B||e[17]!==x||e[18]!==d?(p=P?(0,c.jsx)(Y,{children:(0,c.jsx)(J,{type:"image"})}):(0,c.jsx)(Y,{children:(0,c.jsx)(de,{ref:y,onMouseMove:x,onMouseLeave:B,onClick:L,src:R??"",onLoad:oe,onError:te,zoomState:d,isZoomControlsEnabled:o})}),e[12]=R,e[13]=P,e[14]=o,e[15]=L,e[16]=B,e[17]=x,e[18]=d,e[19]=p):p=e[19];let C;e[20]!==O||e[21]!==t?(C=O?(0,c.jsx)(j,{showBadge:t}):null,e[20]=O,e[21]=t,e[22]=C):C=e[22];let M;return e[23]!==p||e[24]!==C?(M=(0,c.jsxs)(c.Fragment,{children:[p,C]}),e[23]=p,e[24]=C,e[25]=M):M=e[25],M});export{Y as a,J as b,j as c,Be as d};
+//# sourceMappingURL=chunk-ZKVDDDUR.js.map

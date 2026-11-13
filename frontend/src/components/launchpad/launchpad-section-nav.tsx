@@ -24,10 +24,8 @@ export function LaunchpadSectionNav() {
         ))}
       </div>
       <div className="lp-section-nav__actions hx-workspace-nav__actions">
-        <Link to="/tokens/explore" className="lp-section-nav__crosslink">Tokens</Link>
-        <Link to="/airdrops" className="lp-section-nav__crosslink">Airdrops</Link>
         <Link to="/launchpad/presales/create" className={`lp-section-nav__create${createPresale ? " is-active" : ""}`}>Create presale <span aria-hidden="true">＋</span></Link>
-        <Link to="/launchpad/launches/create" className={`lp-section-nav__create lp-section-nav__create--secondary${createFair ? " is-active" : ""}`}>Create fair launch <span aria-hidden="true">＋</span></Link>
+        <Link to="/launchpad/launches/create" className={`lp-section-nav__create${createFair ? " is-active" : ""}`}>Create fair launch <span aria-hidden="true">＋</span></Link>
       </div>
     </nav>
     </WorkspaceNavPortal>

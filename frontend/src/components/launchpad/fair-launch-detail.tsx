@@ -601,27 +601,24 @@ export function FairLaunchDetail({
       {/* TAB 1: OVERVIEW                                                        */}
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "overview" && (
+        <>
         <div className="lf-detail-content grid grid-cols-1 gap-x-10 gap-y-10 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* Left Column: Raise, Timeline, Spotlights */}
           <div className="min-w-0 space-y-8">
-            {/* Simulation Disclosure Banner */}
-            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
-              <div className="flex items-start gap-3">
-                <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <div className="space-y-1 text-xs">
-                  <p className="font-semibold text-foreground">
-                    {provenance === "session"
-                      ? "User-Created Fair Launch Simulation"
-                      : "Catalog Demonstration Fair Launch"}
-                  </p>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {provenance === "session"
-                      ? "This fair launch was configured and simulated during your local browser session. Saved in client storage (pm_session_launches_v1), under Ethereum Sepolia scope (D-04)."
-                      : "This record is a pre-seeded demonstration launch from the HorizonX catalog. No real blockchain transactions or escrow deposits exist."}
-                  </p>
+            {/* Session-only disclosure; catalog demonstration notice is intentionally omitted. */}
+            {provenance === "session" && (
+              <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <div className="space-y-1 text-xs">
+                    <p className="font-semibold text-foreground">User-Created Fair Launch Simulation</p>
+                    <p className="text-muted-foreground leading-relaxed">
+                      This fair launch was configured and simulated during your local browser session. Saved in client storage (pm_session_launches_v1), under Ethereum Sepolia scope (D-04).
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Raise Progress Instrument (Commitment Gauge) */}
             <section aria-labelledby="commitment-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
@@ -636,18 +633,7 @@ export function FairLaunchDetail({
               </div>
             </section>
 
-            {/* Timeline Milestones */}
-            <section aria-labelledby="schedule-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
-              <SectionHead
-                id="schedule-title"
-                eyebrow="Schedule"
-                title="Launch timeline"
-                aside={<span className="text-xs text-muted-foreground">Times are stored UTC values</span>}
-              />
-              <div className="mt-6">
-                <WindowTrack milestones={milestones} duration={duration} />
-              </div>
-            </section>
+
 
             {/* Token & Project Spotlights */}
             <section aria-labelledby="spotlight-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
@@ -801,50 +787,93 @@ export function FairLaunchDetail({
               </div>
             </section>
 
-            {/* Same Token Sibling Launches */}
-            {hasRelated && (
-              <section aria-labelledby="related-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
-                <SectionHead id="related-title" eyebrow="Ecosystem" title="Other Launches for this Token" />
-                <ul className="mt-4 divide-y divide-border/60 border-y border-border/60">
-                  {siblingLaunches.map((f) => (
-                    <li key={f.id}>
-                      <Link to={`/launchpad/launches/${f.id}`} className="group flex items-center justify-between gap-4 py-3">
-                        <span className="min-w-0">
-                          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Fair Launch</span>
-                          <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{f.title}</span>
-                        </span>
-                        <StatusBadge status={f.status} />
-                      </Link>
-                    </li>
-                  ))}
-                  {presales.map((p) => (
-                    <li key={p.id}>
-                      <Link to={`/launchpad/presales/${p.id}`} className="group flex items-center justify-between gap-4 py-3">
-                        <span className="min-w-0">
-                          <span className="block text-[11px] uppercase tracking-wider text-muted-foreground">Presale</span>
-                          <span className="block truncate text-sm font-medium text-foreground group-hover:text-primary">{p.title}</span>
-                        </span>
-                        <StatusBadge status={p.status} />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
 
-            <p className="border-l-2 border-border pl-3 text-xs text-muted-foreground">
-              Demonstration data. Every figure and date on this page comes from a sample catalog record or local session storage;
-              none of it is read from a live contract or block explorer. Under D-04 only Ethereum Sepolia (11155111) is an active network.
-            </p>
           </div>
 
-          {/* Right Rail: Participation Panel */}
-          <aside className="lg:col-start-2">
-            <div className="lg:sticky lg:top-24">
-              <ParticipationPanel launch={launch} />
-            </div>
+          {/* Right Rail: Participation Panel with Schedule beneath it */}
+          <aside className="min-w-0 space-y-8 lg:col-start-2">
+            <ParticipationPanel launch={launch} />
+
+            {/* Timeline Milestones */}
+            <section aria-labelledby="schedule-title" className="rounded-3xl border border-border/60 bg-card p-6 sm:p-8">
+              <SectionHead
+                id="schedule-title"
+                eyebrow="Schedule"
+                title="Launch timeline"
+                aside={<span className="text-xs text-muted-foreground">Times are stored UTC values</span>}
+              />
+              <div className="mt-6">
+                <WindowTrack milestones={milestones} duration={duration} />
+              </div>
+            </section>
           </aside>
         </div>
+
+        {hasRelated && (
+          <section
+            aria-labelledby="related-title"
+            className="mt-10 w-full min-w-0 overflow-hidden rounded-3xl border border-border/60 bg-card p-6 sm:p-8"
+          >
+            <SectionHead
+              id="related-title"
+              eyebrow="Ecosystem"
+              title="Other Launches for this Token"
+              aside={<span className="text-xs text-muted-foreground">{siblingLaunches.length + presales.length} related launches</span>}
+            />
+            <div className="mt-5 overflow-x-auto">
+              <div className="min-w-[900px]">
+                <div className="grid grid-cols-[minmax(240px,1.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,0.8fr)_minmax(110px,0.9fr)_auto] gap-4 border-b border-border/60 px-4 pb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  <span>Launch</span>
+                  <span>Network</span>
+                  <span>Raised</span>
+                  <span>Soft cap</span>
+                  <span>Participants</span>
+                  <span>Sale price</span>
+                  <span className="text-right">Status</span>
+                </div>
+                <div className="space-y-2">
+                  {siblingLaunches.map((f) => (
+                    <Link
+                      key={f.id}
+                      to={`/launchpad/launches/${f.id}`}
+                      className="group grid grid-cols-[minmax(240px,1.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,0.8fr)_minmax(110px,0.9fr)_auto] items-center gap-4 rounded-2xl border border-border/50 bg-secondary/20 px-4 py-4 transition-colors hover:border-border hover:bg-secondary/45"
+                    >
+                      <span className="min-w-0">
+                        <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Fair Launch</span>
+                        <span className="block truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">{f.title}</span>
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">{f.network || "—"}</span>
+                      <span className="font-mono text-xs text-foreground">{f.totalRaised ?? "—"}</span>
+                      <span className="font-mono text-xs text-foreground">{f.softCap ?? "—"}</span>
+                      <span className="font-mono text-xs text-foreground">{f.participantCount ?? "—"}</span>
+                      <span className="font-mono text-xs text-foreground">{f.salePrice ?? "—"}</span>
+                      <span className="justify-self-end"><StatusBadge status={f.status} /></span>
+                    </Link>
+                  ))}
+                  {presales.map((p) => (
+                    <Link
+                      key={p.id}
+                      to={`/launchpad/presales/${p.id}`}
+                      className="group grid grid-cols-[minmax(240px,1.8fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,0.8fr)_minmax(110px,0.9fr)_auto] items-center gap-4 rounded-2xl border border-border/50 bg-secondary/20 px-4 py-4 transition-colors hover:border-border hover:bg-secondary/45"
+                    >
+                      <span className="min-w-0">
+                        <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Presale</span>
+                        <span className="block truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">{p.title}</span>
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">{p.network || "—"}</span>
+                      <span className="font-mono text-xs text-foreground">{p.totalRaised ?? "—"}</span>
+                      <span className="font-mono text-xs text-foreground">{p.softCap ?? p.hardCap ?? "—"}</span>
+                      <span className="font-mono text-xs text-foreground">{p.participantCount ?? "—"}</span>
+                      <span className="font-mono text-xs text-foreground">{p.salePrice ?? "—"}</span>
+                      <span className="justify-self-end"><StatusBadge status={p.status} /></span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+        </>
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════ */}

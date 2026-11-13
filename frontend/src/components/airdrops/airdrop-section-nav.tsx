@@ -20,14 +20,12 @@ export function AirdropSectionNav() {
       <div className="ad-section-nav__links hx-workspace-nav__links">
         {sections.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.end}
-            className={({ isActive }) => `ad-section-nav__link${isActive || (item.to === "/airdrops/campaigns" && pathname.startsWith("/airdrops/campaigns/")) ? " is-active" : ""}`}>
+            className={({ isActive }) => `ad-section-nav__link${isActive || (item.to === "/airdrops/campaigns" && pathname.startsWith("/airdrops/campaigns/")) || (item.to === "/airdrops/my" && pathname.startsWith("/airdrops/my/")) ? " is-active" : ""}`}>
             {item.label}
           </NavLink>
         ))}
       </div>
       <div className="ad-section-nav__actions hx-workspace-nav__actions">
-        <Link to="/tokens/explore" className="ad-section-nav__crosslink">Tokens</Link>
-        <Link to="/launchpad" className="ad-section-nav__crosslink">Launchpad</Link>
         <Link to="/airdrops/campaigns/create" className={`ad-section-nav__create${createActive ? " is-active" : ""}`}>
           Create campaign <span aria-hidden="true">＋</span>
         </Link>

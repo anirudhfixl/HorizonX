@@ -18,7 +18,7 @@ export function StakingSectionNav() {
   const poolDetail = pathname.startsWith("/staking/pools/") && !createActive;
 
   return (
-    <WorkspaceNavPortal>
+    <WorkspaceNavPortal spacerClassName="staking-workspace-nav-spacer">
       <nav className="st-section-nav hx-workspace-nav" aria-label="Staking workspace">
       <div className="st-section-nav__links hx-workspace-nav__links">
         {sections.map((item) => (

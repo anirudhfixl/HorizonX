@@ -1,0 +1,36 @@
+2026-11-06 06:27:18.793: [INFO] CurrentProfilePath: D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default
+2026-11-06 06:27:18.793: [INFO] Profiles total count: 1
+2026-11-06 06:27:18.794: [INFO] Profile: name=Profile 1 path=D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default lastActive=null
+2026-11-06 06:27:18.794: [INFO] LastUsedProfileDir: D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default
+2026-11-06 06:27:18.794: [INFO] VisibilityChanged: 0
+2026-11-06 06:27:18.850: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-06 06:27:18.851: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-06 06:27:18.851: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-06 06:27:18.851: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-06 06:27:18.851: [INFO] BookmarkNodeAdded, ABU: 0
+2026-11-06 06:27:18.851: [INFO] OnDoneLoading sync enabled: 0
+2026-11-06 06:27:18.851: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-06 06:27:18.851: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-06 06:27:18.851: [INFO] BookmarksSnapshot Startup total=5 bar=5 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-06 06:27:25.449: [INFO] BookmarksSnapshot Shutdown total=5 bar=5 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-06 06:27:43.375: [INFO] CurrentProfilePath: D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default
+2026-11-06 06:27:43.375: [INFO] Profiles total count: 1
+2026-11-06 06:27:43.375: [INFO] Profile: name=Profile 1 path=D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default lastActive=2026-11-06T06:27:18.822Z
+2026-11-06 06:27:43.375: [INFO] LastUsedProfileDir: D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default
+2026-11-06 06:27:43.375: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default lastActive=2026-11-06T06:27:18.822Z
+2026-11-06 06:27:43.375: [INFO] VisibilityChanged: 0
+2026-11-06 06:27:43.432: [INFO] OnDoneLoading sync enabled: 0
+2026-11-06 06:27:43.432: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-06 06:27:43.432: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-06 06:27:43.432: [INFO] BookmarksSnapshot Startup total=5 bar=5 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-06 06:27:52.039: [INFO] BookmarksSnapshot Shutdown total=5 bar=5 other=0 mobile=0 showBar=0 showBarNTP=1
+2026-11-06 06:28:07.362: [INFO] CurrentProfilePath: D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default
+2026-11-06 06:28:07.362: [INFO] Profiles total count: 1
+2026-11-06 06:28:07.362: [INFO] Profile: name=Profile 1 path=D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default lastActive=2026-11-06T06:27:43.401Z
+2026-11-06 06:28:07.362: [INFO] LastUsedProfileDir: D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default
+2026-11-06 06:28:07.362: [INFO] MostRecentlyActiveProfile: name=Profile 1 path=D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default lastActive=2026-11-06T06:27:43.401Z
+2026-11-06 06:28:07.362: [INFO] VisibilityChanged: 0
+2026-11-06 06:28:07.417: [INFO] OnDoneLoading sync enabled: 0
+2026-11-06 06:28:07.417: [INFO] BookmarkModelLoaded, ids_reassigned: 0
+2026-11-06 06:28:07.417: [INFO] BookmarksLoadDropped droppedNodes=0
+2026-11-06 06:28:07.417: [INFO] BookmarksSnapshot Startup total=5 bar=5 other=0 mobile=0 showBar=0 showBarNTP=1

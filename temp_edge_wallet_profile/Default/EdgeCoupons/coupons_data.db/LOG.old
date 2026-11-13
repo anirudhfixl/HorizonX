@@ -1,0 +1,6 @@
+2026/11/06-11:57:51.261 5e80 Reusing MANIFEST D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/11/06-11:57:51.262 5e80 Recovering log #3
+2026/11/06-11:57:51.262 5e80 Reusing old log D:\Fixl_work\proMiners\temp_edge_wallet_profile\Default\EdgeCoupons/coupons_data.db/000003.log 
+2026/11/06-11:57:51.434 73bc Level-0 table #5: started
+2026/11/06-11:57:51.438 73bc Level-0 table #5: 683273 bytes OK
+2026/11/06-11:57:51.440 73bc Delete type=0 #3

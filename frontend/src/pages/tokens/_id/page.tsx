@@ -35,7 +35,7 @@ export default function TokenDetailPage() {
         title={`${token.name} (${token.symbol})`}
         description={`${token.name} on ${token.network}: simulated price, tokenomics, holders and linked HorizonX activity.`}
       />
-      <TokenDetail token={token as any} />
+      <TokenDetail token={token as any} embedded />
     </>
   );
 }

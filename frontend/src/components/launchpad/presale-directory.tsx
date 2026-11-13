@@ -423,7 +423,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
   };
 
   return (
-    <div className="launchpad-page mx-auto w-full max-w-none space-y-8 px-4 py-8 sm:px-6 lg:px-10 xl:px-12 2xl:px-16 lg:py-12">
+    <div className="launchpad-page launchpad-directory-page mx-auto w-full max-w-none space-y-8 px-4 pt-4 pb-8 sm:px-6 lg:px-10 xl:px-12 2xl:px-16 lg:pt-4 lg:pb-12">
       {mode === "canonical" && <LaunchpadWorkspaceHeader items={[{ label: "Launchpad", to: "/launchpad" }, { label: "Presales" }]} />}
       {/* 1. Header (Aligned with Fair Launch Directory) */}
       <header className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
@@ -505,16 +505,16 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
 
       {/* 3. Discovery controls */}
       <section aria-label="Search and filters" className="space-y-5">
-        {/* Stage Metric Cards (Aligned with Fair Launch Directory) */}
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <div role="group" aria-label="Launch stage" className="flex min-w-max items-stretch gap-1 sm:min-w-0">
+        {/* Stage track — matches the Fair Launch directory layout */}
+        <div className="-mx-4 h-[68px] overflow-x-auto overflow-y-hidden px-4 sm:mx-0 sm:px-0">
+          <div role="group" aria-label="Launch stage" className="flex h-full min-w-max items-stretch gap-1 sm:min-w-0">
             <button
               type="button"
               onClick={() => handleStatusChange("all")}
               aria-pressed={statusFilter === "all"}
               className={cn(
-                "flex min-w-[88px] flex-col gap-1.5 rounded-md px-3 py-2.5 text-left transition-colors sm:flex-1",
-                statusFilter === "all" ? "bg-secondary/80" : "hover:bg-secondary/40"
+                "flex h-full min-w-[88px] flex-col justify-between gap-1.5 rounded-md border border-transparent bg-transparent px-3 py-2.5 text-left transition-colors sm:flex-1",
+                statusFilter === "all" ? "border-primary/50" : "hover:border-border/60"
               )}
             >
               <span className="h-1 w-full rounded-full bg-gradient-to-r from-muted-foreground/40 via-amber-400 to-emerald-400" />
@@ -530,8 +530,10 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                 onClick={() => handleStatusChange(s.value)}
                 aria-pressed={statusFilter === s.value}
                 className={cn(
-                  "flex min-w-[88px] flex-col gap-1.5 rounded-md px-3 py-2.5 text-left transition-colors sm:flex-1",
-                  statusFilter === s.value ? "bg-secondary/80" : "hover:bg-secondary/40",
+                  "flex h-full min-w-[88px] flex-col justify-between gap-1.5 rounded-md border border-transparent bg-transparent px-3 py-2.5 text-left transition-colors sm:flex-1",
+                  statusFilter === s.value
+                    ? cn("border-current", s.value === "draft" ? "border-zinc-500/60" : s.value === "scheduled" ? "border-amber-400/60" : s.value === "live" ? "border-emerald-400/60" : "border-zinc-400/60")
+                    : "hover:border-border/60",
                   stageCounts[s.value] === 0 && statusFilter !== s.value && "opacity-50"
                 )}
               >
@@ -545,9 +547,9 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
           </div>
         </div>
 
-        {/* Filter bar */}
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center">
-          <div className="relative">
+        {/* Search + network + category — Fair Launch layout, Presale controls */}
+        <div className="flex flex-col gap-3 md:flex-row md:items-center">
+          <div className="relative flex-1 md:max-w-xl">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
@@ -555,12 +557,12 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               aria-label="Search presales"
-              className="h-10 border-border bg-secondary/40 pl-9 pr-8 text-sm text-foreground placeholder:text-muted-foreground/70"
+              className="h-10 border-border/60 bg-secondary/30 pl-9 pr-8 text-sm"
             />
             {searchQuery && (
               <button
                 onClick={() => handleSearchChange("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground"
                 aria-label="Clear search"
               >
                 <X className="h-3.5 w-3.5" />
@@ -568,7 +570,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
             )}
           </div>
 
-          <div role="group" aria-label="Filter by network" className="inline-flex rounded-lg bg-secondary/60 p-1">
+          <div role="group" aria-label="Network" className="inline-flex self-start rounded-lg bg-secondary/40 p-0.5 md:self-auto">
             {[
               { value: "all", label: "All networks", n: networkCounts.all },
               { value: "sepolia", label: "Sepolia", n: networkCounts.sepolia },
@@ -580,11 +582,13 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
                 aria-pressed={networkFilter === o.value}
                 title={o.value === "sepolia" ? "Ethereum Sepolia (11155111 — Active)" : undefined}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-                  networkFilter === o.value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  "rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                  networkFilter === o.value
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {o.label} <span className="ml-0.5 font-mono text-[10px] opacity-70">{o.n}</span>
+                {o.label} <span className="font-mono opacity-70">{o.n}</span>
               </button>
             ))}
           </div>
@@ -593,14 +597,12 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
             <select
               value={categoryFilter}
               onChange={(e) => handleCategoryChange(e.target.value)}
-              className={cn(selectCls, "h-10")}
+              className={cn(selectCls, "h-10 self-start md:self-auto")}
               aria-label="Filter by category"
             >
-              <option value="all">All Categories</option>
+              <option value="all" className="bg-card text-foreground">All Categories</option>
               {uniqueCategories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
+                <option key={cat} value={cat} className="bg-card text-foreground">{cat}</option>
               ))}
             </select>
 
@@ -609,7 +611,7 @@ export function PresaleDirectory({ mode = "canonical" }: PresaleDirectoryProps) 
               variant="outline"
               size="sm"
               onClick={() => setMobileFiltersOpen((prev) => !prev)}
-              className="h-10 md:hidden gap-1.5 px-3 text-xs"
+              className="h-10 gap-1.5 px-3 text-xs md:hidden"
             >
               <Filter className="h-3.5 w-3.5" />
               Filters

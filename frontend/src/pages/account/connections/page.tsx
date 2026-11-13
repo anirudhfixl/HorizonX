@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { useMultiWallet } from "@/web3";
+import { useMultiWallet, openReownAppKit } from "@/web3";
 import { useModal } from "@/contexts/modal-context";
 import { toast } from "sonner";
 import { AccountWorkspace } from "@/components/account/account-workspace";
@@ -152,7 +152,27 @@ export default function AccountConnectionsPage() {
                   ) : (
                     <Button
                       size="sm"
-                      onClick={() => state.connect()}
+                      onClick={() => {
+                        if (eco.id === "evm") {
+                          openReownAppKit("Connect");
+                        } else if (eco.id === "ton") {
+                          openModal("CONNECT_WALLET", { ecosystem: "ton" });
+                        } else if (eco.id === "solana") {
+                          const anyWin = typeof window !== "undefined" ? (window as any) : null;
+                          if (anyWin?.phantom?.solana?.isPhantom || anyWin?.solana?.isPhantom) {
+                            state.connect();
+                          } else {
+                            openModal("CONNECT_WALLET", { ecosystem: "solana" });
+                          }
+                        } else if (eco.id === "tron") {
+                          const anyWin = typeof window !== "undefined" ? (window as any) : null;
+                          if (anyWin?.tronLink || anyWin?.tronWeb) {
+                            state.connect();
+                          } else {
+                            openModal("CONNECT_WALLET", { ecosystem: "tron" });
+                          }
+                        }
+                      }}
                       disabled={state.isConnecting}
                       className="w-full text-xs h-8"
                     >

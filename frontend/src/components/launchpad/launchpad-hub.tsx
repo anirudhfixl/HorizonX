@@ -272,7 +272,7 @@ function LiveRow({ e }: { e: LaunchEntry }) {
         className="group grid min-w-0 gap-x-6 gap-y-3 rounded-lg px-3 py-4 transition-colors hover:bg-foreground/[0.035] sm:-mx-3 sm:grid-cols-[minmax(250px,1.25fr)_minmax(220px,1fr)_minmax(120px,.55fr)] sm:items-center lg:grid-cols-[minmax(280px,1.35fr)_minmax(260px,1.15fr)_minmax(130px,.55fr)]"
       >
         <div className="min-w-0 space-y-1.5">
-          <div className={cn("flex flex-nowrap items-center gap-1.5 overflow-hidden", draft && "[&>*]:shrink-0")}>
+          <div className="flex flex-nowrap items-center gap-1.5 overflow-hidden">
             <KindTag kind={e.kind} />
             <StatusBadge status={e.status} />
             <ProvenanceBadge kind={e.id.startsWith("session-") ? "session" : "catalog"} />
@@ -674,11 +674,19 @@ export function LaunchpadHub() {
 
       {/* Live launches: featured lead + compact supporting rows */}
       <section className="space-y-4">
-        <div className="flex flex-wrap items-baseline gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-400" />
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">Live now</h2>
-          <span className="font-mono text-xs text-muted-foreground">{g.live.length}</span>
-          <span className="text-xs text-muted-foreground">Open for participation</span>
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">Live now</h2>
+            <span className="font-mono text-xs text-muted-foreground">{g.live.length}</span>
+            <span className="text-xs text-muted-foreground">Open for participation</span>
+          </div>
+          <Link
+            to={filter === "fair" ? "/launchpad/launches" : "/launchpad/presales"}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-primary"
+          >
+            View all <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
         {g.live.length ? (
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1.55fr)_minmax(360px,1fr)]">

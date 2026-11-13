@@ -2,7 +2,7 @@ import React from "react";
 import { AccountSectionNav } from "@/components/account/account-section-nav";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
-import { useMultiWallet } from "@/web3";
+import { useMultiWallet, openReownAppKit } from "@/web3";
 import { useModal } from "@/contexts/modal-context";
 import {
   Wallet,
@@ -216,7 +216,27 @@ export default function AccountWalletsPage() {
                   </p>
                   <Button
                     size="sm"
-                    onClick={() => walletState.connect()}
+                    onClick={() => {
+                      if (card.id === "evm") {
+                        openReownAppKit("Connect");
+                      } else if (card.id === "ton") {
+                        openModal("CONNECT_WALLET", { ecosystem: "ton" });
+                      } else if (card.id === "solana") {
+                        const anyWin = typeof window !== "undefined" ? (window as any) : null;
+                        if (anyWin?.phantom?.solana?.isPhantom || anyWin?.solana?.isPhantom) {
+                          walletState.connect();
+                        } else {
+                          openModal("CONNECT_WALLET", { ecosystem: "solana" });
+                        }
+                      } else if (card.id === "tron") {
+                        const anyWin = typeof window !== "undefined" ? (window as any) : null;
+                        if (anyWin?.tronLink || anyWin?.tronWeb) {
+                          walletState.connect();
+                        } else {
+                          openModal("CONNECT_WALLET", { ecosystem: "tron" });
+                        }
+                      }
+                    }}
                     disabled={walletState.isConnecting}
                     className="w-full text-xs font-semibold h-8"
                   >
